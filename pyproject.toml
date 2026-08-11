@@ -4,6 +4,7 @@ requires = ["hatchling"]
 
 [dependency-groups]
 dev = [
+  "pre-commit",
   "pytest>=8.0",
   "ruff>=0.12",
 ]
@@ -22,7 +23,7 @@ dependencies = [
   "gluonts[torch]",
   "huggingface-hub>=0.36.2,<2.0",
   "nixtla>=0.7.0",
-  "pandas>=2.2.0",
+  "pandas>=2.2.0 ; python_full_version >= '3.13'",
   "scipy",
   "tabpfn-time-series==1.0.3 ; python_full_version < '3.13'",
   "tfc-t0>=0.2.3 ; python_full_version >= '3.11' and python_full_version < '3.14'",
@@ -45,3 +46,19 @@ packages = ["foundationforecast"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m 'not models'"
+markers = [
+  "models: marks tests that download model weights",
+]
+
+[tool.ruff]
+fix = true
+line-length = 88
+src = ["foundationforecast"]
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "SIM", "UP"]
+
+[tool.ruff.lint.isort]
+known-local-folder = ["foundationforecast"]
+no-lines-before = ["local-folder"]
