@@ -1,7 +1,47 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.0",
+  "ruff>=0.12",
+]
+
 [project]
 name = "foundationforecast"
 version = "0.1.0"
-description = "Add your description here"
+description = "Foundation time series forecasting models"
 readme = "README.md"
-requires-python = ">=3.11"
-dependencies = []
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+  { name = "Azul Garza", email = "azul.garza.r@gmail.com" },
+]
+dependencies = [
+  "gluonts[torch]",
+  "huggingface-hub>=0.36.2,<2.0",
+  "nixtla>=0.7.0",
+  "pandas>=2.2.0",
+  "scipy",
+  "tabpfn-time-series==1.0.3 ; python_full_version < '3.13'",
+  "tfc-t0>=0.2.3 ; python_full_version >= '3.11' and python_full_version < '3.14'",
+  "timecopilot-chronos-forecasting>=0.2.2",
+  "timecopilot-granite-tsfm>=0.2.1 ; python_full_version >= '3.11' and python_full_version < '3.14'",
+  "timecopilot-timesfm>=0.3.0",
+  "timecopilot-tirex2>=0.1.0 ; python_full_version >= '3.11'",
+  "timecopilot-tirex>=0.1.1 ; python_full_version >= '3.11'",
+  "timecopilot-toto-2>=0.1.1",
+  "timecopilot-toto>=0.1.7",
+  "timecopilot-uni2ts>=0.1.3 ; python_full_version < '3.14'",
+  "torch",
+  "transformers>=4.41,<6 ; python_full_version < '3.13'",
+  "transformers>=4.48,<6 ; python_full_version >= '3.13'",
+  "utilsforecast>=0.2.15",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["foundationforecast"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
