@@ -62,6 +62,8 @@ def test_chronos_finetuning_save_and_reuse(tmp_path):
 
 def test_chronos_lora_finetuning_save_and_reuse(tmp_path):
     """Finetune Chronos-2 with LoRA and save_path, then load from path and forecast."""
+    pytest.importorskip("peft")
+
     save_path = tmp_path / "chronos2-lora-finetuned"
     config = ChronosFinetuningConfig(
         finetune_steps=2,
