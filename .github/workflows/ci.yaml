@@ -46,12 +46,12 @@ jobs:
           key: ${{ runner.os }}-huggingface-${{ hashFiles('**/tests/') }}
 
       - name: Run tests
-        run: uv run pytest
+        run: uv run pytest --cov=foundationforecast --cov-report=term-missing
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
       - name: Test import FoundationForecast and Chronos
-        run: uv run -- python -c "from foundationforecast import FoundationForecast; from foundationforecast.models import Chronos" 
+        run: uv run -- python -c "from foundationforecast import FoundationForecast; from foundationforecast.models import Chronos"
 
   lint:
     name: lint and style checks
