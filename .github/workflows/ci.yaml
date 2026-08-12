@@ -12,12 +12,20 @@ concurrency:
 
 jobs:
   test:
-    name: test on ${{ matrix.python-version }}
+    name: test on ${{ matrix.python-version }}${{ matrix.coverage && ' (coverage)' || '' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        include:
+          - python-version: "3.10"
+            coverage: false
+          - python-version: "3.11"
+            coverage: false
+          - python-version: "3.12"
+            coverage: true
+          - python-version: "3.13"
+            coverage: false
     env:
       UV_PYTHON: ${{ matrix.python-version }}
 
@@ -46,7 +54,7 @@ jobs:
           key: ${{ runner.os }}-huggingface-${{ hashFiles('**/tests/') }}
 
       - name: Run tests
-        run: uv run pytest --cov=foundationforecast --cov-report=term-missing
+        run: uv run pytest ${{ matrix.coverage && '--cov=foundationforecast --cov-report=term-missing' || '' }}
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
