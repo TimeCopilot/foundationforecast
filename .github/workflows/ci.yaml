@@ -50,6 +50,9 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
+        name: Test import class
+        run: uv run -- python -c "from foundationforecast import FoundationForecast; from foundationforecast.models import Chronos" 
+
   lint:
     name: lint and style checks
     runs-on: ubuntu-latest
