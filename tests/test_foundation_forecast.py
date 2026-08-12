@@ -11,7 +11,11 @@ class DummyModel(Forecaster):
     def forecast(self, df, h, freq=None, level=None, quantiles=None):
         out = df[["unique_id", "ds"]].drop_duplicates("unique_id").copy()
         out = out.assign(ds=pd.Timestamp("2020-01-01"))
-        out = pd.concat([out.assign(ds=pd.Timestamp("2020-01-01") + pd.Timedelta(days=i)) for i in range(h)])
+        future_dates = [
+            out.assign(ds=pd.Timestamp("2020-01-01") + pd.Timedelta(days=i))
+            for i in range(h)
+        ]
+        out = pd.concat(future_dates)
         out["dummy"] = 1.0
         return out[["unique_id", "ds", "dummy"]]
 

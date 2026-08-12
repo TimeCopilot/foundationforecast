@@ -4,6 +4,8 @@ import pytest
 
 from foundationforecast.models.timesfm import _TimesFMV1, _TimesFMV2_p5
 
+pytestmark = pytest.mark.models
+
 MODEL_PARAMS = [
     (
         _TimesFMV1,

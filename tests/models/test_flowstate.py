@@ -10,7 +10,9 @@ if sys.version_info < (3, 11) or sys.version_info >= (3, 14):
         allow_module_level=True,
     )
 
-from foundationforecast.models.flowstate import FlowState
+from foundationforecast.models.flowstate import FlowState  # noqa: E402
+
+pytestmark = pytest.mark.models
 
 
 def test_flowstate_forecast_single_uid():

@@ -1,4 +1,7 @@
+import pytest
 import torch
+
+pytestmark = pytest.mark.models
 
 
 def test_chronos_default_dtype_is_float32():
