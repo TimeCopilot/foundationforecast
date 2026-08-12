@@ -1,6 +1,3 @@
-import sys
-
-import numpy as np
 import pandas as pd
 import pytest
 from utilsforecast.data import generate_series
@@ -202,14 +199,13 @@ def test_foundation_forecast_clean_cache_runs_after_each_model(monkeypatch, mode
     assert calls == ["cleaned"] * len(models)
 
 
-def test_flowstate_via_foundation_forecast():
-    if sys.version_info < (3, 11) or sys.version_info >= (3, 14):
-        pytest.skip("FlowState requires Python >= 3.11 and < 3.14")
+def test_foundation_forecast_duplicate_aliases_with_moirai():
+    from foundationforecast.models.moirai import Moirai
 
-    from foundationforecast.models.flowstate import FlowState
+    model1 = Moirai(repo_id="Salesforce/moirai-1.0-R-small", alias="Moirai")
+    model2 = Moirai(repo_id="Salesforce/moirai-1.0-R-large", alias="Moirai")
 
-    ds = pd.date_range("2024-01-01", periods=20, freq="W")
-    df = pd.DataFrame({"unique_id": "u1", "ds": ds, "y": np.arange(20)})
-    ff = FoundationForecast(models=[FlowState()])
-    fcst = ff.forecast(df=df, h=1, freq="W")
-    assert len(fcst) == 1
+    with pytest.raises(
+        ValueError, match="Duplicate model aliases found: \\['Moirai'\\]"
+    ):
+        FoundationForecast(models=[model1, model2])

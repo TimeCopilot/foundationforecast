@@ -23,6 +23,8 @@ def test_freq_inferred_correctly(model, freq):
     fcsts_with_freq = model.forecast(df, h=3, freq=freq)
     cv_no_freq = model.cross_validation(df, h=3)
     cv_with_freq = model.cross_validation(df, h=3, freq=freq)
+    # some foundation models produce different results
+    # each time they are called
     cols_to_check = ["unique_id", "ds"]
     cols_to_check_cv = ["unique_id", "ds", "y", "cutoff"]
     pd.testing.assert_frame_equal(
@@ -39,6 +41,7 @@ def test_freq_inferred_correctly(model, freq):
 @pytest.mark.parametrize(
     "freq",
     [
+        # gift eval freqs
         "10S",
         "10T",
         "15T",
@@ -154,14 +157,19 @@ def test_using_quantiles(model):
     assert len(exp_qs_cols) == len(fcst_df.columns) - 3
     assert all(col in fcst_df.columns for col in exp_qs_cols)
     assert not any(("-lo-" in col or "-hi-" in col) for col in fcst_df.columns)
+    # test monotonicity of quantiles
     for c1, c2 in zip(exp_qs_cols[:-1], exp_qs_cols[1:], strict=False):
         if "chronos" in model.alias.lower() or "median" in model.alias.lower():
+            # sometimes it gives this condition
             assert fcst_df[c1].le(fcst_df[c2]).all()
         elif "timesfm" in model.alias.lower():
+            # TimesFM is a bit more lenient with the monotonicity condition
             assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.8
         elif "tabpfn" in model.alias.lower():
+            # we are testing the mock mode, so we don't care about monotonicity
             continue
         elif "moe" in model.alias.lower():
+            # MoE is a bit more lenient with the monotonicity condition
             assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.5
         else:
             assert fcst_df[c1].lt(fcst_df[c2]).all()
@@ -169,7 +177,7 @@ def test_using_quantiles(model):
 
 @pytest.mark.parametrize("model", models)
 def test_using_level(model):
-    level = [0, 20, 40, 60, 80]
+    level = [0, 20, 40, 60, 80]  # corresponds to qs [0.1, 0.2, ..., 0.9]
     df = generate_series(n_series=2, freq="D")
     fcst_df = model.forecast(
         df=df,
@@ -183,11 +191,14 @@ def test_using_level(model):
     assert len(exp_lv_cols) == len(fcst_df.columns) - 3
     assert all(col in fcst_df.columns for col in exp_lv_cols)
     assert not any(("-q-" in col) for col in fcst_df.columns)
-    exp_lv_cols = exp_lv_cols[2:]
+    # test monotonicity of levels
+    exp_lv_cols = exp_lv_cols[2:]  # remove level 0
     for c1, c2 in zip(exp_lv_cols[:-1:2], exp_lv_cols[1::2], strict=False):
         if "chronos" in model.alias.lower() or "median" in model.alias.lower():
+            # sometimes it gives this condition
             assert fcst_df[c1].le(fcst_df[c2]).all()
         elif "tabpfn" in model.alias.lower():
+            # we are testing the mock mode, so we don't care about monotonicity
             continue
         else:
             assert fcst_df[c1].lt(fcst_df[c2]).all()
