@@ -30,31 +30,6 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Run tests
-        run: uv run pytest -m "not models"
-
-      - name: Test import class
-        run: uv run python -c "from foundationforecast import FoundationForecast; from foundationforecast.models import Chronos"
-
-  test-models:
-    name: test models on ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
-    env:
-      UV_PYTHON: ${{ matrix.python-version }}
-
-    steps:
-      - name: Clone repo
-        uses: actions/checkout@v4
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-
       - name: Free disk space in action runner
         uses: endersonmenezes/free-disk-space@v3
         with:
@@ -71,7 +46,7 @@ jobs:
           key: ${{ runner.os }}-huggingface-${{ hashFiles('**/tests/') }}
 
       - name: Run tests
-        run: uv run pytest -m models
+        run: uv run pytest
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
