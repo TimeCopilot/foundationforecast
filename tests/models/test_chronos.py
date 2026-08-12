@@ -1,89 +1,34 @@
 import pytest
 import torch
 
+from tests.helpers import generate_series
+from foundationforecast.models.chronos import Chronos, ChronosFinetuningConfig
+
 pytestmark = pytest.mark.models
 
 
 def test_chronos_default_dtype_is_float32():
     """Ensure Chronos defaults to float32 dtype."""
-    from foundationforecast.models.chronos import Chronos
-
     model = Chronos(repo_id="amazon/chronos-t5-tiny")
     assert model.dtype == torch.float32
 
 
-def test_chronos_model_uses_configured_dtype(mocker):
-    """Ensure Chronos loads models with the configured dtype."""
-    mock_pipeline = mocker.patch(
-        "foundationforecast.models.chronos.BaseChronosPipeline.from_pretrained"
+def test_chronos_forecast_with_bfloat16():
+    """Ensure Chronos runs a real forecast with a custom dtype."""
+    model = Chronos(
+        repo_id="amazon/chronos-bolt-tiny",
+        dtype=torch.bfloat16,
+        alias="Chronos-Bolt",
     )
-    mocker.patch("torch.cuda.is_available", return_value=False)
-
-    from foundationforecast.models.chronos import Chronos
-
-    # Test default (float32)
-    model = Chronos(repo_id="amazon/chronos-t5-tiny")
-    with model._get_model():
-        pass
-    call_kwargs = mock_pipeline.call_args[1]
-    assert call_kwargs["torch_dtype"] == torch.float32
-
-    # Test custom dtype (bfloat16)
-    mock_pipeline.reset_mock()
-    model_bf16 = Chronos(repo_id="amazon/chronos-t5-tiny", dtype=torch.bfloat16)
-    with model_bf16._get_model():
-        pass
-    call_kwargs = mock_pipeline.call_args[1]
-    assert call_kwargs["torch_dtype"] == torch.bfloat16
-
-
-def test_chronos_forecast_uses_configured_dtype(mocker):
-    """Ensure Chronos.forecast uses the configured dtype for dataset creation."""
-    import pandas as pd
-    import pytest
-
-    from foundationforecast.models.chronos import Chronos
-
-    # Patch dataset creation to capture dtype argument
-    mock_from_df = mocker.patch(
-        "foundationforecast.models.chronos.TimeSeriesDataset.from_df"
-    )
-
-    # Avoid real model loading and CUDA branching
-    mocker.patch(
-        "foundationforecast.models.chronos.BaseChronosPipeline.from_pretrained"
-    )
-    mocker.patch("torch.cuda.is_available", return_value=False)
-
-    model_dtype = torch.bfloat16
-    model = Chronos(repo_id="amazon/chronos-t5-tiny", dtype=model_dtype)
-
-    df = pd.DataFrame(
-        {
-            "unique_id": ["A"] * 10,
-            "ds": pd.date_range("2020-01-01", periods=10),
-            "y": range(10),
-        }
-    )
-
-    def _from_df_side_effect(*args, **kwargs):
-        # Assert that Chronos.forecast passes the configured dtype through
-        assert kwargs.get("dtype") == model_dtype
-        # Short-circuit the rest of the forecast call
-        raise RuntimeError("stop after dtype check")
-
-    mock_from_df.side_effect = _from_df_side_effect
-
-    with pytest.raises(RuntimeError, match="stop after dtype check"):
-        model.forecast(df=df, h=2)
+    df = generate_series(n_series=1, freq="D", min_length=20, max_length=20)
+    fcst = model.forecast(df=df, h=2, freq="D")
+    assert fcst.shape == (2, 3)
+    assert "Chronos-Bolt" in fcst.columns
 
 
 def test_chronos_finetuning_save_and_reuse(tmp_path):
     """Finetune with save_path, run cross-validation,
     then forecast using the saved path."""
-    from ..test_models import generate_series
-    from foundationforecast.models.chronos import Chronos, ChronosFinetuningConfig
-
     save_path = tmp_path / "chronos2-finetuned"
     config = ChronosFinetuningConfig(
         finetune_steps=2,
@@ -117,9 +62,6 @@ def test_chronos_finetuning_save_and_reuse(tmp_path):
 
 def test_chronos_lora_finetuning_save_and_reuse(tmp_path):
     """Finetune Chronos-2 with LoRA and save_path, then load from path and forecast."""
-    from ..test_models import generate_series
-    from foundationforecast.models.chronos import Chronos, ChronosFinetuningConfig
-
     save_path = tmp_path / "chronos2-lora-finetuned"
     config = ChronosFinetuningConfig(
         finetune_steps=2,

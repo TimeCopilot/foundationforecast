@@ -1,14 +1,8 @@
 import pandas as pd
 import pytest
-from utilsforecast.data import generate_series as _generate_series
 
+from tests.helpers import generate_series
 from .conftest import models
-
-
-def generate_series(n_series, freq, **kwargs):
-    df = _generate_series(n_series, freq, **kwargs)
-    df["unique_id"] = df["unique_id"].astype(str)
-    return df
 
 
 @pytest.mark.parametrize("model", models)

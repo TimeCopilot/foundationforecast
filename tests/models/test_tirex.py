@@ -1,7 +1,9 @@
 import sys
 
 import pytest
-from utilsforecast.data import generate_series
+
+from tests.helpers import generate_series
+from foundationforecast.models.tirex import TiRex
 
 pytestmark = [
     pytest.mark.models,
@@ -13,18 +15,13 @@ pytestmark = [
 
 
 def test_is_tirex2_dispatch():
-    from foundationforecast.models.tirex import TiRex
-
     assert not TiRex(repo_id="NX-AI/TiRex")._is_tirex2()
     assert TiRex(repo_id="NX-AI/TiRex-2")._is_tirex2()
     assert TiRex(repo_id="NX-AI/TiRex-2/")._is_tirex2()
 
 
 def test_tirex2_forecast():
-    from foundationforecast.models.tirex import TiRex
-
     df = generate_series(2, freq="D", min_length=50, max_length=50)
-    df["unique_id"] = df["unique_id"].astype(str)
     model = TiRex(repo_id="NX-AI/TiRex-2", alias="TiRex-2", batch_size=2)
     fcst = model.forecast(df, h=3, freq="D")
     assert fcst.shape == (6, 3)

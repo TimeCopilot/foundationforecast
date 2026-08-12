@@ -1,33 +1,10 @@
 import pandas as pd
 import pytest
-from utilsforecast.data import generate_series
-from utilsforecast.processing import make_future_dataframe
 
+from tests.helpers import DummyModel, generate_series
 from foundationforecast import FoundationForecast
-from foundationforecast.core.forecaster import Forecaster, QuantileConverter
-
-
-class DummyModel(Forecaster):
-    def __init__(self, alias: str = "dummy"):
-        self.alias = alias
-
-    def forecast(self, df, h, freq=None, level=None, quantiles=None):
-        freq = self._maybe_infer_freq(df, freq)
-        qc = QuantileConverter(level=level, quantiles=quantiles)
-        last_times = df.groupby("unique_id")["ds"].max()
-        uids = last_times.index.tolist()
-        fcst = make_future_dataframe(
-            uids=uids,
-            last_times=last_times,
-            h=h,
-            freq=freq,
-        )
-        fcst[self.alias] = 1.0
-        if qc.quantiles:
-            for q in qc.quantiles:
-                fcst[f"{self.alias}-q-{int(q * 100)}"] = fcst[self.alias] + q
-            fcst = qc.maybe_convert_quantiles_to_level(fcst, models=[self.alias])
-        return fcst
+from foundationforecast.core.forecaster import Forecaster
+from foundationforecast.models.moirai import Moirai
 
 
 @pytest.fixture
@@ -200,8 +177,6 @@ def test_foundation_forecast_clean_cache_runs_after_each_model(monkeypatch, mode
 
 
 def test_foundation_forecast_duplicate_aliases_with_moirai():
-    from foundationforecast.models.moirai import Moirai
-
     model1 = Moirai(repo_id="Salesforce/moirai-1.0-R-small", alias="Moirai")
     model2 = Moirai(repo_id="Salesforce/moirai-1.0-R-large", alias="Moirai")
 
