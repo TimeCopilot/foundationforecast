@@ -2,16 +2,16 @@ import sys
 
 import pytest
 
-from tests.helpers import generate_series
-from foundationforecast.models.tirex import TiRex
+if sys.version_info < (3, 11):
+    pytest.skip(
+        "TiRex requires Python >= 3.11",
+        allow_module_level=True,
+    )
 
-pytestmark = [
-    pytest.mark.models,
-    pytest.mark.skipif(
-        sys.version_info < (3, 11),
-        reason="TiRex requires Python >= 3.11",
-    ),
-]
+from tests.helpers import generate_series  # noqa: E402
+from foundationforecast.models.tirex import TiRex  # noqa: E402
+
+pytestmark = pytest.mark.models
 
 
 def test_is_tirex2_dispatch():
