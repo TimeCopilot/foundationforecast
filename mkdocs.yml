@@ -1,0 +1,119 @@
+site_name: foundationforecast
+site_description: Foundation time series forecasting models
+site_author: AzulGarza
+strict: true
+
+repo_name: foundationforecast
+repo_url: https://github.com/TimeCopilot/foundationforecast
+edit_uri: edit/main/docs
+
+watch:
+  - "README.md"
+  - foundationforecast
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Introduction: getting-started/introduction.md
+      - Quickstart: getting-started/quickstart.md
+      - Installation: getting-started/installation.md
+      - Model Hub: model-hub.md
+      - Forecasting Parameters: forecasting-parameters.md
+  - Examples:
+      - examples/index.md
+      - Forecaster Quickstart: examples/forecaster-quickstart.ipynb
+      - Anomaly Detection: examples/anomaly-detection-forecaster-quickstart.ipynb
+      - Compare Foundation Models: examples/ts-foundation-models-comparison-quickstart.ipynb
+      - Family Guides:
+          - Chronos: examples/chronos-family.ipynb
+          - TiRex: examples/tirex-family.ipynb
+          - Toto: examples/toto-family.ipynb
+          - TimeGPT: examples/timegpt-family.ipynb
+          - PatchTST-FM: examples/patchtst-fm.ipynb
+      - Finetuning: examples/finetuning.ipynb
+  - API Reference:
+      - api/forecaster.md
+      - api/models/foundation/models.md
+      - api/models/utils/forecaster.md
+  - Community:
+      - Getting Help: community/help.md
+      - Contributing: contributing.md
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: light-blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: light-blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - navigation.path
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.footer
+    - toc.follow
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - attr_list
+  - admonition
+  - pymdownx.details
+  - footnotes
+  - pymdownx.magiclink
+  - pymdownx.snippets:
+      base_path: [!relative $config_dir]
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - tables
+
+plugins:
+  - search
+  - autorefs
+  - mkdocs-jupyter
+  - include-markdown
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [foundationforecast]
+          options:
+            relative_crossrefs: true
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            group_by_category: false
+            heading_level: 3
+            inherited_members: true
+            members: true
+            merge_init_into_class: true
+
+copyright: 2026 - foundationforecast
