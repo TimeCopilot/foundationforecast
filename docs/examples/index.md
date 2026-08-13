@@ -19,6 +19,4 @@ For model API details, see the [Model Hub](../model-hub.md).
 | [Chronos Family](chronos-family.ipynb) | Forecast with Chronos 1.x and 2.x checkpoints | Python 3.10+ |
 | [TiRex Family](tirex-family.ipynb) | Forecast with TiRex 1.0 and 2.0 | Python 3.11+ |
 | [Toto Family](toto-family.ipynb) | Forecast with Toto 1.0 and 2.0 | Python 3.10+ |
-| [TimeGPT Family](timegpt-family.ipynb) | Forecast with TimeGPT | Python 3.10+; `NIXTLA_API_KEY` |
-| [PatchTST-FM](patchtst-fm.ipynb) | Forecast with PatchTST-FM | Python 3.11–3.13 |
 | [Finetuning](finetuning.ipynb) | Adapt Chronos 2 and TimeGPT to your data | Python 3.10+; GPU recommended |

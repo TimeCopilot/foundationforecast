@@ -28,8 +28,6 @@ nav:
           - Chronos: examples/chronos-family.ipynb
           - TiRex: examples/tirex-family.ipynb
           - Toto: examples/toto-family.ipynb
-          - TimeGPT: examples/timegpt-family.ipynb
-          - PatchTST-FM: examples/patchtst-fm.ipynb
       - Finetuning: examples/finetuning.ipynb
   - API Reference:
       - api/forecaster.md
