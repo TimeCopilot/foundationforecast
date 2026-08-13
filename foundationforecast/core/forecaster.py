@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -140,6 +141,30 @@ class Forecaster:
                 return self.season_length
             return get_seasonality(freq)
         return get_seasonality(freq)
+
+    @property
+    def _cached_resources(self) -> dict[tuple, Any]:
+        if not hasattr(self, "_forecaster_cache"):
+            self._forecaster_cache: dict[tuple, Any] = {}
+        return self._forecaster_cache
+
+    def _get_cached(self, key: tuple, loader: Callable[[], Any]) -> Any:
+        if key not in self._cached_resources:
+            self._cached_resources[key] = loader()
+        return self._cached_resources[key]
+
+    def clear_model_cache(self) -> None:
+        import gc
+
+        self._cached_resources.clear()
+        gc.collect()
+        try:
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+                torch.mps.empty_cache()
+        except Exception:
+            pass
 
     def forecast(
         self,

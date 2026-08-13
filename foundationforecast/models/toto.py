@@ -145,22 +145,15 @@ class Toto(Forecaster):
         self._is_toto2_cache = _TOTO2_CONFIG_KEY in config
         return self._is_toto2_cache
 
+    def _load_model(self) -> TotoForecaster | Toto2Model:
+        if self._is_toto2():
+            return Toto2Model.from_pretrained(self.repo_id).to(self.device).eval()
+        model = TotoModel.from_pretrained(self.repo_id).to(self.device)
+        return TotoForecaster(model.model)
+
     @contextmanager
     def _get_model(self) -> TotoForecaster | Toto2Model:
-        if self._is_toto2():
-            model = Toto2Model.from_pretrained(self.repo_id).to(self.device).eval()
-            try:
-                yield model
-            finally:
-                del model
-                torch.cuda.empty_cache()
-        else:
-            model = TotoModel.from_pretrained(self.repo_id).to(self.device)
-            try:
-                yield TotoForecaster(model.model)
-            finally:
-                del model
-                torch.cuda.empty_cache()
+        yield self._get_cached(("model",), self._load_model)
 
     def _to_masked_timeseries(self, batch: list[torch.Tensor]) -> MaskedTimeseries:
         batch_size = len(batch)

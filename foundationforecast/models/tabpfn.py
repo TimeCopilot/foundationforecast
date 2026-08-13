@@ -98,14 +98,12 @@ class TabPFN(Forecaster):
         self.mode = mode
         self.alias = alias
 
+    def _load_model(self) -> TabPFNTimeSeriesPredictor:
+        return TabPFNTimeSeriesPredictor(tabpfn_mode=self.mode)
+
     @contextmanager
     def _get_model(self) -> TabPFNTimeSeriesPredictor:
-        model = TabPFNTimeSeriesPredictor(tabpfn_mode=self.mode)
-        try:
-            yield model
-        finally:
-            del model
-            torch.cuda.empty_cache()
+        yield self._get_cached(("model",), self._load_model)
 
     def _forecast(
         self,

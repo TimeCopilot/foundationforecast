@@ -78,18 +78,16 @@ class Sundial(Forecaster, _DataProcessor):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.dtype = torch.bfloat16
 
-    @contextmanager
-    def _get_model(self) -> AutoModelForCausalLM:
-        model = AutoModelForCausalLM.from_pretrained(
+    def _load_model(self) -> AutoModelForCausalLM:
+        return AutoModelForCausalLM.from_pretrained(
             self.repo_id,
             torch_dtype=self.dtype,
             trust_remote_code=True,
         ).to(self.device)
-        try:
-            yield model
-        finally:
-            del model
-            torch.cuda.empty_cache()
+
+    @contextmanager
+    def _get_model(self) -> AutoModelForCausalLM:
+        yield self._get_cached(("model",), self._load_model)
 
     def _predict_batch(
         self,

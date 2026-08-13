@@ -88,21 +88,19 @@ class T0(Forecaster):
         self.alias = alias
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    @contextmanager
-    def _get_model(self) -> T0Forecaster:
+    def _load_model(self) -> T0Forecaster:
         # huggingface_hub may not inject config.json into model kwargs when the
         # checkpoint repo is gated; pass the config explicitly.
         config_path = hf_hub_download(self.repo_id, CONFIG_NAME)
         with open(config_path, encoding="utf-8") as f:
             config = json.load(f)
-        model = (
+        return (
             T0Forecaster.from_pretrained(self.repo_id, **config).to(self.device).eval()
         )
-        try:
-            yield model
-        finally:
-            del model
-            torch.cuda.empty_cache()
+
+    @contextmanager
+    def _get_model(self) -> T0Forecaster:
+        yield self._get_cached(("model",), self._load_model)
 
     def _to_context(self, batch: list[torch.Tensor]) -> torch.Tensor:
         """Left-pad a ragged batch with NaN (treated as missing by T0)."""

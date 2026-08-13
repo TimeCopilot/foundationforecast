@@ -51,12 +51,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/huggingface/hub/
-          key: ${{ runner.os }}-huggingface-${{ hashFiles('**/tests/') }}
+          key: ${{ runner.os }}-huggingface-${{ hashFiles('tests/models/conftest.py') }}
 
       - name: Run tests
         run: uv run pytest ${{ matrix.coverage && '--cov=foundationforecast --cov-report=term-missing' || '' }}
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_HUB_DISABLE_PROGRESS_BARS: "1"
 
       - name: Test import FoundationForecast and Chronos
         run: uv run -- python -c "from foundationforecast import FoundationForecast; from foundationforecast.models import Chronos"

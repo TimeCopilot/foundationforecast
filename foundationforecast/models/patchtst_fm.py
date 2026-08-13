@@ -94,18 +94,14 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         self.alias = alias
         self.dtype = torch.float32
 
+    def _load_model(self) -> PatchTSTFMForPrediction:
+        model = PatchTSTFMForPrediction.from_pretrained(self.repo_id).to(self.device)
+        model.eval()
+        return model
+
     @contextmanager
     def _get_model(self) -> PatchTSTFMForPrediction:
-        model = PatchTSTFMForPrediction.from_pretrained(self.repo_id).to(self.device)
-        try:
-            model.eval()
-            yield model
-        finally:
-            del model
-            if self.device.startswith("cuda"):
-                torch.cuda.empty_cache()
-            elif self.device.startswith("mps"):
-                torch.mps.empty_cache()
+        yield self._get_cached(("model",), self._load_model)
 
     def _predict_batch(
         self,

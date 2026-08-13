@@ -34,10 +34,13 @@ class FoundationForecast(Forecaster):
                 "Each model must have a unique alias."
             )
 
-    @staticmethod
-    def _clean_model_cache() -> None:
+    def _clean_model_cache(self) -> None:
         import gc
 
+        for model in self.models:
+            clear_cache = getattr(model, "clear_model_cache", None)
+            if clear_cache is not None:
+                clear_cache()
         gc.collect()
         try:
             import torch

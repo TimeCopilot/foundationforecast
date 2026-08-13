@@ -193,8 +193,7 @@ class Chronos(Forecaster):
             fit_kwargs["finetuned_ckpt_name"] = sp.name
         return model.fit(**fit_kwargs)
 
-    @contextmanager
-    def _get_model(self) -> BaseChronosPipeline:
+    def _load_model(self) -> BaseChronosPipeline:
         device_map = "cuda:0" if torch.cuda.is_available() else "cpu"
         repo_path = Path(self.repo_id)
         # LoRA checkpoints save adapter_config.json; BaseChronosPipeline.from_pretrained
@@ -203,16 +202,15 @@ class Chronos(Forecaster):
             cls = Chronos2Pipeline
         else:
             cls = BaseChronosPipeline
-        model = cls.from_pretrained(
+        return cls.from_pretrained(
             self.repo_id,
             device_map=device_map,
             torch_dtype=self.dtype,
         )
-        try:
-            yield model
-        finally:
-            del model
-            torch.cuda.empty_cache()
+
+    @contextmanager
+    def _get_model(self) -> BaseChronosPipeline:
+        yield self._get_cached(("model",), self._load_model)
 
     def _predict(
         self,

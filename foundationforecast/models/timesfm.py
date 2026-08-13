@@ -28,8 +28,7 @@ class _TimesFMV1(Forecaster):
         self.batch_size = batch_size
         self.alias = alias
 
-    @contextmanager
-    def _get_predictor(
+    def _load_predictor(
         self,
         prediction_length: int,
         quantiles: list[float] | None = None,
@@ -56,29 +55,34 @@ class _TimesFMV1(Forecaster):
         if os.path.exists(self.repo_id):
             path = os.path.join(self.repo_id, "torch_model.ckpt")
             tfm_checkpoint = timesfm_v1.TimesFmCheckpoint(path=path)
-            tfm = timesfm_v1.TimesFm(
+            return timesfm_v1.TimesFm(
                 hparams=tfm_hparams,
                 checkpoint=tfm_checkpoint,
             )
-        elif repo_exists(self.repo_id):
+        if repo_exists(self.repo_id):
             tfm_checkpoint = timesfm_v1.TimesFmCheckpoint(
                 huggingface_repo_id=self.repo_id
             )
-            tfm = timesfm_v1.TimesFm(
+            return timesfm_v1.TimesFm(
                 hparams=tfm_hparams,
                 checkpoint=tfm_checkpoint,
             )
-        else:
-            raise OSError(
-                f"Failed to load model. Searched for '{self.repo_id}' "
-                "as a local path to model directory and as a Hugging Face repo_id."
-            )
+        raise OSError(
+            f"Failed to load model. Searched for '{self.repo_id}' "
+            "as a local path to model directory and as a Hugging Face repo_id."
+        )
 
-        try:
-            yield tfm
-        finally:
-            del tfm
-            torch.cuda.empty_cache()
+    @contextmanager
+    def _get_predictor(
+        self,
+        prediction_length: int,
+        quantiles: list[float] | None = None,
+    ) -> timesfm_v1.TimesFm:
+        quantiles_key = tuple(quantiles or DEFAULT_QUANTILES_TFM)
+        yield self._get_cached(
+            ("predictor", prediction_length, quantiles_key),
+            lambda: self._load_predictor(prediction_length, quantiles),
+        )
 
     def forecast(
         self,
@@ -137,14 +141,7 @@ class _TimesFMV2_p5(Forecaster):
         self.alias = alias
         self.kwargs = kwargs
 
-    @contextmanager
-    def _get_predictor(
-        self,
-        prediction_length: int,
-    ) -> TimesFM_2p5_200M_torch:
-        # `from_pretrained` handles both a local directory containing
-        # `model.safetensors` and a Hugging Face repo id, and the model picks
-        # the best available device on load.
+    def _load_compiled_model(self, prediction_length: int) -> TimesFM_2p5_200M_torch:
         if os.path.exists(self.repo_id) or repo_exists(self.repo_id):
             tfm = TimesFM_2p5_200M_torch.from_pretrained(self.repo_id)
         else:
@@ -163,11 +160,17 @@ class _TimesFMV2_p5(Forecaster):
         kwargs = {**default_kwargs, **passed_kwargs}
         config = timesfm.ForecastConfig(**kwargs)
         tfm.compile(config)
-        try:
-            yield tfm
-        finally:
-            del tfm
-            torch.cuda.empty_cache()
+        return tfm
+
+    @contextmanager
+    def _get_predictor(
+        self,
+        prediction_length: int,
+    ) -> TimesFM_2p5_200M_torch:
+        yield self._get_cached(
+            ("compiled", prediction_length),
+            lambda: self._load_compiled_model(prediction_length),
+        )
 
     def _predict(
         self,

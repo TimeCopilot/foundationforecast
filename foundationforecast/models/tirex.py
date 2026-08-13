@@ -91,42 +91,33 @@ class TiRex(Forecaster):
             return "mps"
         return "cpu"
 
-    @contextmanager
-    def _get_model(self) -> PretrainedModel | ForecastModel:
-        if self._is_tirex2():
-            with self._get_model_v2() as model:
-                yield model
-        else:
-            with self._get_model_v1() as model:
-                yield model
-
-    @contextmanager
-    def _get_model_v1(self) -> PretrainedModel:
+    def _load_model_v1(self) -> PretrainedModel:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         if device == "cpu":
             # see https://github.com/NX-AI/tirex/tree/main?tab=readme-ov-file#cuda-kernels
             os.environ["TIREX_NO_CUDA"] = "1"
-        model = load_model(self.repo_id, device=device)
-        try:
-            yield model
-        finally:
-            del model
-            torch.cuda.empty_cache()
+        return load_model(self.repo_id, device=device)
 
-    @contextmanager
-    def _get_model_v2(self) -> ForecastModel:
+    def _load_model_v2(self) -> ForecastModel:
         from tirex2 import load_model as load_model_v2
 
         device = self._best_device_v2()
-        model = load_model_v2(self.repo_id, device=device)
-        try:
-            yield model
-        finally:
-            del model
-            if device == "cuda":
-                torch.cuda.empty_cache()
-            elif device == "mps":
-                torch.mps.empty_cache()
+        return load_model_v2(self.repo_id, device=device)
+
+    @contextmanager
+    def _get_model(self) -> PretrainedModel | ForecastModel:
+        if self._is_tirex2():
+            yield self._get_cached(("model_v2",), self._load_model_v2)
+        else:
+            yield self._get_cached(("model_v1",), self._load_model_v1)
+
+    @contextmanager
+    def _get_model_v1(self) -> PretrainedModel:
+        yield self._get_cached(("model_v1",), self._load_model_v1)
+
+    @contextmanager
+    def _get_model_v2(self) -> ForecastModel:
+        yield self._get_cached(("model_v2",), self._load_model_v2)
 
     def _forecast_v1(
         self,

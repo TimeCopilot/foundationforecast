@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 
-import torch
 from gluonts.torch.model.predictor import PyTorchPredictor
 from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
 from uni2ts.model.moirai2 import Moirai2Forecast, Moirai2Module
@@ -95,6 +94,18 @@ class Moirai(GluonTSForecaster):
         self.past_feat_dynamic_real_dim = past_feat_dynamic_real_dim
         self.batch_size = batch_size
 
+    def _get_module(self):
+        if "moe" in self.repo_id:
+            _, model_module = MoiraiMoEForecast, MoiraiMoEModule
+        elif "moirai-2.0" in self.repo_id:
+            _, model_module = Moirai2Forecast, Moirai2Module
+        else:
+            _, model_module = MoiraiForecast, MoiraiModule
+        return self._get_cached(
+            ("module",),
+            lambda: model_module.from_pretrained(self.repo_id),
+        )
+
     @contextmanager
     def get_predictor(self, prediction_length: int) -> PyTorchPredictor:
         kwargs = {
@@ -107,21 +118,15 @@ class Moirai(GluonTSForecaster):
             "past_feat_dynamic_real_dim": self.past_feat_dynamic_real_dim,
         }
         if "moe" in self.repo_id:
-            model_cls, model_module = MoiraiMoEForecast, MoiraiMoEModule
+            model_cls = MoiraiMoEForecast
         elif "moirai-2.0" in self.repo_id:
-            model_cls, model_module = Moirai2Forecast, Moirai2Module
+            model_cls = Moirai2Forecast
             del kwargs["patch_size"]
             del kwargs["num_samples"]
         else:
-            model_cls, model_module = MoiraiForecast, MoiraiModule
+            model_cls = MoiraiForecast
         model = model_cls(
-            module=model_module.from_pretrained(self.repo_id),
+            module=self._get_module(),
             **kwargs,
         )
-        predictor = model.create_predictor(batch_size=self.batch_size)
-
-        try:
-            yield predictor
-        finally:
-            del predictor, model
-            torch.cuda.empty_cache()
+        yield model.create_predictor(batch_size=self.batch_size)
