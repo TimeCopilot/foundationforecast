@@ -1414,7 +1414,7 @@ dependencies = [
 ]
 name = "foundationforecast"
 source = {editable = "."}
-version = "0.1.0"
+version = "0.1.1"
 
 [package.dev-dependencies]
 dev = [
