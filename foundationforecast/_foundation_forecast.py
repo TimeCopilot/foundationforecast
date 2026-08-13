@@ -52,7 +52,7 @@ class FoundationForecast(Forecaster):
         attr: str,
         merge_on: list[str],
         df: pd.DataFrame,
-        h: int,
+        h: int | None,
         freq: str | None,
         level: list[int | float] | None,
         quantiles: list[float] | None,
@@ -66,8 +66,9 @@ class FoundationForecast(Forecaster):
                 "h": h,
                 "freq": freq,
                 "level": level,
-                "quantiles": quantiles,
             }
+            if attr != "detect_anomalies":
+                known_kwargs["quantiles"] = quantiles
             fn = getattr(model, attr)
             try:
                 res_df_model = fn(**known_kwargs, **kwargs)
@@ -136,4 +137,23 @@ class FoundationForecast(Forecaster):
             quantiles=quantiles,
             n_windows=n_windows,
             step_size=step_size,
+        )
+
+    def detect_anomalies(
+        self,
+        df: pd.DataFrame,
+        h: int | None = None,
+        freq: str | None = None,
+        n_windows: int | None = None,
+        level: int | float = 99,
+    ) -> pd.DataFrame:
+        return self._call_models(
+            "detect_anomalies",
+            merge_on=["unique_id", "ds", "cutoff"],
+            df=df,
+            h=h,
+            freq=freq,
+            level=level,  # type: ignore[arg-type]
+            quantiles=None,
+            n_windows=n_windows,
         )
