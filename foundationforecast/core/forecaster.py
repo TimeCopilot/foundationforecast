@@ -1,7 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pandas as pd
 import torch
 import utilsforecast.processing as ufp
+
+if TYPE_CHECKING:
+    import matplotlib.pyplot as plt
+    import plotly.graph_objects
 from gluonts.time_feature.seasonality import DEFAULT_SEASONALITIES
 from gluonts.time_feature.seasonality import get_seasonality as _get_seasonality
 from gluonts.transform import LastValueImputation
@@ -54,6 +62,70 @@ def maybe_convert_col_to_datetime(df: pd.DataFrame, col_name: str) -> pd.DataFra
 
 class Forecaster:
     alias: str
+
+    @staticmethod
+    def plot(
+        df: pd.DataFrame | None = None,
+        forecasts_df: pd.DataFrame | None = None,
+        ids: list[str] | None = None,
+        plot_random: bool = True,
+        max_ids: int | None = 8,
+        models: list[str] | None = None,
+        level: list[float] | None = None,
+        max_insample_length: int | None = None,
+        plot_anomalies: bool = False,
+        engine: str = "matplotlib",
+        palette: str | None = None,
+        seed: int | None = None,
+        resampler_kwargs: dict | None = None,
+        ax: plt.Axes | np.ndarray | plotly.graph_objects.Figure | None = None,
+    ):
+        """Plot forecasts and insample values."""
+        from utilsforecast.plotting import plot_series
+        from utilsforecast.validation import ensure_time_dtype
+
+        df = ensure_time_dtype(df, time_col="ds")
+        if forecasts_df is not None:
+            forecasts_df = ensure_time_dtype(forecasts_df, time_col="ds")
+            if any("anomaly" in col for col in forecasts_df.columns):
+                df = None
+                models = [
+                    col.split("-")[0]
+                    for col in forecasts_df.columns
+                    if col.endswith("-anomaly")
+                ]
+                forecasts_df = ufp.drop_columns(
+                    forecasts_df,
+                    [f"{model}-anomaly" for model in models],
+                )
+                lv_cols = [
+                    c.replace(f"{model}-lo-", "")
+                    for model in models
+                    for c in forecasts_df.columns
+                    if f"{model}-lo-" in c
+                ]
+                level = [float(c) if "." in c else int(c) for c in lv_cols]
+                level = list(set(level))
+                plot_anomalies = True
+        return plot_series(
+            df=df,
+            forecasts_df=forecasts_df,
+            ids=ids,
+            plot_random=plot_random,
+            max_ids=max_ids,
+            models=models,
+            level=level,
+            max_insample_length=max_insample_length,
+            plot_anomalies=plot_anomalies,
+            engine=engine,
+            resampler_kwargs=resampler_kwargs,
+            palette=palette,
+            seed=seed,
+            id_col="unique_id",
+            time_col="ds",
+            target_col="y",
+            ax=ax,
+        )
 
     @staticmethod
     def _maybe_infer_freq(
