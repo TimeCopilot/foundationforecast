@@ -61,6 +61,36 @@ jobs:
       - name: Test import FoundationForecast and Chronos
         run: uv run -- python -c "from foundationforecast import FoundationForecast; from foundationforecast.models import Chronos"
 
+  test-docs:
+    name: test docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Run docs tests
+        run: uv run --group docs pytest -m docs -o addopts= -x -n 0
+
+  build-docs:
+    name: build docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Build docs
+        run: uv run --group docs mkdocs build
+
   lint:
     name: lint and style checks
     runs-on: ubuntu-latest
