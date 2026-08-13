@@ -42,7 +42,7 @@ pip install "foundationforecast[plot]"
 ```python
 from foundationforecast.core.forecaster import Forecaster
 
-Forecaster.plot(df, fcst_df, level=[80])
+Forecaster.plot(df, fcst_df)
 ```
 
 ## Next steps
