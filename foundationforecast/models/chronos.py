@@ -15,7 +15,7 @@ from chronos import (
 from tqdm import tqdm
 
 from ..core.forecaster import Forecaster, QuantileConverter
-from ..core.utils import TimeSeriesDataset
+from ..core.utils import PanelData, TimeSeriesDataset, process_panel_from_df
 
 
 @dataclass
@@ -152,18 +152,21 @@ class Chronos(Forecaster):
         self.finetuning_config = finetuning_config
 
     @staticmethod
-    def _build_fit_inputs_from_df(df: pd.DataFrame) -> list[dict[str, Any]]:
+    def _build_fit_inputs_from_df(
+        df: pd.DataFrame,
+        panel: PanelData | None = None,
+    ) -> list[dict[str, Any]]:
         """Build list of fit inputs from a DataFrame (unique_id, ds, y)."""
-        df_sorted = df.sort_values(by=["unique_id", "ds"])
-        return [
-            {"target": group["y"].values} for _, group in df_sorted.groupby("unique_id")
-        ]
+        if panel is None:
+            panel = process_panel_from_df(df)
+        return [{"target": arr} for arr in panel.series_arrays]
 
     def _maybe_finetune(
         self,
         model: BaseChronosPipeline,
         df: pd.DataFrame,
         h: int,
+        panel: PanelData | None = None,
     ) -> BaseChronosPipeline:
         """If finetuning_config is set, finetune the model on df and return it."""
         if self.finetuning_config is None:
@@ -173,7 +176,7 @@ class Chronos(Forecaster):
                 f"Finetuning is not supported for model {self.repo_id}; "
                 "the loaded pipeline has no fit method."
             )
-        train_inputs = self._build_fit_inputs_from_df(df)
+        train_inputs = self._build_fit_inputs_from_df(df, panel=panel)
         fit_kwargs: dict[str, Any] = {
             "inputs": train_inputs,
             "prediction_length": h,
@@ -284,6 +287,7 @@ class Chronos(Forecaster):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         """Generate forecasts for time series data using the model.
 
@@ -336,12 +340,15 @@ class Chronos(Forecaster):
         """
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        dataset = TimeSeriesDataset.from_df(
-            df, batch_size=self.batch_size, dtype=self.dtype
+        dataset = self._make_timeseries_dataset(
+            df,
+            batch_size=self.batch_size,
+            dtype=self.dtype,
+            panel=panel,
         )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
         with self._get_model() as model:
-            model = self._maybe_finetune(model, df, h)
+            model = self._maybe_finetune(model, df, h, panel=panel)
             fcsts_mean_np, fcsts_quantiles_np = self._predict(
                 model,
                 dataset,
@@ -350,10 +357,12 @@ class Chronos(Forecaster):
             )
         fcst_df[self.alias] = fcsts_mean_np.reshape(-1, 1)
         if qc.quantiles is not None and fcsts_quantiles_np is not None:
-            for i, q in enumerate(qc.quantiles):
-                fcst_df[f"{self.alias}-q-{int(q * 100)}"] = fcsts_quantiles_np[
-                    ..., i
-                ].reshape(-1, 1)
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                fcsts_quantiles_np,
+            )
             fcst_df = qc.maybe_convert_quantiles_to_level(
                 fcst_df,
                 models=[self.alias],

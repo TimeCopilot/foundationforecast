@@ -101,13 +101,15 @@ def test_foundation_forecast_fallback_model():
     class FailingModel(Forecaster):
         alias = "FailingModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None):
+        def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
+            _ = panel
             raise RuntimeError("Intentional failure")
 
     class FallbackModel(Forecaster):
         alias = "FallbackModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None):
+        def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
+            _ = panel
             n = len(df["unique_id"].unique()) * h
             return pd.DataFrame(
                 {
@@ -132,7 +134,8 @@ def test_foundation_forecast_no_fallback_raises():
     class FailingModel(Forecaster):
         alias = "FailingModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None):
+        def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
+            _ = panel
             raise RuntimeError("Intentional failure")
 
     df = generate_series(n_series=1, freq="D", min_length=10)
