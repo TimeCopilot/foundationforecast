@@ -12,7 +12,7 @@ from tqdm import tqdm
 from transformers import AutoModelForCausalLM
 
 from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
-from ..core.utils import TimeSeriesDataset
+from ..core.utils import PanelData, TimeSeriesDataset
 
 
 class Sundial(Forecaster, _DataProcessor):
@@ -166,6 +166,7 @@ class Sundial(Forecaster, _DataProcessor):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         """Generate forecasts for time series data using the model.
 
@@ -215,7 +216,9 @@ class Sundial(Forecaster, _DataProcessor):
         """
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        dataset = TimeSeriesDataset.from_df(df, batch_size=self.batch_size)
+        dataset = self._make_timeseries_dataset(
+            df, batch_size=self.batch_size, panel=panel
+        )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
         with self._get_model() as model:
             fcsts_mean_np, fcsts_quantiles_np = self._predict(
@@ -226,10 +229,12 @@ class Sundial(Forecaster, _DataProcessor):
             )
         fcst_df[self.alias] = fcsts_mean_np.reshape(-1, 1)
         if qc.quantiles is not None and fcsts_quantiles_np is not None:
-            for i, q in enumerate(qc.quantiles):
-                fcst_df[f"{self.alias}-q-{int(q * 100)}"] = fcsts_quantiles_np[
-                    ..., i
-                ].reshape(-1, 1)
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                fcsts_quantiles_np,
+            )
             fcst_df = qc.maybe_convert_quantiles_to_level(
                 fcst_df,
                 models=[self.alias],

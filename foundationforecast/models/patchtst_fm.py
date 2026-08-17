@@ -11,7 +11,7 @@ from tqdm import tqdm
 from tsfm_public import PatchTSTFMForPrediction
 
 from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
-from ..core.utils import TimeSeriesDataset
+from ..core.utils import PanelData, TimeSeriesDataset
 
 # default to the median quantile
 # PatchTST-FM supports quantiles from 0.01 to 0.99
@@ -182,6 +182,7 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         """Generate forecasts for time series data using the model.
 
@@ -231,10 +232,11 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         """
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        dataset = TimeSeriesDataset.from_df(
+        dataset = self._make_timeseries_dataset(
             df,
             batch_size=self.batch_size,
             dtype=self.dtype,
+            panel=panel,
         )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
         # scale_factor = self.scale_factor or get_fixed_factor(freq)
@@ -263,10 +265,12 @@ class PatchTSTFM(Forecaster, _DataProcessor):
 
         # should only enter when quantiles are used
         if qc.quantiles is not None and fcsts_quantiles_np is not None:
-            for i, q in enumerate(qc.quantiles):
-                fcst_df[f"{self.alias}-q-{int(q * 100)}"] = fcsts_quantiles_np[
-                    ..., i
-                ].reshape(-1)
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                fcsts_quantiles_np,
+            )
             fcst_df = qc.maybe_convert_quantiles_to_level(
                 fcst_df,
                 models=[self.alias],
