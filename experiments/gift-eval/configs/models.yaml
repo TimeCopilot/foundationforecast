@@ -1,0 +1,82 @@
+models:
+  chronos-bolt-small:
+    class: foundationforecast.models.chronos.Chronos
+    reference_slug: chronos_bolt_small
+    kwargs:
+      repo_id: amazon/chronos-bolt-small
+      alias: chronos_bolt_small
+      batch_size: 64
+
+  chronos-2:
+    class: foundationforecast.models.chronos.Chronos
+    reference_slug: chronos-2
+    kwargs:
+      repo_id: amazon/chronos-2
+      alias: chronos-2
+      batch_size: 64
+
+  timesfm-2.5:
+    class: foundationforecast.models.timesfm.TimesFM
+    reference_slug: TimesFM-2.5
+    kwargs:
+      repo_id: google/timesfm-2.5-200m-pytorch
+      alias: TimesFM-2.5
+      batch_size: 64
+
+  tirex:
+    class: foundationforecast.models.tirex.TiRex
+    reference_slug: TiRex
+    kwargs:
+      alias: TiRex
+      batch_size: 64
+
+  moirai-small:
+    class: foundationforecast.models.moirai.Moirai
+    reference_slug: Moirai_small
+    kwargs:
+      repo_id: Salesforce/moirai-1.0-R-small
+      alias: Moirai_small
+      batch_size: 32
+
+  toto-open-base:
+    class: foundationforecast.models.toto.Toto
+    reference_slug: Toto_Open_Base_1.0
+    kwargs:
+      repo_id: Datadog/Toto-Open-Base-1.0
+      alias: Toto_Open_Base_1.0
+      batch_size: 16
+
+  flowstate:
+    class: foundationforecast.models.flowstate.FlowState
+    reference_slug: FlowState-9.1M
+    kwargs:
+      alias: FlowState-9.1M
+      batch_size: 32
+
+  patchtst-fm:
+    class: foundationforecast.models.patchtst_fm.PatchTSTFM
+    reference_slug: PatchTST-FM-r1
+    kwargs:
+      alias: PatchTST-FM-r1
+      batch_size: 32
+
+  t0-alpha:
+    class: foundationforecast.models.t0.T0
+    reference_slug: t0-alpha
+    kwargs:
+      alias: t0-alpha
+      batch_size: 32
+
+  sundial-base:
+    class: foundationforecast.models.sundial.Sundial
+    reference_slug: sundial_base_128m
+    kwargs:
+      alias: sundial_base_128m
+      batch_size: 32
+
+  tabpfn-ts:
+    class: foundationforecast.models.tabpfn.TabPFN
+    reference_slug: tabpfn_ts
+    kwargs:
+      alias: tabpfn_ts
+      batch_size: 32

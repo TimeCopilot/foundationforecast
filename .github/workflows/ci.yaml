@@ -103,3 +103,35 @@ jobs:
 
       - name: Run pre-commit
         run: uv run pre-commit run --all-files
+
+  test-gift-eval:
+    name: test gift-eval replication
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: experiments/gift-eval
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Run GIFT-Eval CI subset on Modal
+        run: uv run modal run -m src.runners.run_modal::run_ci
+        env:
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Sync CI results from S3
+        run: make sync-ci-results
+
+      - name: Verify replication
+        run: uv run pytest tests/test_replication.py -n 0 -x
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
