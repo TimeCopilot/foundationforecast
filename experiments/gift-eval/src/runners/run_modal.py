@@ -11,6 +11,7 @@ image = (
     .apt_install("git")
     .pip_install("uv")
     .add_local_file("pyproject.toml", "/root/pyproject.toml", copy=True)
+    .add_local_file("README.md", "/root/README.md", copy=True)
     .add_local_file(".python-version", "/root/.python-version", copy=True)
     .add_local_file("uv.lock", "/root/uv.lock", copy=True)
     .add_local_dir("src", remote_path="/root/src", copy=True)
