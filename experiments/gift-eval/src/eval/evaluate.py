@@ -20,6 +20,7 @@ def run_gift_eval(
     *,
     storage_path: Path | str,
     output_root: Path | str = Path("results"),
+    overwrite_results: bool = False,
 ) -> Path:
     output_path = job_output_dir(job, Path(output_root))
     output_path.mkdir(parents=True, exist_ok=True)
@@ -42,7 +43,11 @@ def run_gift_eval(
         output_path=output_path,
         storage_path=storage_path,
     )
-    gifteval.evaluate_predictor(predictor, batch_size=DEFAULT_EVAL_BATCH_SIZE)
+    gifteval.evaluate_predictor(
+        predictor,
+        batch_size=DEFAULT_EVAL_BATCH_SIZE,
+        overwrite_results=overwrite_results,
+    )
     csv_path = result_csv(job, Path(output_root))
     logger.info("Wrote results to %s", csv_path)
     return csv_path

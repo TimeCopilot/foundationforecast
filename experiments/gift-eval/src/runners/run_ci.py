@@ -19,9 +19,15 @@ def _run_jobs_local(
     *,
     storage_path: Path,
     output_root: Path,
+    overwrite_results: bool = True,
 ) -> None:
     for job in jobs:
-        run_gift_eval(job, storage_path=storage_path, output_root=output_root)
+        run_gift_eval(
+            job,
+            storage_path=storage_path,
+            output_root=output_root,
+            overwrite_results=overwrite_results,
+        )
 
 
 @app.command()

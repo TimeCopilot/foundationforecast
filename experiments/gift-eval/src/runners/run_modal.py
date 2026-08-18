@@ -44,6 +44,7 @@ def run_gift_eval_modal(
     term: str,
     storage_path: str = "/s3-bucket/data/gift-eval",
     output_root: str = "/s3-bucket/results",
+    force: bool = False,
 ) -> None:
     import logging
     from pathlib import Path
@@ -56,10 +57,15 @@ def run_gift_eval_modal(
     output_path = (
         Path(output_root) / model_key / dataset_name / term / "all_results.csv"
     )
-    if output_path.exists():
+    if not force and output_path.exists():
         logging.info("Skipping existing result at %s", output_path)
         return
-    run_gift_eval(job, storage_path=storage_path, output_root=Path(output_root))
+    run_gift_eval(
+        job,
+        storage_path=storage_path,
+        output_root=Path(output_root),
+        overwrite_results=force,
+    )
 
 
 def _job_tuples(jobs: list) -> list[tuple[str, str, str]]:
@@ -73,7 +79,9 @@ def run_ci_modal(
     output_root: str = "/s3-bucket/results/ci",
 ) -> None:
     logging.basicConfig(level=logging.INFO)
-    args = [(*job_tuple, storage_path, output_root) for job_tuple in _job_tuples(jobs)]
+    args = [
+        (*job_tuple, storage_path, output_root, True) for job_tuple in _job_tuples(jobs)
+    ]
     results = list(
         run_gift_eval_modal.starmap(
             args,

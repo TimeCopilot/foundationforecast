@@ -50,6 +50,8 @@ uv run python -m src.runners.run_ci --local --verify \
 
 ## CI subset (Modal)
 
+Always re-runs and overwrites results (no skip-if-exists). Full grid skips jobs that already have outputs.
+
 ```bash
 uv run modal run -m src.runners.run_modal::run_ci
 make sync-ci-results   # download results for local verify / pytest
