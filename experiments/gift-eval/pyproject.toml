@@ -1,0 +1,31 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[dependency-groups]
+dev = [
+  "pytest-xdist>=3.8.0",
+  "pytest>=8.0",
+]
+
+[project]
+dependencies = [
+  "foundationforecast>=0.1.1",
+  "modal>=1.0.5",
+  "pyyaml>=6.0",
+  "s3fs>=2023.12.1",
+  "timecopilot-gift-eval>=0.3.0",
+  "typer>=0.16.0",
+]
+description = "FoundationForecast GIFT-Eval benchmark experiment"
+name = "foundationforecast-gift-eval-experiment"
+readme = "README.md"
+requires-python = ">=3.11"
+version = "0.1.0"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
