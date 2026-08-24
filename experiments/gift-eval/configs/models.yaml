@@ -85,13 +85,6 @@ models:
       alias: TimesFM
       batch_size: 64
 
-  google--timesfm-2.0-500m-jax:
-    class: foundationforecast.models.timesfm.TimesFM
-    reference_slug: timesfm_2_0_500m
-    kwargs:
-      repo_id: google/timesfm-2.0-500m-jax
-      batch_size: 64
-
   google--timesfm-2.5-200m-pytorch:
     class: foundationforecast.models.timesfm.TimesFM
     reference_slug: TimesFM-2.5
