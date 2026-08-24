@@ -9,25 +9,12 @@ GIFT_EVAL_RESULTS_BASE = (
     "https://huggingface.co/spaces/Salesforce/GIFT-Eval/raw/main/results"
 )
 
-TARGET_COLS = [
-    "dataset",
-    "model",
-    "eval_metrics/MSE[mean]",
-    "eval_metrics/MSE[0.5]",
-    "eval_metrics/MAE[0.5]",
-    "eval_metrics/MASE[0.5]",
-    "eval_metrics/sMAPE[0.5]",
-    "eval_metrics/MSIS",
-    "eval_metrics/RMSE[mean]",
-    "eval_metrics/NRMSE[mean]",
-    "eval_metrics/ND[0.5]",
-    "eval_metrics/mean_weighted_sum_quantile_loss",
-    "domain",
-    "num_variates",
-]
-
 MASE_COL = "eval_metrics/MASE[0.5]"
 CRPS_COL = "eval_metrics/mean_weighted_sum_quantile_loss"
+
+# GIFT-Eval leaderboard ranks on MASE + CRPS (WQL). Secondary metrics (MSE, etc.)
+# can differ across library versions without indicating a failed replication.
+REPLICATION_METRIC_COLS = [MASE_COL, CRPS_COL]
 
 
 @lru_cache
@@ -57,8 +44,8 @@ def compare_results(
     if expected.empty:
         raise AssertionError("Expected results are empty")
     pd.testing.assert_frame_equal(
-        actual.reset_index(drop=True)[TARGET_COLS],
-        expected.reset_index(drop=True)[TARGET_COLS],
+        actual.reset_index(drop=True)[REPLICATION_METRIC_COLS],
+        expected.reset_index(drop=True)[REPLICATION_METRIC_COLS],
         atol=atol,
         rtol=rtol,
         check_dtype=False,
