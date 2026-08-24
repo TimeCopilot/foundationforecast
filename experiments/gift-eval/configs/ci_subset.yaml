@@ -1,3 +1,5 @@
+# CI subset: one GPU job per wrapper class (+ chronos on m4_hourly).
+# Every job is HF-verified in tests/test_replication.py after Modal run_ci.
 jobs:
   - model_key: amazon--chronos-bolt-small
     dataset_name: m4_weekly
@@ -6,5 +8,29 @@ jobs:
     dataset_name: m4_hourly
     term: short
   - model_key: google--timesfm-2.5-200m-pytorch
+    dataset_name: m4_weekly
+    term: short
+  - model_key: NX-AI--TiRex-1.1-gifteval
+    dataset_name: m4_weekly
+    term: short
+  - model_key: Salesforce--moirai-1.1-R-base
+    dataset_name: m4_weekly
+    term: short
+  - model_key: Datadog--Toto-2.0-4m
+    dataset_name: m4_weekly
+    term: short
+  - model_key: ibm-research--flowstate
+    dataset_name: m4_weekly
+    term: short
+  - model_key: ibm-research--patchtst-fm-r1
+    dataset_name: m4_weekly
+    term: short
+  - model_key: theforecastingcompany--t0-alpha
+    dataset_name: m4_weekly
+    term: short
+  - model_key: thuml--sundial-base-128m
+    dataset_name: m4_weekly
+    term: short
+  - model_key: tabpfn-ts
     dataset_name: m4_weekly
     term: short

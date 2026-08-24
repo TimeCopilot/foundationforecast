@@ -40,7 +40,15 @@ uv run python -m src.runners.run_model \
   --output-root ./results
 ```
 
-## CI subset (local GPU)
+## CI subset
+
+[`configs/ci_subset.yaml`](configs/ci_subset.yaml) defines **11 jobs**: one representative
+`model_key` per FoundationForecast wrapper class (Chronos, TimesFM, TiRex, Moirai, Toto,
+FlowState, PatchTST-FM, T0, Sundial, TabPFN), all on `m4_weekly/short`, plus Chronos on
+`m4_hourly/short` for a second dataset. Each job runs on Modal GPU and is **HF-verified**
+in pytest (metrics must match the official GIFT-Eval reference CSV).
+
+### Local GPU
 
 ```bash
 uv run python -m src.runners.run_ci --local --verify \
@@ -48,9 +56,10 @@ uv run python -m src.runners.run_ci --local --verify \
   --output-root ./results/ci
 ```
 
-## CI subset (Modal)
+### Modal (CI / GitHub Actions)
 
-Always re-runs and overwrites results (no skip-if-exists). Full grid skips jobs that already have outputs.
+Always re-runs and overwrites results (no skip-if-exists). Full grid skips jobs that
+already have outputs.
 
 ```bash
 uv run modal run -m src.runners.run_modal::run_ci
