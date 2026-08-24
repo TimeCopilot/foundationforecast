@@ -247,5 +247,3 @@ models:
   tabpfn-ts:
     class: foundationforecast.models.tabpfn.TabPFN
     reference_slug: tabpfn_ts
-    kwargs:
-      batch_size: 32
