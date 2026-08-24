@@ -28,9 +28,3 @@ jobs:
   - model_key: theforecastingcompany--t0-alpha
     dataset_name: m4_weekly
     term: short
-  - model_key: thuml--sundial-base-128m
-    dataset_name: m4_weekly
-    term: short
-  - model_key: tabpfn-ts
-    dataset_name: m4_weekly
-    term: short
