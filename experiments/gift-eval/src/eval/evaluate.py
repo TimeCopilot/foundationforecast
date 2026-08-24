@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
 import logging
+import time
 from pathlib import Path
 
 from timecopilot_gift_eval import GIFTEval, GluonTSPredictor
 
-from .jobs import Job, job_output_dir, result_csv
+from .jobs import Job, job_output_dir, result_csv, timing_json
 from .models import build_model
 
 logger = logging.getLogger(__name__)
@@ -43,11 +45,27 @@ def run_gift_eval(
         output_path=output_path,
         storage_path=storage_path,
     )
+    started_at = time.perf_counter()
     gifteval.evaluate_predictor(
         predictor,
         batch_size=DEFAULT_EVAL_BATCH_SIZE,
         overwrite_results=overwrite_results,
     )
+    elapsed_seconds = time.perf_counter() - started_at
+
+    timing_path = timing_json(job, Path(output_root))
+    timing_path.write_text(
+        json.dumps(
+            {
+                "model_key": job.model_key,
+                "dataset_name": job.dataset_name,
+                "term": job.term,
+                "elapsed_seconds": elapsed_seconds,
+            },
+            indent=2,
+        )
+    )
+
     csv_path = result_csv(job, Path(output_root))
-    logger.info("Wrote results to %s", csv_path)
+    logger.info("Wrote results to %s (%.1fs)", csv_path, elapsed_seconds)
     return csv_path

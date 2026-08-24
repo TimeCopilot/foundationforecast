@@ -26,6 +26,9 @@ TARGET_COLS = [
     "num_variates",
 ]
 
+MASE_COL = "eval_metrics/MASE[0.5]"
+CRPS_COL = "eval_metrics/mean_weighted_sum_quantile_loss"
+
 
 @lru_cache
 def load_reference_results(

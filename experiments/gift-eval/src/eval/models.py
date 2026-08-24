@@ -22,7 +22,10 @@ def build_model(model_key: str) -> ForecasterProtocol:
 
     spec = models[model_key]
     model_cls = _import_class(spec["class"])
-    kwargs: dict[str, Any] = spec.get("kwargs", {})
+    kwargs: dict[str, Any] = dict(spec.get("kwargs", {}))
+    reference = spec.get("reference_slug")
+    if reference is not None and "alias" not in kwargs:
+        kwargs["alias"] = reference
     return model_cls(**kwargs)
 
 

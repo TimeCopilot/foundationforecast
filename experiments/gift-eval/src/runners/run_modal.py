@@ -31,6 +31,10 @@ volume = {
     )
 }
 
+S3_BUCKET = "foundationforecast-gift-eval"
+S3_RESULTS_PREFIX = "results"
+S3_CI_RESULTS_PREFIX = "results/ci"
+
 
 @app.function(
     image=image,
@@ -73,15 +77,20 @@ def _job_tuples(jobs: list) -> list[tuple[str, str, str]]:
     return [(job.model_key, job.dataset_name, job.term) for job in jobs]
 
 
-def run_ci_modal(
+def _dispatch_jobs(
     jobs: list,
     *,
-    storage_path: str = "/s3-bucket/data/gift-eval",
-    output_root: str = "/s3-bucket/results/ci",
+    storage_path: str,
+    output_root: str,
+    force: bool,
 ) -> None:
     logging.basicConfig(level=logging.INFO)
+    if not jobs:
+        logging.info("No jobs to run")
+        return
     args = [
-        (*job_tuple, storage_path, output_root, True) for job_tuple in _job_tuples(jobs)
+        (*job_tuple, storage_path, output_root, force)
+        for job_tuple in _job_tuples(jobs)
     ]
     results = list(
         run_gift_eval_modal.starmap(
@@ -92,43 +101,113 @@ def run_ci_modal(
     )
     errors = [result for result in results if isinstance(result, Exception)]
     if errors:
-        raise RuntimeError(f"Modal CI jobs failed: {errors}")
+        raise RuntimeError(f"Modal jobs failed: {errors}")
+
+
+def run_ci_modal(
+    jobs: list,
+    *,
+    storage_path: str = "/s3-bucket/data/gift-eval",
+    output_root: str = "/s3-bucket/results/ci",
+) -> None:
+    _dispatch_jobs(jobs, storage_path=storage_path, output_root=output_root, force=True)
+
+
+def _s3_job_paths(
+    job,
+    *,
+    bucket: str,
+    prefix: str,
+) -> tuple[str, str]:
+    base = f"s3://{bucket}/{prefix}/{job.model_key}/{job.dataset_name}/{job.term}"
+    return f"{base}/all_results.csv", f"{base}/timing.json"
+
+
+def _job_matches_mode(
+    *,
+    mode: str,
+    has_results: bool,
+    has_timing: bool,
+) -> bool:
+    if mode == "missing":
+        return not has_results
+    if mode == "missing_timing":
+        return has_results and not has_timing
+    if mode == "all":
+        return True
+    raise ValueError(f"Unknown job selection mode: {mode!r}")
+
+
+def _jobs_from_s3(
+    jobs: list,
+    *,
+    bucket: str,
+    prefix: str,
+    mode: str,
+) -> list:
+    import fsspec
+
+    fs = fsspec.filesystem("s3")
+    selected = []
+    for job in jobs:
+        results_path, timing_path = _s3_job_paths(job, bucket=bucket, prefix=prefix)
+        has_results = fs.exists(results_path)
+        has_timing = fs.exists(timing_path)
+        if _job_matches_mode(
+            mode=mode,
+            has_results=has_results,
+            has_timing=has_timing,
+        ):
+            selected.append(job)
+    return selected
 
 
 @app.local_entrypoint()
 def run_ci() -> None:
     from src.eval.jobs import load_ci_subset
 
-    logging.basicConfig(level=logging.INFO)
     jobs = load_ci_subset()
     run_ci_modal(jobs)
 
 
 @app.local_entrypoint()
-def main() -> None:
-    import fsspec
-
+def main(force: bool = False) -> None:
     from src.eval.jobs import load_model_matrix
 
-    logging.basicConfig(level=logging.INFO)
-    fs = fsspec.filesystem("s3")
-    bucket = "foundationforecast-gift-eval"
-    missing_jobs = [
-        job
-        for job in load_model_matrix()
-        if not fs.exists(
-            f"s3://{bucket}/results/{job.model_key}/{job.dataset_name}/"
-            f"{job.term}/all_results.csv"
+    jobs = load_model_matrix()
+    if force:
+        selected = jobs
+    else:
+        selected = _jobs_from_s3(
+            jobs,
+            bucket=S3_BUCKET,
+            prefix=S3_RESULTS_PREFIX,
+            mode="missing",
         )
-    ]
-    logging.info("Running %s missing jobs", len(missing_jobs))
-    args = [(job.model_key, job.dataset_name, job.term) for job in missing_jobs]
-    results = list(
-        run_gift_eval_modal.starmap(
-            args,
-            return_exceptions=True,
-            wrap_returned_exceptions=False,
-        )
+    logging.info("Running %s jobs (force=%s)", len(selected), force)
+    _dispatch_jobs(
+        selected,
+        storage_path="/s3-bucket/data/gift-eval",
+        output_root="/s3-bucket/results",
+        force=force,
     )
-    errors = [result for result in results if isinstance(result, Exception)]
-    logging.info("errors: %s", errors)
+
+
+@app.local_entrypoint()
+def run_missing_timing() -> None:
+    from src.eval.jobs import load_model_matrix
+
+    jobs = load_model_matrix()
+    selected = _jobs_from_s3(
+        jobs,
+        bucket=S3_BUCKET,
+        prefix=S3_RESULTS_PREFIX,
+        mode="missing_timing",
+    )
+    logging.info("Backfilling timing for %s jobs", len(selected))
+    _dispatch_jobs(
+        selected,
+        storage_path="/s3-bucket/data/gift-eval",
+        output_root="/s3-bucket/results",
+        force=True,
+    )

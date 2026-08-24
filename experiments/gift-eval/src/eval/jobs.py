@@ -50,5 +50,19 @@ def result_csv(job: Job, root: Path = DEFAULT_RESULTS_ROOT) -> Path:
     return job_output_dir(job, root) / "all_results.csv"
 
 
+def timing_json(job: Job, root: Path = DEFAULT_RESULTS_ROOT) -> Path:
+    return job_output_dir(job, root) / "timing.json"
+
+
 def ci_output_root() -> Path:
     return DEFAULT_RESULTS_ROOT / "ci"
+
+
+def jobs_missing_timing(jobs: list[Job], output_root: Path) -> list[Job]:
+    missing: list[Job] = []
+    for job in jobs:
+        has_result = result_csv(job, output_root).exists()
+        has_timing = timing_json(job, output_root).exists()
+        if has_result and not has_timing:
+            missing.append(job)
+    return missing

@@ -1,10 +1,10 @@
 jobs:
-  - model_key: chronos-bolt-small
+  - model_key: amazon--chronos-bolt-small
     dataset_name: m4_weekly
     term: short
-  - model_key: chronos-bolt-small
+  - model_key: amazon--chronos-bolt-small
     dataset_name: m4_hourly
     term: short
-  - model_key: timesfm-2.5
+  - model_key: google--timesfm-2.5-200m-pytorch
     dataset_name: m4_weekly
     term: short

@@ -1174,7 +1174,7 @@ dependencies = [
   {name = "typer"},
 ]
 name = "foundationforecast-gift-eval-experiment"
-source = {virtual = "."}
+source = {editable = "."}
 version = "0.1.0"
 
 [package.dev-dependencies]

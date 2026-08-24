@@ -7,7 +7,7 @@ from typing import Annotated
 import typer
 
 from src.eval.evaluate import run_gift_eval
-from src.eval.jobs import ci_output_root, load_ci_subset
+from src.eval.jobs import ci_output_root, jobs_missing_timing, load_ci_subset
 from src.verify.verify import verify_all
 
 logging.basicConfig(level=logging.INFO)
@@ -44,6 +44,12 @@ def main(
         bool,
         typer.Option(help="Skip evaluation and only verify existing outputs"),
     ] = False,
+    missing_timing_only: Annotated[
+        bool,
+        typer.Option(
+            help="Rerun jobs that have results but no timing.json (local only)"
+        ),
+    ] = False,
     output_root: Annotated[
         Path | None,
         typer.Option(help="Directory containing CI subset outputs"),
@@ -55,6 +61,12 @@ def main(
 ) -> None:
     jobs = load_ci_subset()
     resolved_output_root = output_root or ci_output_root()
+    if missing_timing_only:
+        jobs = jobs_missing_timing(jobs, resolved_output_root)
+        if not jobs:
+            logging.info("All jobs already have timing.json")
+            return
+        logging.info("Rerunning %s jobs to backfill timing", len(jobs))
     if not verify_only:
         if local:
             _run_jobs_local(
