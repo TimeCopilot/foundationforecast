@@ -108,7 +108,7 @@ def run_ci_modal(
     jobs: list,
     *,
     storage_path: str = "/s3-bucket/data/gift-eval",
-    output_root: str = "/s3-bucket/results/ci",
+    output_root: str = f"/s3-bucket/{S3_CI_RESULTS_PREFIX}",
 ) -> None:
     _dispatch_jobs(jobs, storage_path=storage_path, output_root=output_root, force=True)
 
@@ -188,7 +188,7 @@ def main(force: bool = False) -> None:
     _dispatch_jobs(
         selected,
         storage_path="/s3-bucket/data/gift-eval",
-        output_root="/s3-bucket/results",
+        output_root=f"/s3-bucket/{S3_RESULTS_PREFIX}",
         force=force,
     )
 
@@ -208,6 +208,6 @@ def run_missing_timing() -> None:
     _dispatch_jobs(
         selected,
         storage_path="/s3-bucket/data/gift-eval",
-        output_root="/s3-bucket/results",
+        output_root=f"/s3-bucket/{S3_RESULTS_PREFIX}",
         force=True,
     )

@@ -1,6 +1,11 @@
 import pytest
 
-from foundationforecast.models.timesfm import _TimesFMV1, _TimesFMV2_p5
+from foundationforecast.models.timesfm import (
+    _GIFT_EVAL_TORCH_REPOS,
+    TimesFM,
+    _TimesFMV1,
+    _TimesFMV2_p5,
+)
 
 pytestmark = pytest.mark.models
 
@@ -8,6 +13,23 @@ MODEL_PARAMS = [
     _TimesFMV1,
     _TimesFMV2_p5,
 ]
+
+
+@pytest.mark.parametrize("repo_id", _GIFT_EVAL_TORCH_REPOS)
+def test_timesfm_accepts_gift_eval_repos(repo_id):
+    model = TimesFM(repo_id=repo_id)
+    assert isinstance(model, _TimesFMV1)
+    assert model.repo_id == repo_id
+
+
+def test_timesfm_accepts_pytorch_repos():
+    model = TimesFM(repo_id="google/timesfm-1.0-200m-pytorch")
+    assert isinstance(model, _TimesFMV1)
+
+
+def test_timesfm_rejects_non_pytorch_repo():
+    with pytest.raises(ValueError, match="pytorch"):
+        TimesFM(repo_id="google/timesfm-2.0-500m")
 
 
 @pytest.mark.parametrize("model_class", MODEL_PARAMS)
