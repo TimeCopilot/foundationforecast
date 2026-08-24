@@ -20,6 +20,8 @@ cd experiments/gift-eval
 uv sync
 ```
 
+Installs the in-repo editable `foundationforecast` package from the monorepo root (`../..`), not PyPI — so local runs and CI always use the current wrapper code.
+
 Requires Python 3.11+.
 
 ## Dataset

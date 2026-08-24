@@ -10,7 +10,7 @@ dev = [
 
 [project]
 dependencies = [
-  "foundationforecast>=0.1.1",
+  "foundationforecast",
   "modal>=1.0.5",
   "pyyaml>=6.0",
   "s3fs>=2023.12.1",
@@ -29,3 +29,6 @@ packages = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.uv.sources]
+foundationforecast = {editable = true, path = "../.."}

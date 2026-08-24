@@ -1,6 +1,12 @@
 import logging
+from pathlib import Path
 
 import modal
+
+_GIFT_EVAL_ROOT = Path(__file__).resolve().parents[2]
+_REPO_ROOT = _GIFT_EVAL_ROOT.parent.parent
+_MODAL_MONOREPO = "/root/monorepo"
+_MODAL_GIFT_EVAL = f"{_MODAL_MONOREPO}/experiments/gift-eval"
 
 app = modal.App(name="foundationforecast-gift-eval")
 image = (
@@ -10,15 +16,12 @@ image = (
     )
     .apt_install("git")
     .pip_install("uv")
-    .add_local_file("pyproject.toml", "/root/pyproject.toml", copy=True)
-    .add_local_file("README.md", "/root/README.md", copy=True)
-    .add_local_file(".python-version", "/root/.python-version", copy=True)
-    .add_local_file("uv.lock", "/root/uv.lock", copy=True)
-    .add_local_dir("src", remote_path="/root/src", copy=True)
-    .add_local_dir("configs", remote_path="/root/configs", copy=True)
-    .workdir("/root")
-    .env({"PYTHONPATH": "/root"})
-    .run_commands("uv pip install . --system --compile-bytecode")
+    .add_local_dir(_REPO_ROOT, remote_path=_MODAL_MONOREPO, copy=True)
+    .workdir(_MODAL_GIFT_EVAL)
+    .env({"PYTHONPATH": _MODAL_GIFT_EVAL})
+    .run_commands(
+        "uv pip install --system --compile-bytecode -e .",
+    )
 )
 secret = modal.Secret.from_name(
     "aws-secret",
