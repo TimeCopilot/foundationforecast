@@ -1233,7 +1233,7 @@ requires-dist = [
   {name = "modal", specifier = ">=1.0.5"},
   {name = "pyyaml", specifier = ">=6.0"},
   {name = "s3fs", specifier = ">=2023.12.1"},
-  {name = "timecopilot-gift-eval", specifier = ">=0.3.0"},
+  {name = "timecopilot-gift-eval", specifier = ">=0.3.1"},
   {name = "typer", specifier = ">=0.16.0"},
 ]
 
@@ -4956,11 +4956,11 @@ dependencies = [
   {name = "utilsforecast"},
 ]
 name = "timecopilot-gift-eval"
-sdist = {hash = "sha256:8bc98c27720b918b6cbb6e4914cc21c3224c1eff9581a72c9961f35e41410c65", size = 215668, upload-time = "2026-08-14T19:19:58.276Z", url = "https://files.pythonhosted.org/packages/35/b5/f14feef27e5bb66d2b547f0982b75f74ae4cc4af64bbf92ecde1863aebea/timecopilot_gift_eval-0.3.0.tar.gz"}
+sdist = {hash = "sha256:12296d5ea20e699fc72cc0ece08cf3bb2634e5f6a7346ce50dbe8d1166776ba2", size = 230414, upload-time = "2026-08-24T21:49:49.92Z", url = "https://files.pythonhosted.org/packages/53/67/b14b13f1e52bc6d4f44f8524ee41c00399cdf9208f36cad408abe827f714/timecopilot_gift_eval-0.3.1.tar.gz"}
 source = {registry = "https://pypi.org/simple"}
-version = "0.3.0"
+version = "0.3.1"
 wheels = [
-  {hash = "sha256:2ca7f30bfa09be28a72e7eb1d755362b319662e08691f9904d3b1a54b800c357", size = 11017, upload-time = "2026-08-14T19:19:56.133Z", url = "https://files.pythonhosted.org/packages/5d/b9/c6b5f529a7a04df5adcbbb57ac0a6320d035e6196173877eefcdc7889d2c/timecopilot_gift_eval-0.3.0-py3-none-any.whl"},
+  {hash = "sha256:38479b2174d0b77939e53aaa1d196f7848c4baabfef40fc5371319ea21fe40c7", size = 11072, upload-time = "2026-08-24T21:49:48.78Z", url = "https://files.pythonhosted.org/packages/b6/d8/58523eb3ff4aa94f80560527f8ad65d64bcf8470f299dd2cb4e44fdfa439/timecopilot_gift_eval-0.3.1-py3-none-any.whl"},
 ]
 
 [[package]]

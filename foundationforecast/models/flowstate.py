@@ -105,7 +105,7 @@ class FlowState(Forecaster, _DataProcessor):
 
     @staticmethod
     def _prepare_target(target: torch.Tensor) -> torch.Tensor:
-        arr = target.squeeze().detach().cpu().numpy().astype(np.float32, copy=False)
+        arr = target.reshape(-1).detach().cpu().numpy().astype(np.float32, copy=False)
         if np.isnan(arr).any():
             arr = np.zeros_like(arr) if np.all(np.isnan(arr)) else arr[~np.isnan(arr)]
         return torch.from_numpy(arr)

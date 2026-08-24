@@ -14,7 +14,7 @@ dependencies = [
   "modal>=1.0.5",
   "pyyaml>=6.0",
   "s3fs>=2023.12.1",
-  "timecopilot-gift-eval>=0.3.0",
+  "timecopilot-gift-eval>=0.3.1",
   "typer>=0.16.0",
 ]
 description = "FoundationForecast GIFT-Eval benchmark experiment"

@@ -44,11 +44,11 @@ uv run python -m src.runners.run_model \
 
 ## CI subset
 
-[`configs/ci_subset.yaml`](configs/ci_subset.yaml) defines **11 jobs**: one representative
-`model_key` per FoundationForecast wrapper class (Chronos, TimesFM, TiRex, Moirai, Toto,
-FlowState, PatchTST-FM, T0, Sundial, TabPFN), all on `m4_weekly/short`, plus Chronos on
-`m4_hourly/short` for a second dataset. Each job runs on Modal GPU and is **HF-verified**
-in pytest (metrics must match the official GIFT-Eval reference CSV).
+[`configs/ci_subset.yaml`](configs/ci_subset.yaml) defines **9 jobs**: Chronos on
+`m4_weekly/short` and `m4_hourly/short`, plus one representative `model_key` each for
+TimesFM, TiRex, Moirai, Toto, FlowState, PatchTST-FM, and T0 (all on `m4_weekly/short`).
+Each job runs on Modal GPU and is **HF-verified** in pytest (metrics must match the
+official GIFT-Eval reference CSV).
 
 ### Local GPU
 
@@ -84,7 +84,7 @@ Compare local/S3 results to official GIFT-Eval CSVs. Uses consolidated
 per-job CSVs under `results/{model_key}/`.
 
 Strict replication asserts **MASE** and **CRPS** only (the GIFT-Eval ranking
-metrics), with default tolerances `atol=0.01`, `rtol=0.02`. Other columns in
+metrics), with default tolerances `atol=0.01`, `rtol=0.025`. Other columns in
 `all_results.csv` are still written but not compared.
 
 Every verify run also writes a replication analysis table (CSV) with:

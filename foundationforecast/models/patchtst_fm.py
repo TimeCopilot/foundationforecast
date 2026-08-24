@@ -4,6 +4,8 @@ from contextlib import contextmanager
 if sys.version_info < (3, 11) or sys.version_info >= (3, 14):
     raise ImportError("PatchTSTFM requires Python >= 3.11 and < 3.14")
 
+import logging
+
 import numpy as np
 import pandas as pd
 import torch
@@ -12,6 +14,8 @@ from tsfm_public import PatchTSTFMForPrediction
 
 from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
 from ..core.utils import TimeSeriesDataset
+
+logger = logging.getLogger(__name__)
 
 # default to the median quantile
 # PatchTST-FM supports quantiles from 0.01 to 0.99
@@ -125,11 +129,54 @@ class PatchTSTFM(Forecaster, _DataProcessor):
             batch = [batch[i] for i in range(batch.shape[0])]
         targets: list[torch.Tensor] = []
         for target in batch:
-            target = target.squeeze()
+            target = target.reshape(-1)
             if len(target) > self.context_length:
                 target = target[-self.context_length :]
             targets.append(self._impute_target(target).to(self.device))
         return targets
+
+    def _run_model_on_targets(
+        self,
+        model: PatchTSTFMForPrediction,
+        targets: list[torch.Tensor],
+        h: int,
+        quantile_levels: list[float],
+    ) -> list[torch.Tensor]:
+        """Run inference with micro-batching and OOM halving."""
+        chunk_size = min(self.batch_size, len(targets))
+        outputs: list[torch.Tensor] = []
+        start = 0
+        while start < len(targets):
+            end = min(start + chunk_size, len(targets))
+            chunk = targets[start:end]
+            while True:
+                try:
+                    chunk_outputs = model(
+                        past_values=chunk,
+                        prediction_length=h,
+                        quantile_levels=quantile_levels,
+                    ).quantile_outputs
+                    if not isinstance(chunk_outputs, list):
+                        chunk_outputs = [
+                            chunk_outputs[i] for i in range(chunk_outputs.shape[0])
+                        ]
+                    outputs.extend(chunk_outputs)
+                    start = end
+                    break
+                except torch.cuda.OutOfMemoryError:
+                    if len(chunk) == 1:
+                        raise
+                    chunk_size = max(1, chunk_size // 2)
+                    end = min(start + chunk_size, len(targets))
+                    chunk = targets[start:end]
+                    logger.warning(
+                        "PatchTST-FM OOM at batch_size %s, retrying with %s",
+                        chunk_size * 2,
+                        chunk_size,
+                    )
+                    if self.device.startswith("cuda"):
+                        torch.cuda.empty_cache()
+        return outputs
 
     def _predict_batch(
         self,
@@ -142,13 +189,7 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         targets = self._prepare_targets(batch)
         quantile_levels = DEFAULT_QUANTILES if quantiles is None else quantiles
 
-        outputs = model(
-            past_values=targets,
-            prediction_length=h,
-            quantile_levels=quantile_levels,
-        ).quantile_outputs
-        if not isinstance(outputs, list):
-            outputs = [outputs[i] for i in range(outputs.shape[0])]
+        outputs = self._run_model_on_targets(model, targets, h, quantile_levels)
 
         fcsts = []
         for output in outputs:
