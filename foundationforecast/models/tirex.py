@@ -80,8 +80,8 @@ class TiRex(Forecaster):
         self.alias = alias
 
     def _is_tirex2(self) -> bool:
-        repo = self.repo_id.rstrip("/")
-        return repo.endswith("TiRex-2") or repo.split("/")[-1] == "TiRex-2"
+        name = self.repo_id.rstrip("/").split("/")[-1]
+        return name == "TiRex-2" or name.startswith("TiRex-2-")
 
     @staticmethod
     def _best_device_v2() -> str:

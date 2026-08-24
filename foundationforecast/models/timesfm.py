@@ -14,6 +14,11 @@ from tqdm import tqdm
 from ..core.forecaster import Forecaster, QuantileConverter
 from ..core.utils import TimeSeriesDataset
 
+_GIFT_EVAL_TORCH_REPOS = (
+    "google/timesfm-1.0-200m",
+    "google/timesfm-2.0-500m-jax",
+)
+
 
 class _TimesFMV1(Forecaster):
     def __init__(
@@ -243,7 +248,7 @@ class TimesFM(Forecaster):
         alias: str = "TimesFM",
         **kwargs: dict,
     ):
-        if "pytorch" not in repo_id:
+        if "pytorch" not in repo_id and repo_id not in _GIFT_EVAL_TORCH_REPOS:
             raise ValueError(
                 "TimesFM only supports pytorch models, "
                 "if you'd like to use jax, please open an issue"
