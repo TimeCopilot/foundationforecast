@@ -147,9 +147,12 @@ uv run python -m src.runners.download_results --model-key amazon--chronos-bolt-s
 ## Infrastructure
 
 - **S3 bucket:** `foundationforecast-gift-eval`
-- **Modal secret:** `aws-secret` (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)
+- **Modal secrets:**
+  - `aws-secret` — `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
+  - `hf-secret` — `HF_TOKEN` (required for gated models like `t0-alpha`; create with
+    `modal secret create hf-secret HF_TOKEN=hf_...`)
 - **Modal tokens:** `MODAL_TOKEN_ID`, `MODAL_TOKEN_SECRET`
-- **Hugging Face:** `HF_TOKEN` (dataset + model weights)
+- **Hugging Face:** accept model licenses on the Hub, then set `HF_TOKEN` in `hf-secret`
 
 ## Adding a model
 

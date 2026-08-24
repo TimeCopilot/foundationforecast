@@ -24,6 +24,10 @@ secret = modal.Secret.from_name(
     "aws-secret",
     required_keys=["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
 )
+hf_secret = modal.Secret.from_name(
+    "hf-secret",
+    required_keys=["HF_TOKEN"],
+)
 volume = {
     "/s3-bucket": modal.CloudBucketMount(
         bucket_name="foundationforecast-gift-eval",
@@ -39,6 +43,7 @@ S3_CI_RESULTS_PREFIX = "results/ci"
 @app.function(
     image=image,
     volumes=volume,
+    secrets=[secret, hf_secret],
     timeout=60 * 60 * 6,
     gpu="A10G",
     cpu=8,
