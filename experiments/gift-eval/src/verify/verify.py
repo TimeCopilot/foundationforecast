@@ -8,7 +8,12 @@ from timecopilot_gift_eval import GIFTEval
 
 from src.eval.jobs import Job, result_csv
 from src.eval.models import load_models_config, reference_slug
-from .reference import compare_results, load_reference_results
+from .reference import (
+    REPLICATION_ATOL,
+    REPLICATION_RTOL,
+    compare_results,
+    load_reference_results,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +36,8 @@ def verify_job(
     output_root: Path,
     *,
     storage_path: Path | str | None = None,
-    atol: float = 1e-2,
-    rtol: float = 1e-2,
+    atol: float = REPLICATION_ATOL,
+    rtol: float = REPLICATION_RTOL,
 ) -> None:
     slug = reference_slug(job.model_key)
     if slug is None:
@@ -66,8 +71,8 @@ def verify_all(
     output_root: Path,
     *,
     storage_path: Path | str | None = None,
-    atol: float = 1e-2,
-    rtol: float = 1e-2,
+    atol: float = REPLICATION_ATOL,
+    rtol: float = REPLICATION_RTOL,
 ) -> None:
     for job in jobs:
         verify_job(
@@ -101,8 +106,8 @@ def verify_model(
     model_key: str,
     output_root: Path,
     *,
-    atol: float = 1e-2,
-    rtol: float = 1e-2,
+    atol: float = REPLICATION_ATOL,
+    rtol: float = REPLICATION_RTOL,
     require_complete: bool = False,
 ) -> None:
     slug = reference_slug(model_key)

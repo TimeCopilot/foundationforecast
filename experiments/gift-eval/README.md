@@ -82,7 +82,8 @@ Compare local/S3 results to official GIFT-Eval CSVs. Uses consolidated
 per-job CSVs under `results/{model_key}/`.
 
 Strict replication asserts **MASE** and **CRPS** only (the GIFT-Eval ranking
-metrics). Other columns in `all_results.csv` are still written but not compared.
+metrics), with default tolerances `atol=0.01`, `rtol=0.02`. Other columns in
+`all_results.csv` are still written but not compared.
 
 Every verify run also writes a replication analysis table (CSV) with:
 
