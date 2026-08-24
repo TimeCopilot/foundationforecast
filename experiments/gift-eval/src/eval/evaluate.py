@@ -8,7 +8,7 @@ from pathlib import Path
 from timecopilot_gift_eval import GIFTEval, GluonTSPredictor
 
 from .jobs import Job, job_output_dir, result_csv, timing_json
-from .models import build_model
+from .models import build_model, predictor_max_length
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +34,14 @@ def run_gift_eval(
         job.term,
     )
 
+    forecaster = build_model(job.model_key)
     predictor = GluonTSPredictor(
-        forecaster=build_model(job.model_key),
-        max_length=DEFAULT_MAX_LENGTH,
+        forecaster=forecaster,
+        max_length=predictor_max_length(
+            job.model_key,
+            forecaster,
+            default=DEFAULT_MAX_LENGTH,
+        ),
         batch_size=DEFAULT_PREDICTOR_BATCH_SIZE,
     )
     gifteval = GIFTEval(

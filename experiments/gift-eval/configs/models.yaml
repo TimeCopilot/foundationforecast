@@ -127,7 +127,7 @@ models:
     reference_slug: Moirai_base
     kwargs:
       repo_id: Salesforce/moirai-1.1-R-base
-      batch_size: 32
+      batch_size: 512
 
   Salesforce--moirai-1.1-R-large--Moirai_large:
     class: foundationforecast.models.moirai.Moirai
@@ -199,7 +199,7 @@ models:
     reference_slug: FlowState-9.1M
     kwargs:
       repo_id: ibm-research/flowstate
-      batch_size: 32
+      batch_size: 16
 
   ibm-research--flowstate--FlowState-r1.1:
     class: foundationforecast.models.flowstate.FlowState
@@ -220,7 +220,7 @@ models:
     reference_slug: PatchTST-FM-r1
     kwargs:
       repo_id: ibm-research/patchtst-fm-r1
-      batch_size: 32
+      batch_size: 2048
 
   ibm-granite--granite-timeseries-patchtst-fm-r1:
     class: foundationforecast.models.patchtst_fm.PatchTSTFM

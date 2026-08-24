@@ -107,6 +107,30 @@ class PatchTSTFM(Forecaster, _DataProcessor):
             elif self.device.startswith("mps"):
                 torch.mps.empty_cache()
 
+    @staticmethod
+    def _impute_target(target: torch.Tensor) -> torch.Tensor:
+        arr = target.detach().cpu().numpy().astype(np.float32, copy=False)
+        if np.isnan(arr).any():
+            if np.all(np.isnan(arr)):
+                arr = np.zeros_like(arr)
+            else:
+                arr = np.nan_to_num(arr, nan=float(np.nanmean(arr)))
+        return torch.from_numpy(arr)
+
+    def _prepare_targets(
+        self,
+        batch: list[torch.Tensor] | torch.Tensor,
+    ) -> list[torch.Tensor]:
+        if isinstance(batch, torch.Tensor):
+            batch = [batch[i] for i in range(batch.shape[0])]
+        targets: list[torch.Tensor] = []
+        for target in batch:
+            target = target.squeeze()
+            if len(target) > self.context_length:
+                target = target[-self.context_length :]
+            targets.append(self._impute_target(target).to(self.device))
+        return targets
+
     def _predict_batch(
         self,
         model: PatchTSTFMForPrediction,
@@ -115,33 +139,29 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         quantiles: list[float] | None,
         # scale_factor: float,
     ) -> tuple[np.ndarray, np.ndarray | None]:
-        context = self._prepare_and_validate_context(batch)
-        if context.shape[1] > self.context_length:
-            context = context[..., -self.context_length :]
-        context = self._maybe_impute_missing(context)
-        context = context.to(self.device)
-        # context is (batch, context_length)
-
-        # input data is grouped by id
-        # input shape: (id_group/batch, data)
-        # output shape: (batch/id, quantiles, h)
+        targets = self._prepare_targets(batch)
         quantile_levels = DEFAULT_QUANTILES if quantiles is None else quantiles
 
-        fcst = model(
-            context,
+        outputs = model(
+            past_values=targets,
             prediction_length=h,
             quantile_levels=quantile_levels,
-            # scale_factor=scale_factor,
-            # batch_first=False,
         ).quantile_outputs
-        fcst = fcst.squeeze(-1).transpose(-1, -2)  # now shape is (batch, h, quantiles)
+        if not isinstance(outputs, list):
+            outputs = [outputs[i] for i in range(outputs.shape[0])]
 
-        # may not be the ideal solution, but this should be more adaptable
-        # when quantiles can vary.
-        # there is no guarantee that 0.5 will be in the list of quantiles.
-        fcst_mean = fcst.mean(dim=-1).squeeze() if fcst.ndim >= 3 else fcst.squeeze()
-        # fcst_mean = fcst[..., quantile_levels.index(0.5)].squeeze()
-        fcst_mean_np = fcst_mean.detach().cpu().numpy()
+        fcsts = []
+        for output in outputs:
+            fcst = output.squeeze(-1).transpose(-1, -2)  # (h, quantiles)
+            fcsts.append(fcst)
+
+        fcst = torch.stack(fcsts, dim=0)  # (batch, h, quantiles)
+        median_idx = (
+            quantile_levels.index(0.5)
+            if 0.5 in quantile_levels
+            else len(quantile_levels) // 2
+        )
+        fcst_mean_np = fcst[..., median_idx].detach().cpu().numpy()
         fcst_quantiles_np = (
             fcst.detach().cpu().numpy() if quantiles is not None else None
         )

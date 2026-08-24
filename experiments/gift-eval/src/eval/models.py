@@ -29,6 +29,18 @@ def build_model(model_key: str) -> ForecasterProtocol:
     return model_cls(**kwargs)
 
 
+def predictor_max_length(
+    model_key: str,
+    forecaster: ForecasterProtocol,
+    *,
+    default: int = 4096,
+) -> int:
+    spec = load_models_config()[model_key]
+    if "max_length" in spec:
+        return int(spec["max_length"])
+    return int(getattr(forecaster, "context_length", default))
+
+
 def reference_slug(model_key: str) -> str | None:
     models = load_models_config()
     if model_key not in models:

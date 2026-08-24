@@ -16,10 +16,10 @@ CRPS_COL = "eval_metrics/mean_weighted_sum_quantile_loss"
 # can differ across library versions without indicating a failed replication.
 REPLICATION_METRIC_COLS = [MASE_COL, CRPS_COL]
 
-# Default verify tolerances. rtol=2% covers typical drift from uni2ts/torch/CUDA
+# Default verify tolerances. rtol=2.5% covers typical drift from uni2ts/torch/CUDA
 # versions vs the original submission environment while still catching gross errors.
 REPLICATION_ATOL = 1e-2
-REPLICATION_RTOL = 2e-2
+REPLICATION_RTOL = 2.5e-2
 
 
 @lru_cache

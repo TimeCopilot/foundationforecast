@@ -1,4 +1,5 @@
 import sys
+from collections import defaultdict
 from contextlib import contextmanager
 
 if sys.version_info < (3, 11) or sys.version_info >= (3, 14):
@@ -102,37 +103,40 @@ class FlowState(Forecaster, _DataProcessor):
             del model
             torch.cuda.empty_cache()
 
-    def _predict_batch(
+    @staticmethod
+    def _prepare_target(target: torch.Tensor) -> torch.Tensor:
+        arr = target.squeeze().detach().cpu().numpy().astype(np.float32, copy=False)
+        if np.isnan(arr).any():
+            arr = np.zeros_like(arr) if np.all(np.isnan(arr)) else arr[~np.isnan(arr)]
+        return torch.from_numpy(arr)
+
+    def _max_context(self, model: FlowStateForPrediction, scale_factor: float) -> int:
+        return int(model.config.context_length / scale_factor)
+
+    def _predict_length_group(
         self,
         model: FlowStateForPrediction,
-        batch: list[torch.Tensor],
+        targets: list[torch.Tensor],
         h: int,
-        quantiles: list[float] | None,
         supported_quantiles: list[float],
         scale_factor: float,
-    ) -> tuple[np.ndarray, np.ndarray | None]:
-        context = self._prepare_and_validate_context(batch)
-        if context.shape[1] > self.context_length:
-            context = context[..., -self.context_length :]
-        context = self._maybe_impute_missing(context)
-        # context is (batch, context_length)
-        # then we convert it to (context_length, batch, 1)
-        context = context.unsqueeze(-1).transpose(0, 1)
-        context = context.to(self.device)
-        # (batch, quantiles, h, n_ch)
+    ) -> np.ndarray:
+        context = torch.stack(targets, dim=1).unsqueeze(-1).to(self.device)
         fcst = model(
-            context,
+            past_values=context,
             prediction_length=h,
             scale_factor=scale_factor,
             batch_first=False,
         ).quantile_outputs
-        fcst = fcst.squeeze(-1).transpose(-1, -2)  # now shape is (batch, h, quantiles)
-        fcst_mean = fcst[..., supported_quantiles.index(0.5)]
-        fcst_mean_np = fcst_mean.detach().numpy(force=True)
-        fcst_quantiles_np = (
-            fcst.detach().numpy(force=True) if quantiles is not None else None
+        fcst = fcst.squeeze(-1).transpose(-1, -2)  # (batch, h, quantiles)
+        non_negative = torch.all(
+            torch.nan_to_num(context.squeeze(-1), nan=1.0) >= 0,
+            dim=0,
         )
-        return fcst_mean_np, fcst_quantiles_np
+        for idx, clamp in enumerate(non_negative):
+            if clamp:
+                fcst[idx] = torch.clamp(fcst[idx], min=0.0)
+        return fcst.detach().cpu().numpy()
 
     def _predict(
         self,
@@ -143,26 +147,39 @@ class FlowState(Forecaster, _DataProcessor):
         supported_quantiles: list[float],
         scale_factor: float,
     ) -> tuple[np.ndarray, np.ndarray | None]:
-        fcsts = [
-            self._predict_batch(
+        max_context = self._max_context(model, scale_factor)
+        prepared: list[torch.Tensor] = []
+        for target in dataset.data:
+            target = self._prepare_target(target)
+            if len(target) > max_context:
+                target = target[-max_context:]
+            prepared.append(target)
+
+        length_groups: dict[int, list[tuple[int, torch.Tensor]]] = defaultdict(list)
+        for idx, target in enumerate(prepared):
+            length_groups[len(target)].append((idx, target))
+
+        median_idx = supported_quantiles.index(0.5)
+        fcsts_mean = [None] * len(prepared)
+        fcsts_quantiles = [None] * len(prepared) if quantiles is not None else None
+        for items in tqdm(length_groups.values(), leave=False):
+            indices, targets = zip(*items, strict=False)
+            fcst_np = self._predict_length_group(
                 model,
-                batch,
+                list(targets),
                 h,
-                quantiles,
                 supported_quantiles,
                 scale_factor,
             )
-            for batch in tqdm(dataset)
-        ]  # list of tuples
-        fcsts_mean_tp, fcsts_quantiles_tp = zip(*fcsts, strict=False)
-        # handle single item forecast output
-        fcsts_mean_np = fcsts_mean_tp[0]
-        if fcsts_mean_tp[0].shape != tuple():
-            fcsts_mean_np = np.concatenate(fcsts_mean_tp)
-        if quantiles is not None:
-            fcsts_quantiles_np = np.concatenate(fcsts_quantiles_tp)
-        else:
-            fcsts_quantiles_np = None
+            for batch_idx, series_idx in enumerate(indices):
+                fcsts_mean[series_idx] = fcst_np[batch_idx, :, median_idx]
+                if fcsts_quantiles is not None:
+                    fcsts_quantiles[series_idx] = fcst_np[batch_idx]
+
+        fcsts_mean_np = np.stack(fcsts_mean)
+        fcsts_quantiles_np = (
+            np.stack(fcsts_quantiles) if fcsts_quantiles is not None else None
+        )
         return fcsts_mean_np, fcsts_quantiles_np
 
     def forecast(
