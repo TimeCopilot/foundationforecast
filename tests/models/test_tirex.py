@@ -16,8 +16,11 @@ pytestmark = pytest.mark.models
 
 def test_is_tirex2_dispatch():
     assert not TiRex(repo_id="NX-AI/TiRex")._is_tirex2()
+    assert not TiRex(repo_id="NX-AI/TiRex-1.1-gifteval")._is_tirex2()
     assert TiRex(repo_id="NX-AI/TiRex-2")._is_tirex2()
     assert TiRex(repo_id="NX-AI/TiRex-2/")._is_tirex2()
+    assert TiRex(repo_id="NX-AI/TiRex-2-gifteval-pretrain")._is_tirex2()
+    assert TiRex(repo_id="NX-AI/TiRex-2-gifteval-zs")._is_tirex2()
 
 
 def test_tirex2_forecast():
