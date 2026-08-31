@@ -55,7 +55,7 @@ license = "MIT"
 name = "foundationforecast"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.1.1"
+version = "0.1.2"
 
 [project.optional-dependencies]
 plot = [
