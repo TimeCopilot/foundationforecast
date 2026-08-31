@@ -29,15 +29,23 @@ def build_model(model_key: str) -> ForecasterProtocol:
     return model_cls(**kwargs)
 
 
+def predictor_batch_size(model_key: str, *, default: int = 1024) -> int:
+    spec = load_models_config()[model_key]
+    if "predictor_batch_size" in spec:
+        return int(spec["predictor_batch_size"])
+    return default
+
+
 def predictor_max_length(
     model_key: str,
     forecaster: ForecasterProtocol,
     *,
     default: int = 4096,
-) -> int:
+) -> int | None:
     spec = load_models_config()[model_key]
     if "max_length" in spec:
-        return int(spec["max_length"])
+        max_length = spec["max_length"]
+        return None if max_length is None else int(max_length)
     return int(getattr(forecaster, "context_length", default))
 
 

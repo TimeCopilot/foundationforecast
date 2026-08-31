@@ -197,13 +197,16 @@ models:
   ibm-research--flowstate:
     class: foundationforecast.models.flowstate.FlowState
     reference_slug: FlowState-9.1M
+    max_length: null
+    predictor_batch_size: 16
     kwargs:
       repo_id: ibm-research/flowstate
-      batch_size: 32
+      batch_size: 16
 
   ibm-research--flowstate--FlowState-r1.1:
     class: foundationforecast.models.flowstate.FlowState
     reference_slug: FlowState-r1.1
+    max_length: null
     kwargs:
       repo_id: ibm-research/flowstate
       batch_size: 32
@@ -211,6 +214,7 @@ models:
   ibm-granite--granite-timeseries-flowstate-r1:
     class: foundationforecast.models.flowstate.FlowState
     reference_slug: Granite-FlowState-r1.1
+    max_length: null
     kwargs:
       repo_id: ibm-granite/granite-timeseries-flowstate-r1
       batch_size: 32

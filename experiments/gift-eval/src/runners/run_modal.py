@@ -3,10 +3,22 @@ from pathlib import Path
 
 import modal
 
-_GIFT_EVAL_ROOT = Path(__file__).resolve().parents[2]
-_REPO_ROOT = _GIFT_EVAL_ROOT.parent.parent
 _MODAL_MONOREPO = "/root/monorepo"
 _MODAL_GIFT_EVAL = f"{_MODAL_MONOREPO}/experiments/gift-eval"
+
+
+def _resolve_paths() -> tuple[Path, Path]:
+    here = Path(__file__).resolve()
+    try:
+        gift_eval_root = here.parents[2]
+        if (gift_eval_root / "pyproject.toml").exists():
+            return gift_eval_root, gift_eval_root.parent.parent
+    except IndexError:
+        pass
+    return Path(_MODAL_GIFT_EVAL), Path(_MODAL_MONOREPO)
+
+
+_GIFT_EVAL_ROOT, _REPO_ROOT = _resolve_paths()
 
 app = modal.App(name="foundationforecast-gift-eval")
 image = (
@@ -16,7 +28,31 @@ image = (
     )
     .apt_install("git")
     .pip_install("uv")
-    .add_local_dir(_REPO_ROOT, remote_path=_MODAL_MONOREPO, copy=True)
+    .add_local_file(
+        _REPO_ROOT / "pyproject.toml",
+        remote_path=f"{_MODAL_MONOREPO}/pyproject.toml",
+        copy=True,
+    )
+    .add_local_file(
+        _REPO_ROOT / "README.md",
+        remote_path=f"{_MODAL_MONOREPO}/README.md",
+        copy=True,
+    )
+    .add_local_file(
+        _REPO_ROOT / "uv.lock",
+        remote_path=f"{_MODAL_MONOREPO}/uv.lock",
+        copy=True,
+    )
+    .add_local_dir(
+        _REPO_ROOT / "foundationforecast",
+        remote_path=f"{_MODAL_MONOREPO}/foundationforecast",
+        copy=True,
+    )
+    .add_local_dir(
+        _GIFT_EVAL_ROOT,
+        remote_path=_MODAL_GIFT_EVAL,
+        copy=True,
+    )
     .workdir(_MODAL_GIFT_EVAL)
     .env({"PYTHONPATH": _MODAL_GIFT_EVAL})
     .run_commands(
@@ -62,8 +98,8 @@ def run_gift_eval_modal(
     import logging
     from pathlib import Path
 
-    from ..eval.evaluate import run_gift_eval
-    from ..eval.jobs import Job
+    from src.eval.evaluate import run_gift_eval
+    from src.eval.jobs import Job
 
     logging.basicConfig(level=logging.INFO)
     job = Job(model_key=model_key, dataset_name=dataset_name, term=term)
