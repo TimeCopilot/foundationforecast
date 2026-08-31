@@ -75,7 +75,8 @@ class Tafsut(Forecaster, _DataProcessor):
             yield model
         finally:
             del model
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
     def _predict_batch(
         self,
@@ -88,10 +89,14 @@ class Tafsut(Forecaster, _DataProcessor):
         context = self._prepare_and_validate_context(batch)
         if context.shape[1] > self.context_length:
             context = context[..., -self.context_length :]
-        context_np = context.numpy(force=True).astype(np.float32)
+        context_np = context.detach().cpu().to(torch.float32).numpy()
         fcst = tafsut_forecast(model, context_np, horizon=h)
-        fcst_mean_np = fcst[..., supported_quantiles.index(0.5)].numpy()
-        fcst_quantiles_np = fcst.numpy() if quantiles is not None else None
+        if isinstance(fcst, torch.Tensor):
+            fcst_np = fcst.detach().cpu().numpy()
+        else:
+            fcst_np = np.asarray(fcst)
+        fcst_mean_np = fcst_np[..., supported_quantiles.index(0.5)]
+        fcst_quantiles_np = fcst_np if quantiles is not None else None
         return fcst_mean_np, fcst_quantiles_np
 
     def _predict(
