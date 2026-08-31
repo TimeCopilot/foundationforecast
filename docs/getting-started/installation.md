@@ -32,7 +32,7 @@ Some models are gated by Python version:
 
 | Model | Python requirement |
 |-------|-------------------|
-| Chronos, Moirai, TimesFM, Toto, TimeGPT, Sundial | 3.10+ |
+| Chronos, Moirai, TimesFM, Toto, TimeGPT, Sundial, Tafsut | 3.10+ |
 | TiRex / TiRex-2 | 3.11+ |
 | T0, FlowState, PatchTST-FM | 3.11 – 3.13 |
 | TabPFN | 3.10 – 3.12 |

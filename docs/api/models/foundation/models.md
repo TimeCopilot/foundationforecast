@@ -36,6 +36,11 @@
         members:
             - TabPFN
 
+::: foundationforecast.models.tafsut
+    options:
+        members:
+            - Tafsut
+
 ::: foundationforecast.models.timegpt
     options:
         members:

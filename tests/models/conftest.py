@@ -2,6 +2,7 @@ import sys
 
 from foundationforecast.models.chronos import Chronos
 from foundationforecast.models.moirai import Moirai
+from foundationforecast.models.tafsut import Tafsut
 from foundationforecast.models.timesfm import TimesFM
 from foundationforecast.models.toto import Toto
 
@@ -34,6 +35,7 @@ models = [
         batch_size=2,
         repo_id="Salesforce/moirai-2.0-R-small",
     ),
+    Tafsut(context_length=512, batch_size=2),
 ]
 
 if sys.version_info >= (3, 11):
