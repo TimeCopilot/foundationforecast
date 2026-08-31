@@ -40,6 +40,7 @@ Below is the list of available foundation models. Click a model name for API det
 - [Sundial](api/models/foundation/models.md#foundationforecast.models.sundial.Sundial) ([arXiv:2502.00816](https://arxiv.org/pdf/2502.00816))
 - [T0](api/models/foundation/models.md#foundationforecast.models.t0.T0) ([model card](https://huggingface.co/theforecastingcompany/t0-alpha)) — Python 3.11–3.13
 - [TabPFN](api/models/foundation/models.md#foundationforecast.models.tabpfn.TabPFN) ([arXiv:2501.02945](https://arxiv.org/abs/2501.02945)) — Python 3.10–3.12
+- [Tafsut](api/models/foundation/models.md#foundationforecast.models.tafsut.Tafsut) ([GitHub](https://github.com/Tafsut-FM/tafsut))
 - [TiRex / TiRex-2](api/models/foundation/models.md#foundationforecast.models.tirex.TiRex) ([arXiv:2505.23719](https://arxiv.org/abs/2505.23719), [arXiv:2607.01204](https://arxiv.org/abs/2607.01204)) — Python 3.11+
 - [TimeGPT](api/models/foundation/models.md#foundationforecast.models.timegpt.TimeGPT) ([arXiv:2310.03589](https://arxiv.org/abs/2310.03589)) — requires `NIXTLA_API_KEY`
 - [TimesFM](api/models/foundation/models.md#foundationforecast.models.timesfm.TimesFM) ([arXiv:2310.10688](https://arxiv.org/abs/2310.10688))
