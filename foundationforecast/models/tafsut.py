@@ -95,6 +95,7 @@ class Tafsut(Forecaster, _DataProcessor):
             fcst_np = fcst.detach().cpu().numpy()
         else:
             fcst_np = np.asarray(fcst)
+        fcst_np = np.sort(fcst_np, axis=-1)
         fcst_mean_np = fcst_np[..., supported_quantiles.index(0.5)]
         fcst_quantiles_np = fcst_np if quantiles is not None else None
         return fcst_mean_np, fcst_quantiles_np
