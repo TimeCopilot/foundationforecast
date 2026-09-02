@@ -1,19 +1,8 @@
-<div align="center">
-  <img src="docs/assets/logo-dark.svg#gh-dark-mode-only" alt="FoundationForecast" width="900">
-  <img src="docs/assets/logo-light.svg#gh-light-mode-only" alt="FoundationForecast" width="900">
-</div>
-<div align="center">
-  <em>One API for every time series foundation model · Forecast · Cross-validation · Anomalie detection</em>
-</div>
-<div align="center">
-  <a href="https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml"><img src="https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml/badge.svg?branch=main" alt="CI"></a>
-  <a href="https://pypi.python.org/pypi/foundationforecast"><img src="https://img.shields.io/pypi/v/foundationforecast.svg" alt="PyPI"></a>
-  <a href="https://github.com/TimeCopilot/foundationforecast"><img src="https://img.shields.io/pypi/pyversions/foundationforecast.svg" alt="versions"></a>
-  <a href="https://github.com/TimeCopilot/foundationforecast/blob/main/LICENSE"><img src="https://img.shields.io/github/license/TimeCopilot/foundationforecast" alt="license"></a>
-  <a href="https://discord.gg/7GEdHR6Pfg"><img src="https://img.shields.io/discord/1387291858513821776?label=discord" alt="Join Discord"></a>
-</div>
+*One API for every time series foundation model · Forecast · Cross-validation · Anomaly detection*
 
 ---
+
+
 
 ## One API for a fragmented foundation landscape
 
@@ -23,13 +12,11 @@ That fragmentation makes it hard to compare models fairly, let alone use them in
 
 Developed with 💙 by the [TimeCopilot](https://timecopilot.dev/) team.
 
-<p align="center">
-  <a href="docs/assets/demo.mp4">
-    <img src="docs/assets/demo-thumbnail.png" alt="FoundationForecast demo — coming soon" width="640">
-  </a>
-</p>
+
 
 ---
+
+
 
 ## Quick example
 
@@ -49,63 +36,111 @@ cv = ff.cross_validation(df, h=12, freq="MS", level=[90])
 anomalies = ff.detect_anomalies(df, freq="MS", level=99)
 ```
 
-Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. Dates in `ds` are parsed automatically — no need to pass `parse_dates`.
+Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. Dates in `ds` are parsed automatically; no need to pass `parse_dates`.
 
 ---
+
+
 
 ## Supported models
 
-Every model supports **forecast**, **cross-validation**, and **anomaly detection** through the same API. **Intervals** means prediction intervals via `level` or quantile forecasts. **Finetune** marks models that can adapt to your data at inference time.
+Every model supports **forecast**, **cross-validation**, and **anomaly detection** through the same API. **Intervals** means prediction intervals via `level` or quantile forecasts. **Finetune** marks models that can adapt to your data at inference time. **License** is the [weight/checkpoint license](https://huggingface.co/models) on the default Hugging Face repo (or provider terms for hosted APIs). See the note below for production use.
 
 Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the underlying model class.
 
-| | Model | Forecast | CV | Anomalies | Intervals | Finetune | Notes |
-|:-:|---|:-:|:-:|:-:|:-:|:-:|---|
-| <img src="docs/assets/logos/amazon.png" width="30" alt=""> | [Chronos](https://arxiv.org/abs/2403.07815) | ✓ | ✓ | ✓ | ✓ | ✓ | Finetune on Chronos 2 |
-| <img src="docs/assets/logos/ibm.png" width="30" alt=""> | [FlowState](https://arxiv.org/abs/2508.05287) | ✓ | ✓ | ✓ | ✓ | — | Python 3.11–3.13 |
-| <img src="docs/assets/logos/salesforce.png" width="30" alt=""> | [Moirai](https://arxiv.org/abs/2402.02592) | ✓ | ✓ | ✓ | ✓ | — | |
-| <img src="docs/assets/logos/ibm.png" width="30" alt=""> | [PatchTST-FM](https://arxiv.org/abs/2602.06909) | ✓ | ✓ | ✓ | ✓ | — | Python 3.11–3.13 |
-| <img src="docs/assets/logos/thuml.png" width="30" alt=""> | [Sundial](https://arxiv.org/abs/2502.00816) | ✓ | ✓ | ✓ | ✓ | — | Python 3.10–3.12 |
-| <img src="docs/assets/logos/tfc.png" width="30" alt=""> | [T0](https://huggingface.co/theforecastingcompany/t0-alpha) | ✓ | ✓ | ✓ | ✓ | — | Python 3.11–3.13 |
-| <img src="docs/assets/logos/priorlabs.png" width="30" alt=""> | [TabPFN](https://arxiv.org/abs/2501.02945) | ✓ | ✓ | ✓ | ✓ | — | Python 3.10–3.12 |
-| <img src="docs/assets/logos/tafsut.png" width="30" alt=""> | [Tafsut](https://github.com/Tafsut-FM/tafsut) | ✓ | ✓ | ✓ | ✓ | — | |
-| <img src="docs/assets/logos/nx-ai.png" width="30" alt=""> | [TiRex](https://arxiv.org/abs/2505.23719) | ✓ | ✓ | ✓ | ✓ | — | Python 3.11+ |
-| <img src="docs/assets/logos/nixtla.png" width="30" alt=""> | [TimeGPT](https://arxiv.org/abs/2310.03589) | ✓ | ✓ | ✓ | ✓ | ✓ | Requires `NIXTLA_API_KEY` |
-| <img src="docs/assets/logos/google.png" width="30" alt=""> | [TimesFM](https://arxiv.org/abs/2310.10688) | ✓ | ✓ | ✓ | ✓ | — | |
-| <img src="docs/assets/logos/datadog.png" width="30" alt=""> | [Toto](https://arxiv.org/abs/2505.14766) | ✓ | ✓ | ✓ | ✓ | — | |
+
+|     | Model                                                       | Variants                                    | Forecast | CV  | Anomalies | Intervals | Finetuning | License                |
+| --- | ----------------------------------------------------------- | ------------------------------------------- | -------- | --- | --------- | --------- | ---------- | ---------------------- |
+|     | [Chronos](https://arxiv.org/abs/2403.07815)                 | **T5 · Bolt · 2**                           | ✓        | ✓   | ✓         | ✓         | ✓          | Apache-2.0             |
+|     | [FlowState](https://arxiv.org/abs/2508.05287)               | **flowstate · granite-r1**                  | ✓        | ✓   | ✓         | ✓         |            | Apache-2.0             |
+|     | [Moirai](https://arxiv.org/abs/2402.02592)                  | **1.0 · 1.1 · 2.0 · MoE**                   | ✓        | ✓   | ✓         | ✓         |            | CC-BY-NC-4.0           |
+|     | [PatchTST-FM](https://arxiv.org/abs/2602.06909)             | **r1**                                      | ✓        | ✓   | ✓         | ✓         |            | CC-BY-NC-SA-4.0        |
+|     | [Sundial](https://arxiv.org/abs/2502.00816)                 | **base-128m**                               | ✓        | ✓   | ✓         | ✓         |            | Apache-2.0             |
+|     | [T0](https://huggingface.co/theforecastingcompany/t0-alpha) | **alpha**                                   | ✓        | ✓   | ✓         | ✓         |            | Apache-2.0†            |
+|     | [TabPFN](https://arxiv.org/abs/2501.02945)                  | **v2**                                      | ✓        | ✓   | ✓         | ✓         |            | TabPFN NC‡             |
+|     | [Tafsut](https://github.com/Tafsut-FM/tafsut)               | **univariate-base**                         | ✓        | ✓   | ✓         | ✓         |            | MIT                    |
+|     | [TiRex](https://arxiv.org/abs/2505.23719)                   | **1.0 · 2.0**                               | ✓        | ✓   | ✓         | ✓         |            | Community / Apache-2.0 |
+|     | [TimeGPT](https://arxiv.org/abs/2310.03589)                 | **1 · 1-long-horizon · 2-mini · 2 · 2-pro** | ✓        | ✓   | ✓         | ✓         | ✓          | Nixtla API§            |
+|     | [TimesFM](https://arxiv.org/abs/2310.10688)                 | **1.0 · 2.0 · 2.5**                         | ✓        | ✓   | ✓         | ✓         |            | Apache-2.0             |
+|     | [Toto](https://arxiv.org/abs/2505.14766)                    | **1.0 · 2.0**                               | ✓        | ✓   | ✓         | ✓         |            | Apache-2.0             |
+
+
+Licenses verified against Hugging Face model cards (March 2026). Variants within a family may differ; check the card for your `repo_id`.
+
+**What this means for production**
+
+- **Apache-2.0**, **MIT**: generally fine for commercial production (retain notices; T0† is also gated on Hugging Face: accept terms and set `HF_TOKEN`).
+- **CC-BY-NC-4.0** (Moirai), **CC-BY-NC-SA-4.0** (PatchTST-FM): **non-commercial** only; not for revenue-generating production without a separate agreement from the rights holder.
+- **TabPFN NC**‡: TabPFN-2.6+ weights are non-commercial; production requires a [Prior Labs commercial license or API](https://docs.priorlabs.ai/models). First use also requires accepting terms at [ux.priorlabs.ai](https://ux.priorlabs.ai) (`TABPFN_TOKEN`).
+- **Community / Apache-2.0** (TiRex): TiRex 1.0 uses the [NXAI Community License](https://huggingface.co/NX-AI/TiRex/blob/main/LICENSE) (commercial limits for large enterprises); TiRex 2.0 is Apache-2.0.
+- **Nixtla API**§: hosted service via `NIXTLA_API_KEY`; production under [Nixtla terms/pricing](https://www.nixtla.io/docs), not open weights.
+
+**FoundationForecast** itself is [Apache-2.0](LICENSE) regardless of which model you plug in.
+
+Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN < 3.13). See the [Model Hub](https://timecopilot.dev/foundationforecast/model-hub/) for details and default checkpoints.
+
+**Example checkpoints & API model IDs**
+
+- **Chronos:** `amazon/chronos-t5-{tiny,mini,small,base,large}`, `amazon/chronos-bolt-{tiny,mini,small,base}`, `amazon/chronos-2`
+- **Moirai:** `Salesforce/moirai-{1.0,1.1,2.0}-R-{small,base,large}`, `Salesforce/moirai-moe-1.0-R-`*
+- **TimesFM:** `google/timesfm-{1.0-200m,2.0-500m,2.5-200m}-pytorch`
+- **Toto:** `Datadog/Toto-Open-Base-1.0`, `Datadog/Toto-2.0-{4m,22m,313m,1B,2.5B}`
+- **TiRex:** `NX-AI/TiRex`, `NX-AI/TiRex-2`
+- **TimeGPT:** pass `model=` to `TimeGPT()`, e.g. `timegpt-1`, `[timegpt-1-long-horizon](https://www.nixtla.io/docs/forecasting/model-version/longhorizon_model)`, `timegpt-2-mini`, `timegpt-2`, `timegpt-2-pro`
+
+
 
 ---
 
+
+
 ## Installation
+
+**Recommended:** [uv](https://docs.astral.sh/uv/) installs fast, locks dependencies reproducibly, and matches how this repo is developed and tested (especially useful with heavy ML stacks like torch and transformers).
+
+```bash
+uv add foundationforecast
+```
+
+Or with pip:
 
 ```bash
 pip install foundationforecast
 ```
 
-Requires Python 3.10+. Some models have additional version requirements, see the [Model Hub](https://timecopilot.dev/foundationforecast/model-hub/).
+Requires Python 3.10+. Some models have additional version requirements; see the [Model Hub](https://timecopilot.dev/foundationforecast/model-hub/).
 
 Optional plotting support:
 
 ```bash
-pip install "foundationforecast[plot]"
+uv add "foundationforecast[plot]"
+# or: pip install "foundationforecast[plot]"
 ```
 
 ---
 
+
+
 ## Relationship to TimeCopilot
 
-| | **FoundationForecast** | **TimeCopilot** |
-|---|---|---|
-| Foundation models (Chronos, Moirai, …) | ✓ | ✓ |
-| Unified forecast / CV / anomaly API | ✓ | ✓ |
-| Statistical & ML baselines | — | ✓ |
-| LLM agent & natural-language queries | — | ✓ |
-| Ensembles & distributed inference | — | ✓ |
+
+|                                        | **FoundationForecast** | **TimeCopilot** |
+| -------------------------------------- | ---------------------- | --------------- |
+| Foundation models (Chronos, Moirai, …) | ✓                      | ✓               |
+| Unified forecast / CV / anomaly API    | ✓                      | ✓               |
+| Statistical & ML baselines             |                        | ✓               |
+| LLM agent & natural-language queries   |                        | ✓               |
+| Ensembles & distributed inference      |                        | ✓               |
+
 
 Use **FoundationForecast** when you only need foundation models. Use **[TimeCopilot](https://github.com/TimeCopilot/timecopilot)** for the full forecasting agent.
 
 ---
 
+
+
 ## License
 
-Apache License 2.0 — see [LICENSE](LICENSE).
+**FoundationForecast** is licensed under [Apache License 2.0](LICENSE). You may use, modify, and deploy the library in production, including commercial applications.
+
+Model weights and hosted APIs have separate licenses. See the **License** column and production note in [Supported models](#supported-models) above.
