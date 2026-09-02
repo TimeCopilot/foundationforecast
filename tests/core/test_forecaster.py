@@ -308,3 +308,36 @@ def test_detect_anomalies_short_series_error():
     )
     with pytest.raises(ValueError, match="Cannot perform anomaly detection"):
         model.detect_anomalies(df, h=5, freq="D")
+
+
+def test_validate_input():
+    df = generate_series(n_series=1, freq="D", min_length=10, max_length=10)
+    DummyModel().validate_input(df, h=2)
+
+
+@pytest.mark.parametrize(
+    "df,h,match",
+    [
+        (
+            pd.DataFrame(
+                {"ds": pd.date_range("2023-01-01", periods=2, freq="D")}
+            ),
+            2,
+            "missing required columns",
+        ),
+        (pd.DataFrame(), 2, "missing required columns"),
+        (
+            generate_series(n_series=1, freq="D", min_length=5, max_length=5),
+            0,
+            "h must be a positive integer",
+        ),
+        (
+            generate_series(n_series=1, freq="D", min_length=5, max_length=5),
+            -1,
+            "h must be a positive integer",
+        ),
+    ],
+)
+def test_validate_input_errors(df, h, match):
+    with pytest.raises(ValueError, match=match):
+        DummyModel().validate_input(df, h)

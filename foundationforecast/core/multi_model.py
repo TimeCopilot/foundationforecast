@@ -13,6 +13,8 @@ class MultiModelForecasterMixin:
     clean_cache: bool
 
     def _validate_unique_aliases(self, models: list[Forecaster]) -> None:
+        if not models:
+            raise ValueError("At least one model is required.")
         aliases = [model.alias for model in models]
         duplicates = {a for a in aliases if aliases.count(a) > 1}
         if duplicates:
@@ -48,6 +50,7 @@ class MultiModelForecasterMixin:
         quantiles: list[float] | None,
         **kwargs,
     ) -> pd.DataFrame:
+        self.validate_input(df, h)
         freq = maybe_infer_freq(df, freq)
         res_df: pd.DataFrame | None = None
         for model in self.models:
