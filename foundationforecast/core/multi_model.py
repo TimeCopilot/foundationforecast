@@ -48,6 +48,7 @@ class MultiModelForecasterMixin:
         quantiles: list[float] | None,
         **kwargs,
     ) -> pd.DataFrame:
+        Forecaster.validate_input(df, h)
         freq = maybe_infer_freq(df, freq)
         res_df: pd.DataFrame | None = None
         for model in self.models:
