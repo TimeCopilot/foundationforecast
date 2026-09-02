@@ -86,7 +86,7 @@ Licenses verified against Hugging Face model cards (March 2026). Check the model
 
 </details>
 
-Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &lt; 3.13). See the [Model Hub](https://timecopilot.dev/foundationforecast/model-hub/) for details and default checkpoints.
+Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &lt; 3.13). See the [Model Hub](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/model-hub.md) for details and default checkpoints.
 
 <details><summary><strong>Example checkpoints &amp; API model IDs</strong></summary>
 
@@ -121,7 +121,7 @@ Or with pip:
 pip install foundationforecast
 ```
 
-Requires Python 3.10+. Some models have additional version requirements; see the [Model Hub](https://timecopilot.dev/foundationforecast/model-hub/).
+Requires Python 3.10+. Some models have additional version requirements; see the [Model Hub](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/model-hub.md).
 
 Optional plotting support:
 
@@ -143,6 +143,51 @@ uv add "foundationforecast[plot]"
 | Ensembles & distributed inference | | ✓ |
 
 Use **FoundationForecast** when you only need foundation models. Use **[TimeCopilot](https://github.com/TimeCopilot/timecopilot)** for the full forecasting agent.
+
+---
+
+## Citation
+
+FoundationForecast is developed by the [TimeCopilot](https://timecopilot.dev/) team. For research use (benchmarks, comparisons, or methodology), please cite the TimeCopilot paper:
+
+[TimeCopilot (arXiv:2509.00616)](https://arxiv.org/abs/2509.00616)
+
+```
+@misc{garza2025timecopilot,
+      title={TimeCopilot},
+      author={Azul Garza and Renée Rosillo},
+      year={2025},
+      eprint={2509.00616},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2509.00616},
+}
+```
+
+To reference the software package:
+
+```
+@software{foundationforecast,
+  title = {FoundationForecast: One API for time series foundation models},
+  author = {Garza, Azul and Rosillo, Renée},
+  year = {2026},
+  url = {https://github.com/TimeCopilot/foundationforecast},
+  version = {0.1.2},
+  license = {Apache-2.0},
+}
+```
+
+---
+
+## Community
+
+Questions, bugs, and contributions:
+
+- [Discord](https://discord.gg/7GEdHR6Pfg)
+- [Issues](https://github.com/TimeCopilot/foundationforecast/issues)
+- [Contributing](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/contributing.md)
+
+Developed with 💙 by the [TimeCopilot](https://timecopilot.dev/) team · Salamanca · Mexico City · San Francisco
 
 ---
 
