@@ -10,7 +10,7 @@ Run state-of-the-art pretrained models (Chronos, Moirai, TimesFM, Toto, TiRex, T
 pip install foundationforecast
 ```
 
-Requires Python 3.10+. Some models have additional version requirements — see the [Model Hub](model-hub.md).
+Requires Python 3.10+. Some models have additional version requirements — see the [Model Hub](docs/model-hub.md).
 
 Optional plotting support:
 
@@ -48,7 +48,7 @@ uv sync --group docs
 uv run --group docs mkdocs serve
 ```
 
-See [Getting Started](getting-started/quickstart.md) and [Examples](examples/index.md).
+See [Getting Started](docs/getting-started/quickstart.md) and [Examples](docs/examples/index.md).
 
 ## Development
 
