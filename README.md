@@ -3,7 +3,7 @@
   <img src="docs/assets/logo-light.svg#gh-light-mode-only" alt="FoundationForecast" width="900" style="display:block;margin:0 auto;">
 </div>
 <div align="center">
-  <em>One API for the time series foundation era · Forecast · Cross-validation · Anomaly detection</em>
+  <em>The API for the time series foundation era · Forecast · Cross-validation · Anomaly detection</em>
 </div>
 <div align="center">
   <a href="https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml"><img src="https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml/badge.svg?branch=main" alt="CI"></a>
@@ -15,15 +15,15 @@
 
 ---
 
-## One API for the time series foundation era
+## Why?
 
 Forecasting and time series have entered their foundation era. But, just like in the LLM space, different models bring different inductive biases and perform differently across domains, datasets, and even horizons.
 
-The world already uses different LLMs for different use cases. We're seeing the same thing in forecasting: there is no single model that dominates everywhere. Results change with the data distribution and forecasting horizon, as we've seen in [Impermanent](https://arxiv.org/abs/2603.08707) and other benchmarks such as [GIFT-Eval](https://huggingface.co/spaces/Salesforce/GIFT-Eval) and [FEV](https://arxiv.org/abs/2509.26468).
+The world already uses different LLMs for different use cases. We're seeing the same thing in forecasting: there is no single model that dominates everywhere. Results change with the data distribution and forecasting horizon, as we've seen in [Impermanent](https://github.com/TimeCopilot/impermanent) and other benchmarks such as [GIFT-Eval](https://huggingface.co/spaces/Salesforce/GIFT-Eval) and [FEV](https://arxiv.org/abs/2509.26468).
 
-But every lab also ships its own API, dependencies, data conventions, and learning curve. That fragmentation makes foundation models hard to compare fairly, and even harder to use together in production.
+At the same time, every lab also ships its own API, dependencies, data conventions, and learning curve. That fragmentation makes foundation models hard to compare fairly, and even harder to use together in production.
 
-**FoundationForecast** removes that friction: one `FoundationForecast` class, one data format, and the same methods: `forecast`, `cross_validation`, and `detect_anomalies`, across the leading time series foundation models. ✨
+**FoundationForecast** removes that friction: one `FoundationForecast` class, one data format, and the same methods: `forecast`, `cross_validation`, and `detect_anomalies`, across time series foundation models. ✨
 
 Developed with 💙 by the [TimeCopilot](https://timecopilot.dev/) team.
 
@@ -148,31 +148,14 @@ Use **FoundationForecast** when you only need foundation models. Use **[TimeCopi
 
 ## Citation
 
-FoundationForecast is developed by the [TimeCopilot](https://timecopilot.dev/) team. For research use (benchmarks, comparisons, or methodology), please cite the TimeCopilot paper:
-
-[TimeCopilot (arXiv:2509.00616)](https://arxiv.org/abs/2509.00616)
-
-```
-@misc{garza2025timecopilot,
-      title={TimeCopilot},
-      author={Azul Garza and Renée Rosillo},
-      year={2025},
-      eprint={2509.00616},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2509.00616},
-}
-```
-
 To reference the software package:
 
 ```
 @software{foundationforecast,
-  title = {FoundationForecast: One API for time series foundation models},
+  title = {FoundationForecast: The API for time series foundation models},
   author = {Garza, Azul and Rosillo, Renée},
   year = {2026},
   url = {https://github.com/TimeCopilot/foundationforecast},
-  version = {0.1.2},
   license = {Apache-2.0},
 }
 ```
@@ -187,7 +170,7 @@ Questions, bugs, and contributions:
 - [Issues](https://github.com/TimeCopilot/foundationforecast/issues)
 - [Contributing](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/contributing.md)
 
-Developed with 💙 by the [TimeCopilot](https://timecopilot.dev/) team · Salamanca · Mexico City · San Francisco
+Developed across Salamanca · Mexico City · San Francisco.
 
 ---
 
