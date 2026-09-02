@@ -72,7 +72,7 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 | <img src="docs/assets/logos/google.png" width="30" alt=""> | [TimesFM](https://arxiv.org/abs/2310.10688) | ✓ | ✓ | ✓ | ✓ | | Apache-2.0 |
 | <img src="docs/assets/logos/datadog.png" width="30" alt=""> | [Toto](https://arxiv.org/abs/2505.14766) | ✓ | ✓ | ✓ | ✓ | | Apache-2.0 |
 
-Licenses verified against Hugging Face model cards (March 2026). Check the model card for your `repo_id` when in doubt.
+Licenses verified against Hugging Face model cards. Check the model card for your `repo_id` when in doubt.
 
 <details><summary><strong>What this means for production</strong></summary>
 
