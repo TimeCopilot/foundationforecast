@@ -2,6 +2,8 @@
 
 ---
 
+
+
 ## One API for the time series foundation era
 
 Forecasting and time series have entered their foundation era. But, just like in the LLM space, different models bring different inductive biases and perform differently across domains, datasets, and even horizons.
@@ -15,6 +17,8 @@ But every lab also ships its own API, dependencies, data conventions, and learni
 Developed with 💙 by the [TimeCopilot](https://timecopilot.dev/) team.
 
 ---
+
+
 
 ## Quick example
 
@@ -37,6 +41,8 @@ anomalies = ff.detect_anomalies(df, freq="MS", level=99)
 Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. Dates in `ds` are parsed automatically; no need to pass `parse_dates`.
 
 ---
+
+
 
 ## Supported models
 
@@ -96,6 +102,8 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN <
 
 ---
 
+
+
 ## Installation
 
 **Recommended:** [uv](https://docs.astral.sh/uv/) installs fast, locks dependencies reproducibly, and matches how this repo is developed and tested (especially useful with heavy ML stacks like torch and transformers).
@@ -121,6 +129,8 @@ uv add "foundationforecast[plot]"
 
 ---
 
+
+
 ## Relationship to TimeCopilot
 
 
@@ -136,6 +146,8 @@ uv add "foundationforecast[plot]"
 Use **FoundationForecast** when you only need foundation models. Use **[TimeCopilot](https://github.com/TimeCopilot/timecopilot)** for the full forecasting agent.
 
 ---
+
+
 
 ## License
 
