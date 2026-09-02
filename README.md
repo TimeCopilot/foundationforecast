@@ -42,9 +42,9 @@ df = pd.read_csv(
 
 ff = FoundationForecast(models=[Chronos(), Toto(context_length=256)])
 
-fcst = ff.forecast(df, h=12, freq="MS", level=[90])
-cv = ff.cross_validation(df, h=12, freq="MS", level=[90])
-anomalies = ff.detect_anomalies(df, freq="MS", level=99)
+fcst_df = ff.forecast(df, h=12, freq="MS", level=[90])
+cv_df = ff.cross_validation(df, h=12, freq="MS", level=[90])
+anomalies_df = ff.detect_anomalies(df, freq="MS", level=99)
 ```
 
 Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results, ensure `ds` is a proper datetime dtype (e.g., pass `parse_dates=["ds"]` when reading) or an ISO-8601 string so sorting is correct; cross-validation/anomaly detection will also convert `ds` to datetime internally where needed.
