@@ -54,7 +54,7 @@ Every model supports **forecast**, **cross-validation**, and **anomaly detection
 Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the underlying model class.
 
 | | Model | Forecast | CV | Anomalies | Intervals | Finetuning | License |
-|:-:|---|:-:|:-:|:-:|:-:|---|
+|:-:|---|:-:|:-:|:-:|:-:|:-:|---|
 | <img src="docs/assets/logos/amazon.png" width="30" alt=""> | [Chronos](https://arxiv.org/abs/2403.07815) | ✓ | ✓ | ✓ | ✓ | ✓ | Apache-2.0 |
 | <img src="docs/assets/logos/ibm.png" width="30" alt=""> | [FlowState](https://arxiv.org/abs/2508.05287) | ✓ | ✓ | ✓ | ✓ | | Apache-2.0 |
 | <img src="docs/assets/logos/salesforce.png" width="30" alt=""> | [Moirai](https://arxiv.org/abs/2402.02592) | ✓ | ✓ | ✓ | ✓ | | CC-BY-NC-4.0 |
