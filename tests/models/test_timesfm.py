@@ -1,7 +1,7 @@
 import pytest
 
 from foundationforecast.models.timesfm import (
-    _GIFT_EVAL_TORCH_REPOS,
+    _GIFT_EVAL_LEGACY_REPOS,
     TimesFM,
     _TimesFMV1,
     _TimesFMV2_p5,
@@ -15,7 +15,7 @@ MODEL_PARAMS = [
 ]
 
 
-@pytest.mark.parametrize("repo_id", _GIFT_EVAL_TORCH_REPOS)
+@pytest.mark.parametrize("repo_id", _GIFT_EVAL_LEGACY_REPOS)
 def test_timesfm_accepts_gift_eval_repos(repo_id):
     model = TimesFM(repo_id=repo_id)
     assert isinstance(model, _TimesFMV1)
@@ -28,7 +28,7 @@ def test_timesfm_accepts_pytorch_repos():
 
 
 def test_timesfm_rejects_non_pytorch_repo():
-    with pytest.raises(ValueError, match="pytorch"):
+    with pytest.raises(ValueError, match="JAX backends are not supported"):
         TimesFM(repo_id="google/timesfm-2.0-500m")
 
 

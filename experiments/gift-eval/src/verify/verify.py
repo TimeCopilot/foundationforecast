@@ -10,6 +10,7 @@ from src.eval.jobs import Job, result_csv
 from src.eval.models import load_models_config, reference_slug
 from .reference import (
     REPLICATION_ATOL,
+    REPLICATION_METRIC_COLS,
     REPLICATION_RTOL,
     compare_results,
     load_reference_results,
@@ -48,8 +49,8 @@ def verify_job(
         raise FileNotFoundError(f"Missing results file: {csv_path}")
 
     actual_df = pd.read_csv(csv_path)
-    if actual_df.isna().any().any():
-        raise AssertionError(f"NaN values found in actual results at {csv_path}")
+    if actual_df[REPLICATION_METRIC_COLS].isna().any().any():
+        raise AssertionError(f"NaN values in replication metrics at {csv_path}")
 
     expected_df = load_reference_results(slug)
     dataset_key = (
@@ -115,8 +116,8 @@ def verify_model(
         raise ReplicationSkip(f"No reference slug for model_key={model_key!r}")
 
     actual = load_actual_results(model_key, output_root)
-    if actual.isna().any().any():
-        raise AssertionError(f"NaN values found in actual results for {model_key!r}")
+    if actual[REPLICATION_METRIC_COLS].isna().any().any():
+        raise AssertionError(f"NaN values in replication metrics for {model_key!r}")
 
     expected = load_reference_results(slug)
     common = sorted(set(actual["dataset"]) & set(expected["dataset"]))

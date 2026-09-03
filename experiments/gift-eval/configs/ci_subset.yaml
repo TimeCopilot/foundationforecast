@@ -1,4 +1,4 @@
-# CI subset: one GPU job per wrapper class (+ chronos on m4_hourly).
+# Representative CI subset for replication verification (Chronos on two datasets).
 # Every job is HF-verified in tests/test_replication.py after Modal run_ci.
 jobs:
   - model_key: amazon--chronos-bolt-small
