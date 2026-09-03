@@ -184,3 +184,15 @@ def test_foundation_forecast_duplicate_aliases_with_moirai():
         ValueError, match="Duplicate model aliases found: \\['Moirai'\\]"
     ):
         FoundationForecast(models=[model1, model2])
+
+
+def test_foundation_forecast_rejects_empty_models():
+    with pytest.raises(ValueError, match="At least one model is required"):
+        FoundationForecast(models=[])
+
+
+def test_foundation_forecast_validates_input():
+    df = generate_series(n_series=1, freq="D", min_length=5, max_length=5)
+    forecaster = FoundationForecast(models=[DummyModel()])
+    with pytest.raises(ValueError, match="h must be a positive integer"):
+        forecaster.forecast(df=df, h=0, freq="D")

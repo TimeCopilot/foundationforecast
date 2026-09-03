@@ -64,6 +64,33 @@ class Forecaster:
     alias: str
 
     @staticmethod
+    def validate_input(
+        df: pd.DataFrame,
+        h: int | None,
+    ) -> None:
+        """Validate that the input DataFrame and horizon are suitable for forecasting.
+
+        Args:
+            df: DataFrame containing the time series. Must include the columns
+                `unique_id`, `ds`, and `y`.
+            h: Forecast horizon. If provided, must be a positive integer.
+        """
+        if not isinstance(df, pd.DataFrame):
+            raise ValueError("df must be a pandas DataFrame.")
+        required_cols = ["unique_id", "ds", "y"]
+        missing = [c for c in required_cols if c not in df.columns]
+        if missing:
+            raise ValueError(
+                f"Input df is missing required columns: {missing}. "
+                "Expected columns are: 'unique_id', 'ds', 'y'."
+            )
+        if h is not None:
+            if not isinstance(h, (int, np.integer)) or h <= 0:
+                raise ValueError("h must be a positive integer.")
+        if len(df) == 0:
+            raise ValueError("df must contain at least one row.")
+
+    @staticmethod
     def plot(
         df: pd.DataFrame | None = None,
         forecasts_df: pd.DataFrame | None = None,
@@ -161,6 +188,7 @@ class Forecaster:
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
     ) -> pd.DataFrame:
+        self.validate_input(df, h)
         freq = self._maybe_infer_freq(df, freq)
         df = maybe_convert_col_to_datetime(df, "ds")
         results = []
