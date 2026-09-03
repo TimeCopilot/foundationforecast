@@ -255,7 +255,7 @@ models:
 
   tafsut-univariate-base:
     class: foundationforecast.models.tafsut.Tafsut
-    reference_slug: tafsut_univariate_base
+    reference_slug: tafsut
     kwargs:
       repo_id: Tafsut-FM/tafsut-univariate-base
       alias: tafsut_univariate_base

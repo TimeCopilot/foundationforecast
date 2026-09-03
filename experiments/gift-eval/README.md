@@ -44,9 +44,9 @@ uv run python -m src.runners.run_model \
 
 ## CI subset
 
-[`configs/ci_subset.yaml`](configs/ci_subset.yaml) defines **9 jobs**: Chronos on
+[`configs/ci_subset.yaml`](configs/ci_subset.yaml) defines **10 jobs**: Chronos on
 `m4_weekly/short` and `m4_hourly/short`, plus one representative `model_key` each for
-TimesFM, TiRex, Moirai, Toto, FlowState, PatchTST-FM, and T0 (all on `m4_weekly/short`).
+TimesFM, TiRex, Moirai, Toto, FlowState, PatchTST-FM, T0, and Tafsut (all on `m4_weekly/short`).
 Each job runs on Modal GPU and is **HF-verified** in pytest (metrics must match the
 official GIFT-Eval reference CSV).
 
