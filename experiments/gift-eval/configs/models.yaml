@@ -1,89 +1,261 @@
+# Model registry for GIFT-Eval runs and replication checks.
+#
+# Identifiers (four roles — do not collapse them):
+#   model_key        — slugified repo_id (org--model); drives results/, S3, ci_subset.yaml
+#   kwargs.repo_id   — Hugging Face hub path to load weights (org/model)
+#   reference_slug   — official GIFT-Eval results folder on the leaderboard HF space
+#   kwargs.alias     — auto-set from reference_slug unless set explicitly in kwargs;
+#                      must match the reference CSV "model" column (can differ from folder slug)
+#
+# Picking repo_id:
+#   - Use the weights from GIFT-Eval results/{reference_slug}/config.json → model_link
+#     (many models publish gifteval-specific HF repos, e.g. NX-AI/TiRex-1.1-gifteval).
+#   - Moirai 1.x leaderboard entries use moirai-1.1-R-* checkpoints, not moirai-1.0-R-*.
+#
+# Picking reference_slug:
+#   - Must match GIFT-Eval's published names, NOT repo_id (org prefix often omitted).
+#   - Verify at:
+#       https://huggingface.co/spaces/Salesforce/GIFT-Eval/tree/main/results/{reference_slug}
+#   - Set reference_slug: null if no public reference (verify skips).
+#
+# model_key = repo_id with "/" replaced by "--". When one repo_id maps to multiple
+# leaderboard entries (e.g. TiRex-2 Pretrained vs Zeroshot), suffix with --{reference_slug}.
+# Do not use raw org/model as model_key — slashes break results/ and S3 paths.
+
 models:
-  chronos-bolt-small:
+  # --- Chronos ---
+  amazon--chronos-bolt-small:
     class: foundationforecast.models.chronos.Chronos
     reference_slug: chronos_bolt_small
     kwargs:
       repo_id: amazon/chronos-bolt-small
-      alias: chronos_bolt_small
       batch_size: 64
 
-  chronos-2:
+  amazon--chronos-bolt-base:
+    class: foundationforecast.models.chronos.Chronos
+    reference_slug: chronos_bolt_base
+    kwargs:
+      repo_id: amazon/chronos-bolt-base
+      batch_size: 32
+
+  amazon--chronos-t5-base:
+    class: foundationforecast.models.chronos.Chronos
+    reference_slug: chronos_base
+    kwargs:
+      repo_id: amazon/chronos-t5-base
+      alias: Chronos_base
+      batch_size: 32
+
+  amazon--chronos-t5-large:
+    class: foundationforecast.models.chronos.Chronos
+    reference_slug: chronos_large
+    kwargs:
+      repo_id: amazon/chronos-t5-large
+      alias: Chronos_large
+      batch_size: 16
+
+  amazon--chronos-t5-small:
+    class: foundationforecast.models.chronos.Chronos
+    reference_slug: Chronos_small
+    kwargs:
+      repo_id: amazon/chronos-t5-small
+      batch_size: 64
+
+  amazon--chronos-2:
     class: foundationforecast.models.chronos.Chronos
     reference_slug: chronos-2
     kwargs:
       repo_id: amazon/chronos-2
-      alias: chronos-2
       batch_size: 64
 
-  timesfm-2.5:
+  autogluon--chronos-2-synth:
+    class: foundationforecast.models.chronos.Chronos
+    reference_slug: chronos-2-synth
+    kwargs:
+      repo_id: autogluon/chronos-2-synth
+      alias: Chronos-2-Synth
+      batch_size: 64
+
+  # --- TimesFM ---
+  google--timesfm-1.0-200m:
+    class: foundationforecast.models.timesfm.TimesFM
+    reference_slug: timesfm
+    kwargs:
+      repo_id: google/timesfm-1.0-200m
+      alias: TimesFM
+      batch_size: 64
+
+  google--timesfm-2.5-200m-pytorch:
     class: foundationforecast.models.timesfm.TimesFM
     reference_slug: TimesFM-2.5
     kwargs:
       repo_id: google/timesfm-2.5-200m-pytorch
-      alias: TimesFM-2.5
       batch_size: 64
 
-  tirex:
+  # --- TiRex (GIFT-Eval-specific HF weights) ---
+  NX-AI--TiRex-1.1-gifteval:
     class: foundationforecast.models.tirex.TiRex
     reference_slug: TiRex
     kwargs:
-      alias: TiRex
+      repo_id: NX-AI/TiRex-1.1-gifteval
       batch_size: 64
 
-  moirai-small:
+  NX-AI--TiRex-2-gifteval-pretrain:
+    class: foundationforecast.models.tirex.TiRex
+    reference_slug: TiRex-2-Pretrained
+    kwargs:
+      repo_id: NX-AI/TiRex-2-gifteval-pretrain
+      batch_size: 64
+
+  NX-AI--TiRex-2-gifteval-zs:
+    class: foundationforecast.models.tirex.TiRex
+    reference_slug: TiRex-2-Zeroshot
+    kwargs:
+      repo_id: NX-AI/TiRex-2-gifteval-zs
+      batch_size: 64
+
+  # --- Moirai (GIFT-Eval 1.x entries use moirai-1.1-R-* checkpoints) ---
+  Salesforce--moirai-1.1-R-large--Moirai_small:
     class: foundationforecast.models.moirai.Moirai
     reference_slug: Moirai_small
     kwargs:
-      repo_id: Salesforce/moirai-1.0-R-small
-      alias: Moirai_small
+      repo_id: Salesforce/moirai-1.1-R-large
       batch_size: 32
 
-  toto-open-base:
+  Salesforce--moirai-1.1-R-base:
+    class: foundationforecast.models.moirai.Moirai
+    reference_slug: Moirai_base
+    kwargs:
+      repo_id: Salesforce/moirai-1.1-R-base
+      batch_size: 512
+
+  Salesforce--moirai-1.1-R-large--Moirai_large:
+    class: foundationforecast.models.moirai.Moirai
+    reference_slug: Moirai_large
+    kwargs:
+      repo_id: Salesforce/moirai-1.1-R-large
+      batch_size: 16
+
+  Salesforce--moirai-2.0-R-small:
+    class: foundationforecast.models.moirai.Moirai
+    reference_slug: Moirai2
+    kwargs:
+      repo_id: Salesforce/moirai-2.0-R-small
+      batch_size: 32
+
+  # --- Toto ---
+  Datadog--Toto-Open-Base-1.0:
     class: foundationforecast.models.toto.Toto
     reference_slug: Toto_Open_Base_1.0
     kwargs:
       repo_id: Datadog/Toto-Open-Base-1.0
-      alias: Toto_Open_Base_1.0
       batch_size: 16
 
-  flowstate:
+  Datadog--Toto-2.0-4m:
+    class: foundationforecast.models.toto.Toto
+    reference_slug: Toto-2.0-4m
+    kwargs:
+      repo_id: Datadog/Toto-2.0-4m
+      batch_size: 16
+
+  Datadog--Toto-2.0-22m:
+    class: foundationforecast.models.toto.Toto
+    reference_slug: Toto-2.0-22m
+    kwargs:
+      repo_id: Datadog/Toto-2.0-22m
+      batch_size: 16
+
+  Datadog--Toto-2.0-313m:
+    class: foundationforecast.models.toto.Toto
+    reference_slug: Toto-2.0-313m
+    kwargs:
+      repo_id: Datadog/Toto-2.0-313m
+      batch_size: 8
+
+  Datadog--Toto-2.0-1B:
+    class: foundationforecast.models.toto.Toto
+    reference_slug: Toto-2.0-1B
+    kwargs:
+      repo_id: Datadog/Toto-2.0-1B
+      batch_size: 8
+
+  Datadog--Toto-2.0-2.5B:
+    class: foundationforecast.models.toto.Toto
+    reference_slug: Toto-2.0-2.5B
+    kwargs:
+      repo_id: Datadog/Toto-2.0-2.5B
+      batch_size: 4
+
+  Datadog--Toto-2.0-2.5B-FT:
+    class: foundationforecast.models.toto.Toto
+    reference_slug: Toto-2.0-2.5B-FT
+    kwargs:
+      repo_id: Datadog/Toto-2.0-2.5B-FT
+      batch_size: 4
+
+  # --- FlowState / PatchTST-FM ---
+  ibm-research--flowstate:
     class: foundationforecast.models.flowstate.FlowState
     reference_slug: FlowState-9.1M
+    max_length: null
+    predictor_batch_size: 16
     kwargs:
-      alias: FlowState-9.1M
+      repo_id: ibm-research/flowstate
+      batch_size: 16
+
+  ibm-research--flowstate--FlowState-r1.1:
+    class: foundationforecast.models.flowstate.FlowState
+    reference_slug: FlowState-r1.1
+    max_length: null
+    kwargs:
+      repo_id: ibm-research/flowstate
       batch_size: 32
 
-  patchtst-fm:
+  ibm-granite--granite-timeseries-flowstate-r1:
+    class: foundationforecast.models.flowstate.FlowState
+    reference_slug: Granite-FlowState-r1.1
+    max_length: null
+    kwargs:
+      repo_id: ibm-granite/granite-timeseries-flowstate-r1
+      batch_size: 32
+
+  ibm-research--patchtst-fm-r1:
     class: foundationforecast.models.patchtst_fm.PatchTSTFM
     reference_slug: PatchTST-FM-r1
+    predictor_batch_size: 64
     kwargs:
-      alias: PatchTST-FM-r1
+      repo_id: ibm-research/patchtst-fm-r1
+      batch_size: 128
+
+  ibm-granite--granite-timeseries-patchtst-fm-r1:
+    class: foundationforecast.models.patchtst_fm.PatchTSTFM
+    reference_slug: Granite-PatchTST-FM-r1
+    kwargs:
+      repo_id: ibm-granite/granite-timeseries-patchtst-fm-r1
       batch_size: 32
 
-  t0-alpha:
+  # --- Other foundation models ---
+  theforecastingcompany--t0-alpha:
     class: foundationforecast.models.t0.T0
     reference_slug: t0-alpha
     kwargs:
-      alias: t0-alpha
+      repo_id: theforecastingcompany/t0-alpha
       batch_size: 32
 
-  sundial-base:
+  thuml--sundial-base-128m:
     class: foundationforecast.models.sundial.Sundial
     reference_slug: sundial_base_128m
     kwargs:
-      alias: sundial_base_128m
+      repo_id: thuml/sundial-base-128m
       batch_size: 32
 
   tabpfn-ts:
     class: foundationforecast.models.tabpfn.TabPFN
     reference_slug: tabpfn_ts
-    kwargs:
-      alias: tabpfn_ts
-      batch_size: 32
 
   tafsut-univariate-base:
     class: foundationforecast.models.tafsut.Tafsut
-    reference_slug: tafsut_univariate_base
+    reference_slug: tafsut
     kwargs:
       repo_id: Tafsut-FM/tafsut-univariate-base
       alias: tafsut_univariate_base

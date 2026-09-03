@@ -14,6 +14,13 @@ from tqdm import tqdm
 from ..core.forecaster import Forecaster, QuantileConverter
 from ..core.utils import TimeSeriesDataset
 
+# Legacy HF repo IDs from GIFT-Eval submissions without "pytorch" in the name.
+# Still loaded via timesfm_v1 PyTorch checkpoints (JAX is not supported).
+_GIFT_EVAL_LEGACY_REPOS = (
+    "google/timesfm-1.0-200m",
+    "google/timesfm-2.0-500m-jax",
+)
+
 
 class _TimesFMV1(Forecaster):
     def __init__(
@@ -243,10 +250,12 @@ class TimesFM(Forecaster):
         alias: str = "TimesFM",
         **kwargs: dict,
     ):
-        if "pytorch" not in repo_id:
+        if "pytorch" not in repo_id and repo_id not in _GIFT_EVAL_LEGACY_REPOS:
+            legacy = ", ".join(_GIFT_EVAL_LEGACY_REPOS)
             raise ValueError(
-                "TimesFM only supports pytorch models, "
-                "if you'd like to use jax, please open an issue"
+                "TimesFM requires a PyTorch checkpoint repo_id (name contains "
+                f"'pytorch') or a supported legacy GIFT-Eval repo_id: {legacy}. "
+                "JAX backends are not supported."
             )
         if "1.0" in repo_id or "2.0" in repo_id:
             return _TimesFMV1(

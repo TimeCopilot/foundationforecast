@@ -1,3 +1,5 @@
+import gc
+import logging
 import sys
 from contextlib import contextmanager
 
@@ -12,6 +14,8 @@ from tsfm_public import PatchTSTFMForPrediction
 
 from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
 from ..core.utils import TimeSeriesDataset
+
+logger = logging.getLogger(__name__)
 
 # default to the median quantile
 # PatchTST-FM supports quantiles from 0.01 to 0.99
@@ -93,19 +97,97 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         # )
         self.alias = alias
         self.dtype = torch.float32
+        self._model: PatchTSTFMForPrediction | None = None
+
+    def _load_model(self) -> PatchTSTFMForPrediction:
+        if self._model is None:
+            self._model = PatchTSTFMForPrediction.from_pretrained(self.repo_id).to(
+                self.device
+            )
+            self._model.eval()
+        return self._model
+
+    def _release_model(self) -> None:
+        if self._model is None:
+            return
+        self._model.cpu()
+        del self._model
+        self._model = None
+        gc.collect()
+        if self.device == "cuda":
+            torch.cuda.empty_cache()
 
     @contextmanager
     def _get_model(self) -> PatchTSTFMForPrediction:
-        model = PatchTSTFMForPrediction.from_pretrained(self.repo_id).to(self.device)
-        try:
-            model.eval()
-            yield model
-        finally:
-            del model
-            if self.device.startswith("cuda"):
-                torch.cuda.empty_cache()
-            elif self.device.startswith("mps"):
-                torch.mps.empty_cache()
+        yield self._load_model()
+
+    @staticmethod
+    def _impute_target(target: torch.Tensor) -> torch.Tensor:
+        arr = target.detach().cpu().numpy().astype(np.float32, copy=False)
+        if np.isnan(arr).any():
+            if np.all(np.isnan(arr)):
+                arr = np.zeros_like(arr)
+            else:
+                arr = np.nan_to_num(arr, nan=float(np.nanmean(arr)))
+        return torch.from_numpy(arr)
+
+    def _prepare_targets(
+        self,
+        batch: list[torch.Tensor] | torch.Tensor,
+    ) -> list[torch.Tensor]:
+        if isinstance(batch, torch.Tensor):
+            batch = [batch[i] for i in range(batch.shape[0])]
+        targets: list[torch.Tensor] = []
+        for target in batch:
+            target = target.reshape(-1)
+            if len(target) > self.context_length:
+                target = target[-self.context_length :]
+            targets.append(self._impute_target(target).to(self.device))
+        return targets
+
+    def _run_model_on_targets(
+        self,
+        model: PatchTSTFMForPrediction,
+        targets: list[torch.Tensor],
+        h: int,
+        quantile_levels: list[float],
+    ) -> list[torch.Tensor]:
+        """Run inference with micro-batching and OOM halving."""
+        chunk_size = min(self.batch_size, len(targets))
+        outputs: list[torch.Tensor] = []
+        start = 0
+        with torch.inference_mode():
+            while start < len(targets):
+                end = min(start + chunk_size, len(targets))
+                chunk = targets[start:end]
+                while True:
+                    try:
+                        chunk_outputs = model(
+                            past_values=chunk,
+                            prediction_length=h,
+                            quantile_levels=quantile_levels,
+                        ).quantile_outputs
+                        if not isinstance(chunk_outputs, list):
+                            chunk_outputs = [
+                                chunk_outputs[i] for i in range(chunk_outputs.shape[0])
+                            ]
+                        outputs.extend(chunk_outputs)
+                        start = end
+                        break
+                    except torch.cuda.OutOfMemoryError:
+                        if len(chunk) == 1:
+                            raise
+                        chunk_size = max(1, chunk_size // 2)
+                        end = min(start + chunk_size, len(targets))
+                        chunk = targets[start:end]
+                        logger.warning(
+                            "PatchTST-FM OOM at batch_size %s, retrying with %s",
+                            chunk_size * 2,
+                            chunk_size,
+                        )
+                        if self.device == "cuda":
+                            torch.cuda.empty_cache()
+        return outputs
 
     def _predict_batch(
         self,
@@ -115,32 +197,23 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         quantiles: list[float] | None,
         # scale_factor: float,
     ) -> tuple[np.ndarray, np.ndarray | None]:
-        context = self._prepare_and_validate_context(batch)
-        if context.shape[1] > self.context_length:
-            context = context[..., -self.context_length :]
-        context = self._maybe_impute_missing(context)
-        # context is (batch, context_length)
-
-        # input data is grouped by id
-        # input shape: (id_group/batch, data)
-        # output shape: (batch/id, quantiles, h)
+        targets = self._prepare_targets(batch)
         quantile_levels = DEFAULT_QUANTILES if quantiles is None else quantiles
 
-        fcst = model(
-            context,
-            prediction_length=h,
-            quantile_levels=quantile_levels,
-            # scale_factor=scale_factor,
-            # batch_first=False,
-        ).quantile_outputs
-        fcst = fcst.squeeze(-1).transpose(-1, -2)  # now shape is (batch, h, quantiles)
+        outputs = self._run_model_on_targets(model, targets, h, quantile_levels)
 
-        # may not be the ideal solution, but this should be more adaptable
-        # when quantiles can vary.
-        # there is no guarantee that 0.5 will be in the list of quantiles.
-        fcst_mean = fcst.mean(dim=-1).squeeze() if fcst.ndim >= 3 else fcst.squeeze()
-        # fcst_mean = fcst[..., quantile_levels.index(0.5)].squeeze()
-        fcst_mean_np = fcst_mean.detach().cpu().numpy()
+        fcsts = []
+        for output in outputs:
+            fcst = output.squeeze(-1).transpose(-1, -2)  # (h, quantiles)
+            fcsts.append(fcst)
+
+        fcst = torch.stack(fcsts, dim=0)  # (batch, h, quantiles)
+        median_idx = (
+            quantile_levels.index(0.5)
+            if 0.5 in quantile_levels
+            else len(quantile_levels) // 2
+        )
+        fcst_mean_np = fcst[..., median_idx].detach().cpu().numpy()
         fcst_quantiles_np = (
             fcst.detach().cpu().numpy() if quantiles is not None else None
         )

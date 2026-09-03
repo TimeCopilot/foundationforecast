@@ -119,6 +119,9 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Install gift-eval deps (editable foundationforecast)
+        run: uv sync --frozen --no-dev
+
       - name: Run GIFT-Eval CI subset on Modal
         run: uv run modal run -m src.runners.run_modal::run_ci
         env:

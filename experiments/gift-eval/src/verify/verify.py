@@ -1,13 +1,22 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import pandas as pd
 from timecopilot_gift_eval import GIFTEval
 
 from src.eval.jobs import Job, result_csv
-from src.eval.models import reference_slug
-from .reference import compare_results, load_reference_results
+from src.eval.models import load_models_config, reference_slug
+from .reference import (
+    REPLICATION_ATOL,
+    REPLICATION_METRIC_COLS,
+    REPLICATION_RTOL,
+    compare_results,
+    load_reference_results,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class ReplicationSkip(Exception):
@@ -28,8 +37,8 @@ def verify_job(
     output_root: Path,
     *,
     storage_path: Path | str | None = None,
-    atol: float = 1e-2,
-    rtol: float = 1e-2,
+    atol: float = REPLICATION_ATOL,
+    rtol: float = REPLICATION_RTOL,
 ) -> None:
     slug = reference_slug(job.model_key)
     if slug is None:
@@ -40,8 +49,8 @@ def verify_job(
         raise FileNotFoundError(f"Missing results file: {csv_path}")
 
     actual_df = pd.read_csv(csv_path)
-    if actual_df.isna().any().any():
-        raise AssertionError(f"NaN values found in actual results at {csv_path}")
+    if actual_df[REPLICATION_METRIC_COLS].isna().any().any():
+        raise AssertionError(f"NaN values in replication metrics at {csv_path}")
 
     expected_df = load_reference_results(slug)
     dataset_key = (
@@ -63,8 +72,8 @@ def verify_all(
     output_root: Path,
     *,
     storage_path: Path | str | None = None,
-    atol: float = 1e-2,
-    rtol: float = 1e-2,
+    atol: float = REPLICATION_ATOL,
+    rtol: float = REPLICATION_RTOL,
 ) -> None:
     for job in jobs:
         verify_job(
@@ -74,3 +83,74 @@ def verify_all(
             atol=atol,
             rtol=rtol,
         )
+
+
+def load_actual_results(model_key: str, output_root: Path) -> pd.DataFrame:
+    consolidated = output_root / model_key / "all_results.csv"
+    if consolidated.exists():
+        return pd.read_csv(consolidated)
+
+    job_csvs = sorted((output_root / model_key).glob("**/all_results.csv"))
+    if not job_csvs:
+        raise FileNotFoundError(
+            f"No results found for {model_key!r} under {output_root}"
+        )
+
+    return (
+        pd.concat([pd.read_csv(path) for path in job_csvs], ignore_index=True)
+        .drop_duplicates(subset=["dataset"])
+        .reset_index(drop=True)
+    )
+
+
+def verify_model(
+    model_key: str,
+    output_root: Path,
+    *,
+    atol: float = REPLICATION_ATOL,
+    rtol: float = REPLICATION_RTOL,
+    require_complete: bool = False,
+) -> None:
+    slug = reference_slug(model_key)
+    if slug is None:
+        raise ReplicationSkip(f"No reference slug for model_key={model_key!r}")
+
+    actual = load_actual_results(model_key, output_root)
+    if actual[REPLICATION_METRIC_COLS].isna().any().any():
+        raise AssertionError(f"NaN values in replication metrics for {model_key!r}")
+
+    expected = load_reference_results(slug)
+    common = sorted(set(actual["dataset"]) & set(expected["dataset"]))
+    missing = sorted(set(expected["dataset"]) - set(actual["dataset"]))
+
+    if missing:
+        message = (
+            f"{model_key}: missing {len(missing)}/{len(expected)} "
+            f"HF datasets (have {len(actual)}, need overlap with reference)"
+        )
+        if require_complete:
+            raise AssertionError(message)
+        logger.warning(message)
+
+    if not common:
+        raise AssertionError(f"{model_key}: no overlapping datasets with HF reference")
+
+    actual_sub = actual[actual["dataset"].isin(common)].sort_values("dataset")
+    expected_sub = expected[expected["dataset"].isin(common)].sort_values("dataset")
+    compare_results(actual_sub, expected_sub, atol=atol, rtol=rtol)
+    logger.info(
+        "%s: verified %s/%s datasets against HF reference %s",
+        model_key,
+        len(common),
+        len(expected),
+        slug,
+    )
+
+
+def model_keys_with_reference() -> list[str]:
+    models = load_models_config()
+    return [
+        model_key
+        for model_key, spec in models.items()
+        if spec.get("reference_slug") is not None
+    ]

@@ -1,10 +1,33 @@
+# Representative CI subset for replication verification (Chronos on two datasets).
+# Every job is HF-verified in tests/test_replication.py after Modal run_ci.
 jobs:
-  - model_key: chronos-bolt-small
+  - model_key: amazon--chronos-bolt-small
     dataset_name: m4_weekly
     term: short
-  - model_key: chronos-bolt-small
+  - model_key: amazon--chronos-bolt-small
     dataset_name: m4_hourly
     term: short
-  - model_key: timesfm-2.5
+  - model_key: google--timesfm-2.5-200m-pytorch
+    dataset_name: m4_weekly
+    term: short
+  - model_key: NX-AI--TiRex-1.1-gifteval
+    dataset_name: m4_weekly
+    term: short
+  - model_key: Salesforce--moirai-1.1-R-base
+    dataset_name: m4_weekly
+    term: short
+  - model_key: Datadog--Toto-2.0-4m
+    dataset_name: m4_weekly
+    term: short
+  - model_key: ibm-research--flowstate
+    dataset_name: m4_weekly
+    term: short
+  - model_key: ibm-research--patchtst-fm-r1
+    dataset_name: m4_weekly
+    term: short
+  - model_key: theforecastingcompany--t0-alpha
+    dataset_name: m4_weekly
+    term: short
+  - model_key: tafsut-univariate-base
     dataset_name: m4_weekly
     term: short
