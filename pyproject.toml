@@ -35,6 +35,7 @@ dependencies = [
   "pandas>=2.2.0 ; python_full_version >= '3.13'",
   "scipy",
   "tabpfn-time-series==1.0.3 ; python_full_version < '3.13'",
+  "tafsut>=0.1.0",
   "tfc-t0>=0.2.3 ; python_full_version >= '3.11' and python_full_version < '3.14'",
   "timecopilot-chronos-forecasting>=0.2.2",
   "timecopilot-granite-tsfm>=0.2.1 ; python_full_version >= '3.11' and python_full_version < '3.14'",
@@ -50,11 +51,11 @@ dependencies = [
   "utilsforecast>=0.2.15",
 ]
 description = "Foundation time series forecasting models"
-license = "MIT"
+license = "Apache-2.0"
 name = "foundationforecast"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.1.1"
+version = "0.1.2"
 
 [project.optional-dependencies]
 plot = [

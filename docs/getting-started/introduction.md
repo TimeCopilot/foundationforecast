@@ -5,7 +5,7 @@
 ## What you can do
 
 - Run multiple pretrained foundation models with one interface via [`FoundationForecast`](../api/forecaster.md).
-- Compare Chronos, Moirai, TimesFM, Toto, TiRex, TimeGPT, FlowState, and more side by side.
+- Compare Chronos, Moirai, TimesFM, Toto, TiRex, TimeGPT, FlowState, Tafsut, and more side by side.
 - Finetune supported models (Chronos 2, TimeGPT) on your own data.
 - Detect anomalies using cross-validated z-score tests on any forecaster.
 
