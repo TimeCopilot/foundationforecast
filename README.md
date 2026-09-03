@@ -51,6 +51,12 @@ Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results
 
 ---
 
+## Highlights
+
+**Reproducible by design.** FoundationForecast implementations are regression-tested against [official GIFT-Eval submissions](https://huggingface.co/spaces/Salesforce/GIFT-Eval) to ensure they continue to reproduce their benchmark behavior. [CI](https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml) automatically re-runs [`experiments/gift-eval`](experiments/gift-eval) on Modal GPU and verifies MASE and CRPS against Hugging Face reference CSVs for every change.
+
+---
+
 ## Supported models
 
 Every model supports **forecast**, **cross-validation**, and **anomaly detection** through the same API. **Intervals** means prediction intervals via `level` or quantile forecasts. **Finetuning** marks models that can adapt to your data at inference time. **License** is the [weight/checkpoint license](https://huggingface.co/models) on the default Hugging Face repo (or provider terms for hosted APIs). See the note below for production use.
