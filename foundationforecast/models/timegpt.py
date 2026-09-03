@@ -6,6 +6,7 @@ import pandas as pd
 from nixtla import NixtlaClient
 
 from ..core.forecaster import Forecaster
+from ..core.utils import PanelData
 
 
 @dataclass
@@ -119,7 +120,9 @@ class TimeGPT(Forecaster):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
+        # NOTE: 'panel' is accepted for API compatibility; this model does not use it.
         """Generate forecasts for time series data using the model.
 
         This method produces point forecasts and, optionally, prediction

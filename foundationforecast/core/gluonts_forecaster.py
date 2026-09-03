@@ -2,6 +2,7 @@ from collections.abc import Iterable
 from contextlib import contextmanager
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import torch
 import utilsforecast.processing as ufp
@@ -9,9 +10,10 @@ from gluonts.dataset.pandas import PandasDataset
 from gluonts.model.forecast import Forecast
 from gluonts.torch.model.predictor import PyTorchPredictor
 from huggingface_hub import hf_hub_download
-from tqdm import tqdm
+from utilsforecast.processing import make_future_dataframe
 
 from .forecaster import Forecaster, QuantileConverter
+from .utils import PanelData, process_panel_from_df
 
 
 def fix_freq(freq: str) -> str:
@@ -84,12 +86,9 @@ class GluonTSForecaster(Forecaster):
             }
         )
         if quantiles is not None:
-            for q in quantiles:
-                fcst_df = ufp.assign_columns(
-                    fcst_df,
-                    f"{model_name}-q-{int(q * 100)}",
-                    fcst.quantile(q),
-                )
+            q_cols = [f"{model_name}-q-{int(q * 100)}" for q in quantiles]
+            q_vals = [fcst.quantile(q) for q in quantiles]
+            fcst_df = ufp.assign_columns(fcst_df, q_cols, q_vals)
         return fcst_df
 
     def gluonts_fcsts_to_df(
@@ -98,17 +97,34 @@ class GluonTSForecaster(Forecaster):
         freq: str,
         model_name: str,
         quantiles: list[float] | None,
+        h: int,
+        panel: PanelData,
     ) -> pd.DataFrame:
-        df = []
-        for fcst in tqdm(fcsts):
-            fcst_df = self.gluonts_instance_fcst_to_df(
-                fcst=fcst,
-                freq=freq,
-                model_name=model_name,
-                quantiles=quantiles,
-            )
-            df.append(fcst_df)
-        return pd.concat(df).reset_index(drop=True)
+        fcsts_list = list(fcsts)
+        if not fcsts_list:
+            return pd.DataFrame()
+        fcst_by_id = {fcst.item_id: fcst for fcst in fcsts_list}
+        ordered_fcsts = [fcst_by_id[uid] for uid in panel.uids]
+        point_fcsts = np.stack([fcst.median for fcst in ordered_fcsts])
+        fcst_df = make_future_dataframe(
+            uids=panel.uids,
+            last_times=pd.to_datetime(panel.last_times),
+            h=h,
+            freq=freq,
+        )
+        fcst_df = ufp.assign_columns(
+            fcst_df,
+            model_name,
+            point_fcsts.reshape(-1),
+        )
+        if quantiles is not None:
+            q_cols = [f"{model_name}-q-{int(q * 100)}" for q in quantiles]
+            q_vals = [
+                np.stack([fcst.quantile(q) for fcst in ordered_fcsts]).reshape(-1)
+                for q in quantiles
+            ]
+            fcst_df = ufp.assign_columns(fcst_df, q_cols, q_vals)
+        return fcst_df
 
     def forecast(
         self,
@@ -117,6 +133,7 @@ class GluonTSForecaster(Forecaster):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         """Generate forecasts for time series data using the model.
 
@@ -166,6 +183,8 @@ class GluonTSForecaster(Forecaster):
         df = maybe_convert_col_to_float32(df, "y")
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
+        if panel is None:
+            panel = process_panel_from_df(df)
         gluonts_dataset = PandasDataset.from_long_dataframe(
             df.copy(deep=False),
             target="y",
@@ -183,6 +202,8 @@ class GluonTSForecaster(Forecaster):
             freq=freq,
             model_name=self.alias,
             quantiles=qc.quantiles,
+            h=h,
+            panel=panel,
         )
         if qc.quantiles is not None:
             fcst_df = qc.maybe_convert_quantiles_to_level(

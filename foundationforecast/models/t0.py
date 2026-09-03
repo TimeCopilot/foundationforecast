@@ -14,7 +14,7 @@ from t0 import T0Forecaster
 from tqdm import tqdm
 
 from ..core.forecaster import Forecaster, QuantileConverter
-from ..core.utils import TimeSeriesDataset
+from ..core.utils import PanelData
 
 
 class T0(Forecaster):
@@ -127,6 +127,7 @@ class T0(Forecaster):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         """Generate forecasts for time series data using the model.
 
@@ -177,7 +178,9 @@ class T0(Forecaster):
         """
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        dataset = TimeSeriesDataset.from_df(df, batch_size=self.batch_size)
+        dataset = self._make_timeseries_dataset(
+            df, batch_size=self.batch_size, panel=panel
+        )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
         # T0 interpolates arbitrary quantile levels from its trained knots,
         # so the median and any user-requested quantiles come from one pass.

@@ -16,7 +16,7 @@ from tirex.base import PretrainedModel
 from tqdm import tqdm
 
 from ..core.forecaster import Forecaster, QuantileConverter
-from ..core.utils import TimeSeriesDataset
+from ..core.utils import PanelData, TimeSeriesDataset
 
 if TYPE_CHECKING:
     from tirex2.api_adapter import ForecastModel
@@ -190,6 +190,7 @@ class TiRex(Forecaster):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         """Generate forecasts for time series data using the model.
 
@@ -246,9 +247,10 @@ class TiRex(Forecaster):
                 "TiRex only supports the default quantiles, "
                 "please use the default quantiles or default level, "
             )
-        dataset = TimeSeriesDataset.from_df(
+        dataset = self._make_timeseries_dataset(
             df,
             batch_size=self.batch_size,
+            panel=panel,
         )
 
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
@@ -262,10 +264,12 @@ class TiRex(Forecaster):
             )
         fcst_df[self.alias] = fcsts_mean_np.reshape(-1, 1)
         if qc.quantiles is not None and fcsts_quantiles_np is not None:
-            for i, q in enumerate(qc.quantiles):
-                fcst_df[f"{self.alias}-q-{int(q * 100)}"] = fcsts_quantiles_np[
-                    ..., i
-                ].reshape(-1, 1)
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                fcsts_quantiles_np,
+            )
             fcst_df = qc.maybe_convert_quantiles_to_level(
                 fcst_df,
                 models=[self.alias],
