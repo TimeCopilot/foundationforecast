@@ -1146,6 +1146,7 @@ dependencies = [
   {marker = "python_full_version >= '3.13'", name = "scipy", source = {registry = "https://pypi.org/simple"}, version = "1.18.0"},
   {name = "huggingface-hub"},
   {name = "nixtla"},
+  {name = "tafsut"},
   {name = "timecopilot-chronos-forecasting"},
   {name = "timecopilot-timesfm"},
   {name = "timecopilot-tirex"},
@@ -1158,7 +1159,7 @@ dependencies = [
 ]
 name = "foundationforecast"
 source = {editable = "../../"}
-version = "0.1.1"
+version = "0.1.2"
 
 [package.metadata]
 provides-extras = ["plot"]
@@ -1178,6 +1179,7 @@ requires-dist = [
   {name = "huggingface-hub", specifier = ">=0.36.2,<2.0"},
   {name = "nixtla", specifier = ">=0.7.0"},
   {name = "scipy"},
+  {name = "tafsut", specifier = ">=0.1.0"},
   {name = "timecopilot-chronos-forecasting", specifier = ">=0.2.2"},
   {name = "timecopilot-timesfm", specifier = ">=0.3.0"},
   {name = "timecopilot-toto", specifier = ">=0.1.7"},
@@ -4840,6 +4842,22 @@ source = {registry = "https://pypi.org/simple"}
 version = "0.10.0"
 wheels = [
   {hash = "sha256:f0b0622e567335c8fabaaa659f1b33bcb6ddfe2e496071b743aa113f8774f2d3", size = 39814, upload-time = "2026-03-04T18:55:31.284Z", url = "https://files.pythonhosted.org/packages/99/55/db07de81b5c630da5cbf5c7df646580ca26dfaefa593667fc6f2fe016d2e/tabulate-0.10.0-py3-none-any.whl"},
+]
+
+[[package]]
+dependencies = [
+  {marker = "python_full_version < '3.13'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "1.26.4"},
+  {marker = "python_full_version >= '3.13'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.2"},
+  {name = "huggingface-hub"},
+  {name = "safetensors"},
+  {name = "torch"},
+]
+name = "tafsut"
+sdist = {hash = "sha256:41c1f3a512995090decc2c8a46041559d9d64356806a3da81ae97494ea7cca4a", size = 16875, upload-time = "2026-08-12T14:53:37.042Z", url = "https://files.pythonhosted.org/packages/fa/70/9041794f03613571ddaf136b8139a9c9cad9db49f367caeb7be6696f7791/tafsut-0.1.0.tar.gz"}
+source = {registry = "https://pypi.org/simple"}
+version = "0.1.0"
+wheels = [
+  {hash = "sha256:8c892f4f521ae60014073e43faabae2c8e3427db554f035729c29590b4d5de1a", size = 17394, upload-time = "2026-08-12T14:53:35.779Z", url = "https://files.pythonhosted.org/packages/20/18/08de8e3db29a5cfe06449ef692113e50966c7915c8709aaa4a0ac4a9e7bf/tafsut-0.1.0-py3-none-any.whl"},
 ]
 
 [[package]]
