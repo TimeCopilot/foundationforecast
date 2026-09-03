@@ -4,6 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
+from numpy.testing import assert_allclose
 
 GIFT_EVAL_RESULTS_BASE = (
     "https://huggingface.co/spaces/Salesforce/GIFT-Eval/raw/main/results"
@@ -48,10 +49,27 @@ def compare_results(
         raise AssertionError("Actual results are empty")
     if expected.empty:
         raise AssertionError("Expected results are empty")
-    pd.testing.assert_frame_equal(
-        actual.reset_index(drop=True)[REPLICATION_METRIC_COLS],
-        expected.reset_index(drop=True)[REPLICATION_METRIC_COLS],
-        atol=atol,
-        rtol=rtol,
-        check_dtype=False,
-    )
+    actual_sub = actual.reset_index(drop=True)[REPLICATION_METRIC_COLS]
+    expected_sub = expected.reset_index(drop=True)[REPLICATION_METRIC_COLS]
+    try:
+        assert_allclose(
+            actual_sub.to_numpy(dtype=float),
+            expected_sub.to_numpy(dtype=float),
+            atol=atol,
+            rtol=rtol,
+        )
+    except AssertionError as exc:
+        diffs = actual_sub.to_numpy(dtype=float) - expected_sub.to_numpy(dtype=float)
+        details = ", ".join(
+            f"{col}: actual={act:.6g} expected={exp:.6g} diff={diff:.6g}"
+            for col, act, exp, diff in zip(
+                REPLICATION_METRIC_COLS,
+                actual_sub.iloc[0],
+                expected_sub.iloc[0],
+                diffs[0],
+                strict=True,
+            )
+        )
+        raise AssertionError(
+            f"Replication metrics differ (atol={atol}, rtol={rtol}): {details}"
+        ) from exc
