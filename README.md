@@ -25,7 +25,7 @@ At the same time, every lab also ships its own API, dependencies, data conventio
 
 **FoundationForecast** removes that friction: one `FoundationForecast` class, one data format, and the same methods: `forecast`, `cross_validation`, and `detect_anomalies`, across time series foundation models. ✨
 
-Developed with 💙 by the [TimeCopilot](https://timecopilot.dev/) team.
+Developed with 💙 by the [TimeCopilot](https://timecopilot.dev/) crew.
 
 ---
 
