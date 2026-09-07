@@ -26,6 +26,7 @@ nav:
       - Compare Foundation Models: examples/ts-foundation-models-comparison-quickstart.ipynb
       - Family Guides:
           - Chronos: examples/chronos-family.ipynb
+          - TimesFM: examples/timesfm-family.ipynb
           - TiRex: examples/tirex-family.ipynb
           - Toto: examples/toto-family.ipynb
       - Finetuning: examples/finetuning.ipynb
@@ -36,6 +37,10 @@ nav:
   - Community:
       - Getting Help: community/help.md
       - Contributing: contributing.md
+  - Changelogs:
+      - changelogs/index.md
+      - changelogs/v0.1.3.md
+      - changelogs/v0.1.2.md
 
 theme:
   name: material
