@@ -92,6 +92,14 @@ models:
       repo_id: google/timesfm-2.5-200m-pytorch
       batch_size: 64
 
+  google--timesfm-3.0-pytorch:
+    class: foundationforecast.models.timesfm.TimesFM
+    reference_slug: TimesFM-3
+    kwargs:
+      repo_id: google/timesfm-3.0-pytorch
+      alias: TimesFM-3
+      batch_size: 64
+
   # --- TiRex (GIFT-Eval-specific HF weights) ---
   NX-AI--TiRex-1.1-gifteval:
     class: foundationforecast.models.tirex.TiRex

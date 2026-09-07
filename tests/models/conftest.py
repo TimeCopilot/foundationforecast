@@ -30,6 +30,10 @@ models = [
         repo_id="google/timesfm-2.5-200m-pytorch",
         context_length=256,
     ),
+    TimesFM(
+        repo_id="google/timesfm-3.0-pytorch",
+        context_length=256,
+    ),
     Moirai(
         context_length=256,
         batch_size=2,

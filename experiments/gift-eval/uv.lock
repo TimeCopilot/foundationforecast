@@ -1181,7 +1181,7 @@ requires-dist = [
   {name = "scipy"},
   {name = "tafsut", specifier = ">=0.1.0"},
   {name = "timecopilot-chronos-forecasting", specifier = ">=0.2.2"},
-  {name = "timecopilot-timesfm", specifier = ">=0.3.0"},
+  {name = "timecopilot-timesfm", specifier = ">=0.4.0"},
   {name = "timecopilot-toto", specifier = ">=0.1.7"},
   {name = "timecopilot-toto-2", specifier = ">=0.1.1"},
   {name = "torch"},
@@ -5020,11 +5020,11 @@ dependencies = [
   {name = "wandb"},
 ]
 name = "timecopilot-timesfm"
-sdist = {hash = "sha256:e0d2608cc30b4d010027f0aca7e74874cd289d2d31dd19d08e4397c017124e7a", size = 61715, upload-time = "2026-06-25T01:55:57.929Z", url = "https://files.pythonhosted.org/packages/b6/4e/2ed6fb5533862d858861cb3e1060c085f40f58d64937d5e9523f0d2e9c20/timecopilot_timesfm-0.3.0.tar.gz"}
+sdist = {hash = "sha256:59d73de66e697fadc4613f4e2c49f1d81c71b35f042e4654aa745010c28eab0f", size = 91968, upload-time = "2026-09-07T16:38:04.76Z", url = "https://files.pythonhosted.org/packages/e9/a7/85a07334d68be96f40e33e9087bf3e60e3a51d5c30984ac0764168854b75/timecopilot_timesfm-0.4.0.tar.gz"}
 source = {registry = "https://pypi.org/simple"}
-version = "0.3.0"
+version = "0.4.0"
 wheels = [
-  {hash = "sha256:98c3c11532957dc2102a989c1457a73fcb6616059a5b0dd6c1a8c2260dd05dc0", size = 89253, upload-time = "2026-06-25T01:55:56.942Z", url = "https://files.pythonhosted.org/packages/ca/95/35e8ba2f2416fb8afc32290eb727beb70c276e685f3d93936f8484586da1/timecopilot_timesfm-0.3.0-py3-none-any.whl"},
+  {hash = "sha256:874aac6e53ec1210a3debe3e350b61ce390880bf3f16ae4af5053f63eb3f2989", size = 135822, upload-time = "2026-09-07T16:38:03.66Z", url = "https://files.pythonhosted.org/packages/04/08/c8956c7ca45a9d6dd06e8070957494087f0f243494a08b5005ab4fbc3c82/timecopilot_timesfm-0.4.0-py3-none-any.whl"},
 ]
 
 [[package]]
