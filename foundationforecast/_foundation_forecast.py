@@ -19,6 +19,8 @@ class FoundationForecast(MultiModelForecasterMixin, Forecaster):
         fallback_model: Forecaster | None = None,
         clean_cache: bool = False,
     ):
+        if not models:
+            raise ValueError("At least one model is required.")
         self._validate_unique_aliases(models)
         self.models = models
         self.fallback_model = fallback_model
