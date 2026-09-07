@@ -137,7 +137,7 @@ class _TimesFMV2_p5(Forecaster):
         context_length: int,
         batch_size: int,
         alias: str,
-        **kwargs: dict,
+        **kwargs,
     ):
         self.repo_id = repo_id
         self.context_length = context_length
@@ -243,7 +243,7 @@ class _TimesFMV3(Forecaster):
         context_length: int,
         batch_size: int,
         alias: str,
-        **kwargs: dict,
+        **kwargs,
     ):
         self.repo_id = repo_id
         self.context_length = context_length
@@ -357,7 +357,7 @@ class TimesFM(Forecaster):
         context_length: int = 2048,
         batch_size: int = 64,
         alias: str = "TimesFM",
-        **kwargs: dict,
+        **kwargs,
     ):
         if "pytorch" not in repo_id and repo_id not in _GIFT_EVAL_LEGACY_REPOS:
             legacy = ", ".join(_GIFT_EVAL_LEGACY_REPOS)
@@ -401,7 +401,7 @@ class TimesFM(Forecaster):
         context_length: int = 2048,
         batch_size: int = 64,
         alias: str = "TimesFM",
-        kwargs: dict | None = None,
+        **kwargs,
     ):
         """
         Args:
@@ -426,8 +426,8 @@ class TimesFM(Forecaster):
                 Adjust based on available memory and model size.
             alias (str, optional): Name to use for the model in output DataFrames and
                 logs. Defaults to `TimesFM`.
-            kwargs (dict, optional): Additional keyword arguments to pass to the model.
-                Defaults to None. Used for TimesFM 2.5 and 3.0 models.
+            **kwargs: Extra keyword arguments forwarded to the backend model config.
+                Used for TimesFM 2.5 and 3.0 models.
 
         Notes:
             **Academic Reference:**
