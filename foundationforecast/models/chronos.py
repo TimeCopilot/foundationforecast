@@ -340,6 +340,8 @@ class Chronos(Forecaster):
         """
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
+        if panel is None:
+            panel = process_panel_from_df(df)
         dataset = self._make_timeseries_dataset(
             df,
             batch_size=self.batch_size,

@@ -98,7 +98,6 @@ class _TimesFMV1(Forecaster):
         quantiles: list[float] | None = None,
         panel: PanelData | None = None,
     ) -> pd.DataFrame:
-        _ = panel
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
         if qc.quantiles is not None and len(qc.quantiles) != len(DEFAULT_QUANTILES_TFM):
@@ -207,7 +206,6 @@ class _TimesFMV2_p5(Forecaster):
         quantiles: list[float] | None = None,
         panel: PanelData | None = None,
     ) -> pd.DataFrame:
-        _ = panel
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
         if qc.quantiles is not None and len(qc.quantiles) != len(DEFAULT_QUANTILES_TFM):
@@ -316,6 +314,7 @@ class _TimesFMV3(Forecaster):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
@@ -325,10 +324,11 @@ class _TimesFMV3(Forecaster):
                 "please use the default quantiles or default level, "
                 "see https://github.com/google-research/timesfm/issues/286"
             )
-        dataset = TimeSeriesDataset.from_df(
+        dataset = self._make_timeseries_dataset(
             df,
             batch_size=self.batch_size,
             dtype=torch.float32,
+            panel=panel,
         )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
         with self._get_predictor(prediction_length=h) as forecaster:

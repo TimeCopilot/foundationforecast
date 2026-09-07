@@ -8,7 +8,7 @@ from tafsut import forecast as tafsut_forecast
 from tqdm import tqdm
 
 from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
-from ..core.utils import TimeSeriesDataset
+from ..core.utils import PanelData, TimeSeriesDataset
 
 
 class Tafsut(Forecaster, _DataProcessor):
@@ -135,6 +135,7 @@ class Tafsut(Forecaster, _DataProcessor):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         """Generate forecasts for time series data using the model.
 
@@ -184,10 +185,11 @@ class Tafsut(Forecaster, _DataProcessor):
         """
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        dataset = TimeSeriesDataset.from_df(
+        dataset = self._make_timeseries_dataset(
             df,
             batch_size=self.batch_size,
             dtype=self.dtype,
+            panel=panel,
         )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
         with self._get_model() as model:

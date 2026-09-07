@@ -20,6 +20,9 @@ def process_panel_from_df(
     time_col: str = "ds",
     target_col: str = "y",
 ) -> PanelData:
+    if not pd.api.types.is_datetime64_any_dtype(df[time_col]):
+        df = df.copy()
+        df[time_col] = pd.to_datetime(df[time_col])
     processed = process_df(df, id_col, time_col, target_col)
     series_arrays = [
         processed.data[s:e, 0]

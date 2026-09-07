@@ -88,7 +88,8 @@ class GluonTSForecaster(Forecaster):
         if quantiles is not None:
             q_cols = [f"{model_name}-q-{int(q * 100)}" for q in quantiles]
             q_vals = [fcst.quantile(q) for q in quantiles]
-            fcst_df = ufp.assign_columns(fcst_df, q_cols, q_vals)
+            for q_col, q_val in zip(q_cols, q_vals, strict=True):
+                fcst_df = ufp.assign_columns(fcst_df, q_col, q_val)
         return fcst_df
 
     def gluonts_fcsts_to_df(
@@ -123,7 +124,8 @@ class GluonTSForecaster(Forecaster):
                 np.stack([fcst.quantile(q) for fcst in ordered_fcsts]).reshape(-1)
                 for q in quantiles
             ]
-            fcst_df = ufp.assign_columns(fcst_df, q_cols, q_vals)
+            for q_col, q_val in zip(q_cols, q_vals, strict=True):
+                fcst_df = ufp.assign_columns(fcst_df, q_col, q_val)
         return fcst_df
 
     def forecast(

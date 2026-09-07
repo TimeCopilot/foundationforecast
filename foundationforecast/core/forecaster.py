@@ -193,7 +193,9 @@ class Forecaster:
     ) -> pd.DataFrame:
         q_cols = [f"{alias}-q-{int(q * 100)}" for q in quantiles]
         q_vals = [fcsts_quantiles_np[..., i].reshape(-1) for i in range(len(quantiles))]
-        return ufp.assign_columns(fcst_df, q_cols, q_vals)
+        for q_col, q_val in zip(q_cols, q_vals, strict=True):
+            fcst_df = ufp.assign_columns(fcst_df, q_col, q_val)
+        return fcst_df
 
     def forecast(
         self,
@@ -202,6 +204,7 @@ class Forecaster:
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         raise NotImplementedError("This method must be implemented in a subclass.")
 
