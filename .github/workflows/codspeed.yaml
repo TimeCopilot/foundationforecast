@@ -1,0 +1,51 @@
+name: CodSpeed
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # `workflow_dispatch` allows CodSpeed to trigger backtest
+  # performance analysis in order to generate initial data.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # for OpenID Connect authentication with CodSpeed
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmarks:
+    name: Run benchmarks
+    runs-on: ubuntu-latest
+    env:
+      UV_PYTHON: "3.11"
+
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Free disk space in action runner
+        uses: endersonmenezes/free-disk-space@v3
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          rm_cmd: "rmz"
+          rmz_version: "3.1.1"
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Run benchmarks
+        uses: CodSpeedHQ/action@v5
+        with:
+          mode: simulation
+          run: uv run pytest benchmarks/ --codspeed
