@@ -29,6 +29,7 @@ def cached_model_context(
         finally:
             release_model(model)
     else:
+        assert cache_key is not None
         yield cache.get_or_load(cache_key, loader)
 
 

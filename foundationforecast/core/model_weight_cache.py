@@ -65,9 +65,7 @@ class ModelWeightCache:
         boundary = f"{prefix}:"
         with self._lock:
             keys = [
-                key
-                for key in self._cache
-                if key == prefix or key.startswith(boundary)
+                key for key in self._cache if key == prefix or key.startswith(boundary)
             ]
         for key in keys:
             self.clear(key)
