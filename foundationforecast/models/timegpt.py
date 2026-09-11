@@ -54,6 +54,7 @@ class TimeGPT(Forecaster):
         model: str = "timegpt-1",
         alias: str = "TimeGPT",
         finetuning_config: TimeGPTFinetuningConfig | None = None,
+        reuse_loaded_model: bool = True,
     ):
         """
         Args:
@@ -94,6 +95,7 @@ class TimeGPT(Forecaster):
             - For more information, see the
               [TimeGPT documentation](https://www.nixtla.io/docs).
         """
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.api_key = api_key
         self.base_url = base_url
         self.max_retries = max_retries

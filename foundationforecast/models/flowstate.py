@@ -1,4 +1,3 @@
-import gc
 import sys
 from collections import defaultdict
 from contextlib import contextmanager
@@ -36,6 +35,7 @@ class FlowState(Forecaster, _DataProcessor):
         context_length: int = 2_048,
         batch_size: int = 1_024,
         alias: str = "FlowState",
+        reuse_loaded_model: bool = True,
     ):
         """
         Initialize FlowState time series foundation model.
@@ -86,6 +86,7 @@ class FlowState(Forecaster, _DataProcessor):
             - `ibm-research/flowstate` (default)
             - `ibm-granite/granite-timeseries-flowstate-r1`.
         """
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.repo_id = repo_id
         self.scale_factor = scale_factor
         self.context_length = context_length
@@ -98,29 +99,16 @@ class FlowState(Forecaster, _DataProcessor):
         else:
             self.device = "cpu"
         self.dtype = torch.float32
-        self._model: FlowStateForPrediction | None = None
 
     def _load_model(self) -> FlowStateForPrediction:
-        if self._model is None:
-            self._model = FlowStateForPrediction.from_pretrained(self.repo_id).to(
-                self.device
-            )
-            self._model.eval()
-        return self._model
-
-    def _release_model(self) -> None:
-        if self._model is None:
-            return
-        self._model.cpu()
-        del self._model
-        self._model = None
-        gc.collect()
-        if self.device == "cuda":
-            torch.cuda.empty_cache()
+        model = FlowStateForPrediction.from_pretrained(self.repo_id).to(self.device)
+        model.eval()
+        return model
 
     @contextmanager
     def _get_model(self) -> FlowStateForPrediction:
-        yield self._load_model()
+        with self._cached_model(self._load_model) as model:
+            yield model
 
     @staticmethod
     def _prepare_target(target: torch.Tensor) -> torch.Tensor:

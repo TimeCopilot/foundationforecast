@@ -19,6 +19,16 @@ class FoundationForecast(MultiModelForecasterMixin, Forecaster):
         fallback_model: Forecaster | None = None,
         clean_cache: bool = False,
     ):
+        """Run multiple foundation models through one interface.
+
+        Args:
+            models: Forecasters to run; each must have a unique ``alias``.
+            fallback_model: Optional substitute when a model raises
+                ``ValueError`` or ``RuntimeError``.
+            clean_cache: When ``True``, call ``clear_model_cache()`` on every
+                model after each one finishes forecasting. Helps limit peak GPU
+                memory in multi-model ensembles.
+        """
         if not models:
             raise ValueError("At least one model is required.")
         self._validate_unique_aliases(models)

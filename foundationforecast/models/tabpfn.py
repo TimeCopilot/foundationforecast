@@ -44,6 +44,7 @@ class TabPFN(Forecaster):
         mode: TabPFNMode | None = None,
         api_key: str | None = None,
         alias: str = "TabPFN",
+        reuse_loaded_model: bool = True,
     ):
         """
         Args:
@@ -83,6 +84,7 @@ class TabPFN(Forecaster):
             - For LOCAL mode, a CUDA-capable GPU is recommended for best performance.
             - The model is only available for Python < 3.13.
         """
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         if features is None:
             features = [
                 RunningIndexFeature(),
@@ -98,14 +100,16 @@ class TabPFN(Forecaster):
         self.mode = mode
         self.alias = alias
 
+    def _model_cache_prefix(self) -> str | None:
+        return f"TabPFN:{self.mode}"
+
+    def _load_model(self) -> TabPFNTimeSeriesPredictor:
+        return TabPFNTimeSeriesPredictor(tabpfn_mode=self.mode)
+
     @contextmanager
     def _get_model(self) -> TabPFNTimeSeriesPredictor:
-        model = TabPFNTimeSeriesPredictor(tabpfn_mode=self.mode)
-        try:
+        with self._cached_model(self._load_model) as model:
             yield model
-        finally:
-            del model
-            torch.cuda.empty_cache()
 
     def _forecast(
         self,

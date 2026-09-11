@@ -37,6 +37,7 @@ class T0(Forecaster):
         context_length: int = 4096,
         batch_size: int = 16,
         alias: str = "t0-alpha",
+        reuse_loaded_model: bool = True,
     ):
         # ruff: noqa: E501
         """
@@ -82,27 +83,25 @@ class T0(Forecaster):
               `predict` API; this integration currently exposes the univariate
               path only.
         """
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.repo_id = repo_id
         self.context_length = context_length
         self.batch_size = batch_size
         self.alias = alias
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    @contextmanager
-    def _get_model(self) -> T0Forecaster:
+    def _load_model(self) -> T0Forecaster:
         # huggingface_hub may not inject config.json into model kwargs when the
         # checkpoint repo is gated; pass the config explicitly.
         config_path = hf_hub_download(self.repo_id, CONFIG_NAME)
         with open(config_path, encoding="utf-8") as f:
             config = json.load(f)
-        model = (
-            T0Forecaster.from_pretrained(self.repo_id, **config).to(self.device).eval()
-        )
-        try:
+        return T0Forecaster.from_pretrained(self.repo_id, **config).to(self.device).eval()
+
+    @contextmanager
+    def _get_model(self) -> T0Forecaster:
+        with self._cached_model(self._load_model) as model:
             yield model
-        finally:
-            del model
-            torch.cuda.empty_cache()
 
     def _to_context(self, batch: list[torch.Tensor]) -> torch.Tensor:
         """Left-pad a ragged batch with NaN (treated as missing by T0)."""
