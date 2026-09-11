@@ -41,6 +41,33 @@ def test_model_weight_cache_lru_eviction():
     assert loads == ["a", "b", "c"]
 
 
+def test_clear_prefix_does_not_match_sibling_repo_ids():
+    cache = ModelWeightCache(max_cached_models=3)
+    cache.get_or_load("T0:repo-a:float32", lambda: "model-a")
+    cache.get_or_load("T0:repo-a2:float32", lambda: "model-a2")
+    cache.clear_prefix("T0:repo-a")
+    assert "T0:repo-a:float32" not in cache
+    assert "T0:repo-a2:float32" in cache
+
+
+def test_zero_capacity_reloads_each_call(mocker):
+    load_count = 0
+    fake_model = mocker.Mock()
+
+    def fake_load():
+        nonlocal load_count
+        load_count += 1
+        return fake_model
+
+    df = _patch_chronos_forecast_deps(mocker, fake_load)
+    set_max_cached_models(0)
+    model = Chronos(repo_id="amazon/chronos-t5-tiny", reuse_loaded_model=True)
+
+    model.forecast(df=df, h=2, freq="D")
+    model.forecast(df=df, h=2, freq="D")
+    assert load_count == 2
+
+
 def test_set_max_cached_models_evicts_when_shrinking():
     set_max_cached_models(2)
     cache = get_model_weight_cache()
@@ -165,3 +192,43 @@ def test_foundation_forecast_clean_cache_calls_clear_model_cache(mocker):
     )
     forecaster.forecast(df=df, h=2, freq="D")
     assert clear_calls == {"a": 2, "b": 2}
+
+
+def test_foundation_forecast_clean_cache_includes_fallback(mocker):
+    from tests.helpers import generate_series
+    from foundationforecast import FoundationForecast
+    from foundationforecast.core.forecaster import Forecaster
+
+    class FailingModel(Forecaster):
+        alias = "FailingModel"
+
+        def forecast(self, df, h, freq=None, level=None, quantiles=None):
+            raise RuntimeError("Intentional failure")
+
+    fallback = Chronos(repo_id="amazon/chronos-t5-tiny", alias="Fallback")
+    clear_calls = {"fallback": 0}
+
+    def clear_fallback():
+        clear_calls["fallback"] += 1
+
+    mocker.patch.object(fallback, "clear_model_cache", side_effect=clear_fallback)
+    mocker.patch.object(
+        fallback,
+        "forecast",
+        return_value=pd.DataFrame(
+            {
+                "unique_id": ["A", "A"],
+                "ds": pd.date_range("2020-01-01", periods=2, freq="D"),
+                "Fallback": [1.0, 2.0],
+            }
+        ),
+    )
+
+    df = generate_series(n_series=1, freq="D", min_length=10)
+    forecaster = FoundationForecast(
+        models=[FailingModel()],
+        fallback_model=fallback,
+        clean_cache=True,
+    )
+    forecaster.forecast(df=df, h=2, freq="D")
+    assert clear_calls["fallback"] == 1

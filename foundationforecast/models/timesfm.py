@@ -303,11 +303,11 @@ class _TimesFMV3(Forecaster):
         return f"timesfm_v3:{self.repo_id}"
 
     def _model_cache_key(self, prediction_length: int) -> str:
+        del prediction_length
         kwargs_key = tuple(sorted((self.kwargs or {}).items()))
         return (
             f"{self._model_cache_prefix()}:"
-            f"{self.context_length}:{self.batch_size}:"
-            f"{prediction_length}:{kwargs_key}"
+            f"{self.context_length}:{self.batch_size}:{kwargs_key}"
         )
 
     def _load_predictor(self, prediction_length: int) -> TimesFM3Evaluator:

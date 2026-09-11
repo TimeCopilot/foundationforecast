@@ -147,10 +147,6 @@ class Toto(Forecaster):
         self._is_toto2_cache = _TOTO2_CONFIG_KEY in config
         return self._is_toto2_cache
 
-    def _model_cache_prefix(self) -> str | None:
-        version = "v2" if self._is_toto2() else "v1"
-        return f"{type(self).__qualname__}:{self.repo_id}:{version}"
-
     def _load_model(self) -> TotoForecaster | Toto2Model:
         if self._is_toto2():
             return Toto2Model.from_pretrained(self.repo_id).to(self.device).eval()

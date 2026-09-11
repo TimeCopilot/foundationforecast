@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from collections import OrderedDict
 from collections.abc import Callable
 from typing import Any, TypeVar
@@ -20,6 +21,7 @@ class ModelWeightCache:
             raise ValueError("max_cached_models must be >= 0.")
         self._max_cached_models = max_cached_models
         self._cache: OrderedDict[str, Any] = OrderedDict()
+        self._lock = threading.Lock()
 
     @property
     def max_cached_models(self) -> int:
@@ -28,33 +30,51 @@ class ModelWeightCache:
     def get_or_load(self, key: str, loader: Callable[[], T]) -> T:
         if self._max_cached_models == 0:
             return loader()
-        if key in self._cache:
-            self._cache.move_to_end(key)
-            return self._cache[key]
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+                return self._cache[key]
+            while len(self._cache) >= self._max_cached_models:
+                _, evicted = self._cache.popitem(last=False)
+                release_model(evicted)
         model = loader()
-        self._cache[key] = model
-        while len(self._cache) > self._max_cached_models:
-            _, evicted = self._cache.popitem(last=False)
-            release_model(evicted)
-        return model
+        with self._lock:
+            cached = self._cache.get(key)
+            if cached is not None:
+                release_model(model)
+                self._cache.move_to_end(key)
+                return cached
+            while len(self._cache) >= self._max_cached_models:
+                _, evicted = self._cache.popitem(last=False)
+                release_model(evicted)
+            self._cache[key] = model
+            return model
 
     def clear(self, key: str | None = None) -> None:
-        if key is None:
-            for model in self._cache.values():
-                release_model(model)
-            self._cache.clear()
-            return
-        model = self._cache.pop(key, None)
-        if model is not None:
+        with self._lock:
+            if key is None:
+                models = list(self._cache.values())
+                self._cache.clear()
+            else:
+                model = self._cache.pop(key, None)
+                models = [model] if model is not None else []
+        for model in models:
             release_model(model)
 
     def clear_prefix(self, prefix: str) -> None:
-        keys = [key for key in self._cache if key.startswith(prefix)]
+        boundary = f"{prefix}:"
+        with self._lock:
+            keys = [
+                key
+                for key in self._cache
+                if key == prefix or key.startswith(boundary)
+            ]
         for key in keys:
             self.clear(key)
 
     def __contains__(self, key: str) -> bool:
-        return key in self._cache
+        with self._lock:
+            return key in self._cache
 
 
 def release_model(model: Any) -> None:
@@ -88,7 +108,8 @@ def set_max_cached_models(max_cached_models: int) -> None:
     previous = _model_weight_cache
     _model_weight_cache = ModelWeightCache(max_cached_models=max_cached_models)
     if previous is not None:
-        _model_weight_cache._cache = previous._cache.copy()
+        with previous._lock:
+            _model_weight_cache._cache = previous._cache.copy()
         while len(_model_weight_cache._cache) > max_cached_models:
             _, evicted = _model_weight_cache._cache.popitem(last=False)
             release_model(evicted)

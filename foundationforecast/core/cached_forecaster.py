@@ -18,14 +18,18 @@ def cached_model_context(
     cache_key: str | None,
     loader: Callable[[], T],
 ) -> Iterator[T]:
-    if not reuse_loaded_model or cache_key is None:
+    cache = get_model_weight_cache()
+    use_cache = (
+        reuse_loaded_model and cache_key is not None and cache.max_cached_models > 0
+    )
+    if not use_cache:
         model = loader()
         try:
             yield model
         finally:
             release_model(model)
     else:
-        yield get_model_weight_cache().get_or_load(cache_key, loader)
+        yield cache.get_or_load(cache_key, loader)
 
 
 def clear_model_cache_for_prefix(prefix: str | None) -> None:
