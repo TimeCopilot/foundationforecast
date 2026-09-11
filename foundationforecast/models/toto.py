@@ -13,7 +13,7 @@ from toto2 import Toto2Model
 from tqdm import tqdm
 
 from ..core.forecaster import Forecaster, QuantileConverter
-from ..core.utils import TimeSeriesDataset
+from ..core.utils import PanelData, TimeSeriesDataset
 
 # Config key that only appears in Toto 2.0 checkpoints (a Toto2ModelConfig field).
 # Used to dispatch between the Toto 1.0 and Toto 2.0 backends.
@@ -357,6 +357,7 @@ class Toto(Forecaster):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         """Generate forecasts for time series data using the model.
 
@@ -407,7 +408,9 @@ class Toto(Forecaster):
         """
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        dataset = TimeSeriesDataset.from_df(df, batch_size=self.batch_size)
+        dataset = self._make_timeseries_dataset(
+            df, batch_size=self.batch_size, panel=panel
+        )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
         forecast_fn = self._forecast_toto2 if self._is_toto2() else self._forecast
         with self._get_model() as model:
@@ -419,10 +422,12 @@ class Toto(Forecaster):
             )
         fcst_df[self.alias] = fcsts_mean_np.reshape(-1, 1)
         if qc.quantiles is not None and fcsts_quantiles_np is not None:
-            for i, q in enumerate(qc.quantiles):
-                fcst_df[f"{self.alias}-q-{int(q * 100)}"] = fcsts_quantiles_np[
-                    ..., i
-                ].reshape(-1, 1)
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                fcsts_quantiles_np,
+            )
             fcst_df = qc.maybe_convert_quantiles_to_level(
                 fcst_df,
                 models=[self.alias],

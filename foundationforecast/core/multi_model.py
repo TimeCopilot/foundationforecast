@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import pandas as pd
+import utilsforecast.processing as ufp
 
 from .forecaster import Forecaster, maybe_infer_freq
+from .utils import PanelData, process_panel_from_df
 
 
 class MultiModelForecasterMixin:
@@ -49,10 +51,13 @@ class MultiModelForecasterMixin:
         freq: str | None,
         level: list[int | float] | None,
         quantiles: list[float] | None,
+        panel: PanelData | None = None,
         **kwargs,
     ) -> pd.DataFrame:
         Forecaster.validate_input(df, h)
         freq = maybe_infer_freq(df, freq)
+        if panel is None and attr == "forecast":
+            panel = process_panel_from_df(df)
         res_df: pd.DataFrame | None = None
         for model in self.models:
             known_kwargs = {
@@ -63,6 +68,8 @@ class MultiModelForecasterMixin:
             }
             if attr != "detect_anomalies":
                 known_kwargs["quantiles"] = quantiles
+            if panel is not None:
+                known_kwargs["panel"] = panel
             fn = getattr(model, attr)
             try:
                 res_df_model = fn(**known_kwargs, **kwargs)
@@ -86,7 +93,7 @@ class MultiModelForecasterMixin:
             else:
                 if "y" in res_df_model:
                     res_df_model = res_df_model.drop(columns=["y"])
-                res_df = res_df.merge(res_df_model, on=merge_on, how="left")
+                res_df = ufp.join(res_df, res_df_model, on=merge_on, how="left")
             if self.clean_cache:
                 self._clean_model_cache()
         if res_df is None:
@@ -100,6 +107,7 @@ class MultiModelForecasterMixin:
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         return self._call_models(
             "forecast",
@@ -109,6 +117,7 @@ class MultiModelForecasterMixin:
             freq=freq,
             level=level,
             quantiles=quantiles,
+            panel=panel,
         )
 
     def cross_validation(

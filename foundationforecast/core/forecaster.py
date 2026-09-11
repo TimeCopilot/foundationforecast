@@ -18,12 +18,15 @@ from gluonts.transform import LastValueImputation
 from tqdm import tqdm
 from utilsforecast.processing import (
     backtest_splits,
+    counts_by_id,
     drop_index_if_pandas,
     join,
     maybe_compute_sort_indices,
     take_rows,
     vertical_concat,
 )
+
+from .utils import PanelData, TimeSeriesDataset, grouped_std_by_id
 
 T = TypeVar("T")
 
@@ -212,6 +215,33 @@ class Forecaster:
             return get_seasonality(freq)
         return get_seasonality(freq)
 
+    @staticmethod
+    def _make_timeseries_dataset(
+        df: pd.DataFrame,
+        batch_size: int,
+        dtype: torch.dtype = torch.bfloat16,
+        panel: PanelData | None = None,
+    ) -> TimeSeriesDataset:
+        return TimeSeriesDataset.from_df(
+            df,
+            batch_size=batch_size,
+            dtype=dtype,
+            panel=panel,
+        )
+
+    @staticmethod
+    def _assign_quantile_forecasts(
+        fcst_df: pd.DataFrame,
+        alias: str,
+        quantiles: list[float],
+        fcsts_quantiles_np: np.ndarray,
+    ) -> pd.DataFrame:
+        q_cols = [f"{alias}-q-{int(q * 100)}" for q in quantiles]
+        q_vals = [fcsts_quantiles_np[..., i].reshape(-1) for i in range(len(quantiles))]
+        for q_col, q_val in zip(q_cols, q_vals, strict=True):
+            fcst_df = ufp.assign_columns(fcst_df, q_col, q_val)
+        return fcst_df
+
     def forecast(
         self,
         df: pd.DataFrame,
@@ -219,6 +249,7 @@ class Forecaster:
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         raise NotImplementedError("This method must be implemented in a subclass.")
 
@@ -297,7 +328,7 @@ class Forecaster:
         df = maybe_convert_col_to_datetime(df, "ds")
         if h is None:
             h = self._maybe_get_seasonality(freq)
-        min_series_length = df.groupby("unique_id").size().min()
+        min_series_length = counts_by_id(df, "unique_id")["counts"].min()
         min_required = self._anomaly_min_series_length(h)
         reserved = min_required - h
         max_possible_windows = (min_series_length - reserved) // h
@@ -319,11 +350,12 @@ class Forecaster:
             step_size=h,
         )
         cv_results["residuals"] = cv_results["y"] - cv_results[self.alias]
-        residual_stats = (
-            cv_results.groupby("unique_id")["residuals"].std().reset_index()
+        residual_stats = grouped_std_by_id(
+            cv_results,
+            "unique_id",
+            "residuals",
         )
-        residual_stats.columns = ["unique_id", "residual_std"]
-        cv_results = cv_results.merge(residual_stats, on="unique_id", how="left")
+        cv_results = join(cv_results, residual_stats, on="unique_id", how="left")
         cv_results["z_score"] = cv_results["residuals"] / cv_results["residual_std"]
         alpha = 1 - level / 100
         critical_z = stats.norm.ppf(1 - alpha / 2)
@@ -383,8 +415,8 @@ class QuantileConverter:
         if level is None and quantiles is not None:
             if not all(0 < q < 1 for q in quantiles):
                 raise ValueError("`quantiles` should be floats between 0 and 1.")
-            level = [abs(int(100 - 200 * q)) for q in quantiles]
-            return sorted(set(level)), quantiles, False
+            level = sorted({abs(int(100 - 200 * q)) for q in quantiles if q != 0.5})
+            return level or None, quantiles, False
         return None, None, False
 
     @staticmethod

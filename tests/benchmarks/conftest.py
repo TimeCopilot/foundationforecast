@@ -23,6 +23,20 @@ def large_panel_df():
 
 
 @pytest.fixture(scope="session")
+def large_panel_data(large_panel_df):
+    from foundationforecast.core.utils import process_panel_from_df
+
+    return process_panel_from_df(large_panel_df)
+
+
+@pytest.fixture(scope="session")
+def string_ds_large_panel_df(large_panel_df):
+    df = large_panel_df.copy()
+    df["ds"] = df["ds"].astype(str)
+    return df
+
+
+@pytest.fixture(scope="session")
 def chronos_bolt():
     from foundationforecast.models.chronos import Chronos
 
