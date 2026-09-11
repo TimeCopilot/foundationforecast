@@ -35,7 +35,7 @@ jobs:
         uses: CodSpeedHQ/action@v5
         with:
           mode: simulation
-          run: uv run pytest tests/benchmarks/test_core.py --codspeed -m benchmark -o addopts=
+          run: uv run pytest tests/benchmarks/test_core.py tests/benchmarks/test_orchestration.py --codspeed -m benchmark -o addopts=
 
   benchmarks-models:
     name: CodSpeed models
