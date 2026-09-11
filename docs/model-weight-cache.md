@@ -45,8 +45,10 @@ Call `set_max_cached_models()` once at worker startup (before the first forecast
 Each forecaster exposes `clear_model_cache()` to drop its cached weights:
 
 ```python
+from foundationforecast.models import Chronos
+
 model = Chronos(repo_id="amazon/chronos-bolt-mini")
-model.forecast(df, h=12, freq="D")
+# ... run model.forecast(df, h=12, freq="D") ...
 model.clear_model_cache()
 ```
 
@@ -58,14 +60,13 @@ model.clear_model_cache()
 from foundationforecast import FoundationForecast
 from foundationforecast.models import Chronos, TimesFM
 
-ff = FoundationForecast(
+FoundationForecast(
     models=[
         Chronos(alias="Chronos"),
         TimesFM(alias="TimesFM"),
     ],
     clean_cache=True,
 )
-fcst = ff.forecast(df, h=12, freq="D")
 ```
 
 ## Which models use the cache?
