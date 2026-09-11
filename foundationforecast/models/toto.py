@@ -38,6 +38,7 @@ class Toto(Forecaster):
         samples_per_batch: int = 8,
         decode_block_size: int | None = None,
         alias: str = "Toto",
+        reuse_loaded_model: bool = True,
     ):
         # ruff: noqa: E501
         """
@@ -71,6 +72,10 @@ class Toto(Forecaster):
                 used by Toto 2.0 checkpoints; ignored by Toto 1.0.
             alias (str, optional): Name to use for the model in output DataFrames and
                 logs. Defaults to "Toto".
+            reuse_loaded_model (bool, optional): When True (default), reuse
+                loaded checkpoint weights across repeated ``forecast()`` calls
+                via the process-wide LRU cache. Set to False to load and
+                release weights on every call.
 
         Notes:
             **Available models:**
@@ -112,6 +117,7 @@ class Toto(Forecaster):
               the point forecast and requested quantiles are obtained by linear
               interpolation across the knots.
         """
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.repo_id = repo_id
         self.context_length = context_length
         self.batch_size = batch_size
@@ -145,22 +151,16 @@ class Toto(Forecaster):
         self._is_toto2_cache = _TOTO2_CONFIG_KEY in config
         return self._is_toto2_cache
 
+    def _load_model(self) -> TotoForecaster | Toto2Model:
+        if self._is_toto2():
+            return Toto2Model.from_pretrained(self.repo_id).to(self.device).eval()
+        model = TotoModel.from_pretrained(self.repo_id).to(self.device)
+        return TotoForecaster(model.model)
+
     @contextmanager
     def _get_model(self) -> TotoForecaster | Toto2Model:
-        if self._is_toto2():
-            model = Toto2Model.from_pretrained(self.repo_id).to(self.device).eval()
-            try:
-                yield model
-            finally:
-                del model
-                torch.cuda.empty_cache()
-        else:
-            model = TotoModel.from_pretrained(self.repo_id).to(self.device)
-            try:
-                yield TotoForecaster(model.model)
-            finally:
-                del model
-                torch.cuda.empty_cache()
+        with self._cached_model(self._load_model) as model:
+            yield model
 
     def _to_masked_timeseries(self, batch: list[torch.Tensor]) -> MaskedTimeseries:
         batch_size = len(batch)

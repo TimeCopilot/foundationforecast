@@ -26,7 +26,10 @@ class MultiModelForecasterMixin:
     def _clean_model_cache(self) -> None:
         import gc
 
-        for model in self.models:
+        models_to_clear = list(self.models)
+        if self.fallback_model is not None:
+            models_to_clear.append(self.fallback_model)
+        for model in models_to_clear:
             clear_cache = getattr(model, "clear_model_cache", None)
             if clear_cache is not None:
                 clear_cache()

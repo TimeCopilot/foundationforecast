@@ -19,6 +19,7 @@ nav:
       - Installation: getting-started/installation.md
       - Model Hub: model-hub.md
       - Forecasting Parameters: forecasting-parameters.md
+      - Model Weight Cache: model-weight-cache.md
   - Examples:
       - examples/index.md
       - Forecaster Quickstart: examples/forecaster-quickstart.ipynb
@@ -39,6 +40,7 @@ nav:
       - Contributing: contributing.md
   - Changelogs:
       - changelogs/index.md
+      - changelogs/v0.1.5.md
       - changelogs/v0.1.4.md
       - changelogs/v0.1.3.md
       - changelogs/v0.1.2.md

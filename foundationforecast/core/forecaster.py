@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
+from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -25,6 +27,8 @@ from utilsforecast.processing import (
 )
 
 from .utils import PanelData, TimeSeriesDataset, grouped_std_by_id
+
+T = TypeVar("T")
 
 
 def get_seasonality(
@@ -65,6 +69,47 @@ def maybe_convert_col_to_datetime(df: pd.DataFrame, col_name: str) -> pd.DataFra
 
 class Forecaster:
     alias: str
+    reuse_loaded_model: bool = True
+
+    def __init__(self, *, reuse_loaded_model: bool = True) -> None:
+        """Initialize forecaster options.
+
+        Args:
+            reuse_loaded_model: When ``True`` (default), keep loaded checkpoint
+                weights in the process-wide LRU cache across ``forecast()``
+                calls. Set to ``False`` to load and release weights on every
+                call. See the model weight cache docs for details.
+        """
+        self.reuse_loaded_model = reuse_loaded_model
+
+    def _model_cache_prefix(self) -> str | None:
+        repo_id = getattr(self, "repo_id", None)
+        if repo_id is None:
+            return None
+        return f"{type(self).__qualname__}:{repo_id}"
+
+    @contextmanager
+    def _cached_model(
+        self,
+        loader: Callable[[], T],
+        *,
+        cache_key: str | None = None,
+    ) -> Iterator[T]:
+        from .cached_forecaster import cached_model_context
+
+        key = cache_key if cache_key is not None else self._model_cache_prefix()
+        with cached_model_context(
+            reuse_loaded_model=self.reuse_loaded_model,
+            cache_key=key,
+            loader=loader,
+        ) as model:
+            yield model
+
+    def clear_model_cache(self) -> None:
+        """Release cached weights for this forecaster, if any."""
+        from .cached_forecaster import clear_model_cache_for_prefix
+
+        clear_model_cache_for_prefix(self._model_cache_prefix())
 
     @staticmethod
     def validate_input(

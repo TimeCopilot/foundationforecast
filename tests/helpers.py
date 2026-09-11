@@ -45,7 +45,8 @@ def generate_series_with_anomalies(
 
 
 class DummyModel(Forecaster):
-    def __init__(self, alias: str = "dummy"):
+    def __init__(self, alias: str = "dummy", reuse_loaded_model: bool = True):
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.alias = alias
 
     def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
@@ -71,7 +72,12 @@ class DummyModel(Forecaster):
 class SeasonalNaiveModel(Forecaster):
     alias = "SeasonalNaive"
 
-    def __init__(self, season_length: int | None = None):
+    def __init__(
+        self,
+        season_length: int | None = None,
+        reuse_loaded_model: bool = True,
+    ):
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.season_length = season_length
 
     def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):

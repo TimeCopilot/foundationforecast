@@ -73,6 +73,7 @@ class Chronos(Forecaster):
         alias: str = "Chronos",
         dtype: torch.dtype = torch.float32,
         finetuning_config: ChronosFinetuningConfig | None = None,
+        reuse_loaded_model: bool = True,
     ):
         # ruff: noqa: E501
         """
@@ -107,6 +108,11 @@ class Chronos(Forecaster):
                 ChronosFinetuningConfig and the
                 [Chronos-2 quickstart](https://github.com/amazon-science/chronos-forecasting/blob/main/notebooks/chronos-2-quickstart.ipynb)
                 for parameter details.
+            reuse_loaded_model (bool, optional): When True (default), reuse
+                loaded checkpoint weights across repeated ``forecast()`` calls
+                via the process-wide LRU cache. Set to False to load and
+                release weights on every call. Ignored when
+                ``finetuning_config`` is set.
 
         Notes:
             **Available models:**
@@ -149,7 +155,16 @@ class Chronos(Forecaster):
         self.batch_size = batch_size
         self.alias = alias
         self.dtype = dtype
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.finetuning_config = finetuning_config
+
+    def _model_cache_prefix(self) -> str | None:
+        if self.finetuning_config is not None:
+            return None
+        return f"chronos:{self.repo_id}:{self.dtype}"
+
+    def _model_cache_key(self) -> str | None:
+        return self._model_cache_prefix()
 
     @staticmethod
     def _build_fit_inputs_from_df(
@@ -196,8 +211,7 @@ class Chronos(Forecaster):
             fit_kwargs["finetuned_ckpt_name"] = sp.name
         return model.fit(**fit_kwargs)
 
-    @contextmanager
-    def _get_model(self) -> BaseChronosPipeline:
+    def _load_model(self) -> BaseChronosPipeline:
         device_map = "cuda:0" if torch.cuda.is_available() else "cpu"
         repo_path = Path(self.repo_id)
         # LoRA checkpoints save adapter_config.json; BaseChronosPipeline.from_pretrained
@@ -206,16 +220,19 @@ class Chronos(Forecaster):
             cls = Chronos2Pipeline
         else:
             cls = BaseChronosPipeline
-        model = cls.from_pretrained(
+        return cls.from_pretrained(
             self.repo_id,
             device_map=device_map,
             torch_dtype=self.dtype,
         )
-        try:
+
+    @contextmanager
+    def _get_model(self) -> BaseChronosPipeline:
+        with self._cached_model(
+            self._load_model,
+            cache_key=self._model_cache_key(),
+        ) as model:
             yield model
-        finally:
-            del model
-            torch.cuda.empty_cache()
 
     def _predict(
         self,

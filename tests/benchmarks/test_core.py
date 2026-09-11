@@ -12,9 +12,16 @@ def test_maybe_infer_freq(benchmark, panel_df):
     assert result == "D"
 
 
-def test_timeseries_dataset_from_df(benchmark, panel_df):
+@pytest.mark.parametrize(
+    "panel_df_fixture",
+    ["panel_df", "large_panel_df"],
+    ids=["small", "large"],
+)
+def test_timeseries_dataset_from_df(benchmark, panel_df_fixture, request):
+    df = request.getfixturevalue(panel_df_fixture)
+
     def build_dataset():
-        return TimeSeriesDataset.from_df(panel_df, batch_size=4)
+        return TimeSeriesDataset.from_df(df, batch_size=4)
 
     dataset = benchmark(build_dataset)
     assert len(dataset) > 0

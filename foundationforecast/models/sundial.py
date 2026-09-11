@@ -32,6 +32,7 @@ class Sundial(Forecaster, _DataProcessor):
         context_length: int = 2_880,
         batch_size: int = 1_024,
         alias: str = "Sundial",
+        reuse_loaded_model: bool = True,
     ):
         """
         Args:
@@ -51,6 +52,10 @@ class Sundial(Forecaster, _DataProcessor):
                 can improve throughput but require more GPU memory.
             alias (str, optional): Name to use for the model in output DataFrames and
                 logs. Defaults to "Sundial".
+            reuse_loaded_model (bool, optional): When True (default), reuse
+                loaded checkpoint weights across repeated ``forecast()`` calls
+                via the process-wide LRU cache. Set to False to load and
+                release weights on every call.
 
         Notes:
             **Academic Reference:**
@@ -70,6 +75,7 @@ class Sundial(Forecaster, _DataProcessor):
               efficiency on supported hardware.
             - The model is only available for Python < 3.13.
         """
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.repo_id = repo_id
         self.num_samples = num_samples
         self.context_length = context_length
@@ -78,18 +84,25 @@ class Sundial(Forecaster, _DataProcessor):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.dtype = torch.bfloat16
 
-    @contextmanager
-    def _get_model(self) -> AutoModelForCausalLM:
-        model = AutoModelForCausalLM.from_pretrained(
+    def _model_cache_key(self) -> str:
+        prefix = self._model_cache_prefix()
+        assert prefix is not None
+        return f"{prefix}:{self.dtype}"
+
+    def _load_model(self) -> AutoModelForCausalLM:
+        return AutoModelForCausalLM.from_pretrained(
             self.repo_id,
             torch_dtype=self.dtype,
             trust_remote_code=True,
         ).to(self.device)
-        try:
+
+    @contextmanager
+    def _get_model(self) -> AutoModelForCausalLM:
+        with self._cached_model(
+            self._load_model,
+            cache_key=self._model_cache_key(),
+        ) as model:
             yield model
-        finally:
-            del model
-            torch.cuda.empty_cache()
 
     def _predict_batch(
         self,

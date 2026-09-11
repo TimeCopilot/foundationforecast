@@ -27,6 +27,7 @@ class Tafsut(Forecaster, _DataProcessor):
         context_length: int = 32_768,
         batch_size: int = 64,
         alias: str = "Tafsut",
+        reuse_loaded_model: bool = True,
     ):
         """
         Initialize Tafsut time series foundation model.
@@ -43,6 +44,10 @@ class Tafsut(Forecaster, _DataProcessor):
                 Adjust based on available memory and model size.
             alias (str, optional): Name to use for the model in output DataFrames
                 and logs. Defaults to "Tafsut".
+            reuse_loaded_model (bool, optional): When True (default), reuse
+                loaded checkpoint weights across repeated ``forecast()`` calls
+                via the process-wide LRU cache. Set to False to load and
+                release weights on every call.
 
         Notes:
             **Resources:**
@@ -60,6 +65,7 @@ class Tafsut(Forecaster, _DataProcessor):
             - Missing values in the context are handled natively via NaN.
             - Univariate only; no covariates or cross-series structure.
         """
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.repo_id = repo_id
         self.context_length = context_length
         self.batch_size = batch_size
@@ -67,16 +73,15 @@ class Tafsut(Forecaster, _DataProcessor):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.dtype = torch.float32
 
+    def _load_model(self) -> TafsutModel:
+        model = TafsutModel.from_pretrained(self.repo_id, device=self.device)
+        model.eval()
+        return model
+
     @contextmanager
     def _get_model(self) -> TafsutModel:
-        model = TafsutModel.from_pretrained(self.repo_id, device=self.device)
-        try:
-            model.eval()
+        with self._cached_model(self._load_model) as model:
             yield model
-        finally:
-            del model
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
 
     def _predict_batch(
         self,

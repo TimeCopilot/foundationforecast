@@ -1,6 +1,6 @@
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -14,6 +14,8 @@ from utilsforecast.processing import make_future_dataframe
 
 from .forecaster import Forecaster, QuantileConverter
 from .utils import PanelData, process_panel_from_df
+
+T = TypeVar("T")
 
 
 def fix_freq(freq: str) -> str:
@@ -36,7 +38,10 @@ class GluonTSForecaster(Forecaster):
         filename: str,
         alias: str,
         num_samples: int = 100,
+        *,
+        reuse_loaded_model: bool = True,
     ):
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.repo_id = repo_id
         self.filename = filename
         self.alias = alias
@@ -59,6 +64,23 @@ class GluonTSForecaster(Forecaster):
             self.checkpoint_path,
             map_location=self.map_location,
         )
+
+    def _predictor_cache_key(self, prediction_length: int) -> str:
+        prefix = self._model_cache_prefix()
+        assert prefix is not None
+        return f"{prefix}:{prediction_length}"
+
+    @contextmanager
+    def _cached_predictor(
+        self,
+        prediction_length: int,
+        loader: Callable[[], T],
+    ) -> Iterator[T]:
+        with self._cached_model(
+            loader,
+            cache_key=self._predictor_cache_key(prediction_length),
+        ) as predictor:
+            yield predictor
 
     @contextmanager
     def get_predictor(self, prediction_length: int) -> PyTorchPredictor:
