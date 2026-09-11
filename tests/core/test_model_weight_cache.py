@@ -1,3 +1,5 @@
+import threading
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -39,6 +41,44 @@ def test_model_weight_cache_lru_eviction():
     assert "a" in cache
     assert "c" in cache
     assert loads == ["a", "b", "c"]
+
+
+def test_concurrent_same_key_loads_once():
+    cache = ModelWeightCache(max_cached_models=1)
+    load_count = 0
+    loading = threading.Event()
+    release = threading.Event()
+    count_lock = threading.Lock()
+
+    def loader() -> str:
+        nonlocal load_count
+        with count_lock:
+            load_count += 1
+        loading.set()
+        assert release.wait(timeout=5)
+        return "shared-model"
+
+    results: list[str] = []
+    errors: list[BaseException] = []
+
+    def worker() -> None:
+        try:
+            results.append(cache.get_or_load("shared", loader))
+        except BaseException as exc:
+            errors.append(exc)
+
+    first = threading.Thread(target=worker)
+    second = threading.Thread(target=worker)
+    first.start()
+    assert loading.wait(timeout=5)
+    second.start()
+    release.set()
+    first.join(timeout=10)
+    second.join(timeout=10)
+
+    assert not errors
+    assert load_count == 1
+    assert results == ["shared-model", "shared-model"]
 
 
 def test_clear_prefix_does_not_match_sibling_repo_ids():
