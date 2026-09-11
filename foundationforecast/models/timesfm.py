@@ -101,8 +101,8 @@ class _TimesFMV1(Forecaster):
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
     ) -> pd.DataFrame:
-        freq = self._maybe_infer_freq(df, freq)
         df = maybe_convert_col_to_datetime(df, "ds")
+        freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
         if qc.quantiles is not None and len(qc.quantiles) != len(DEFAULT_QUANTILES_TFM):
             raise ValueError(

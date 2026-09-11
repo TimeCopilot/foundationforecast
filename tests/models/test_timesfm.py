@@ -45,7 +45,8 @@ def test_timesfm_rejects_non_pytorch_repo():
         TimesFM(repo_id="google/timesfm-2.0-500m")
 
 
-def test_timesfm_v1_forecast_converts_string_ds_to_datetime(mocker):
+@pytest.mark.parametrize("freq", ["D", None])
+def test_timesfm_v1_forecast_converts_string_ds_to_datetime(mocker, freq):
     """JSON roundtrips leave ds as object dtype; forecast must still work."""
     df = generate_series(n_series=1, freq="D", min_length=14, max_length=14)
     df = pd.read_json(
@@ -77,11 +78,12 @@ def test_timesfm_v1_forecast_converts_string_ds_to_datetime(mocker):
 
     mocker.patch.object(model, "_get_predictor", side_effect=fake_predictor)
 
-    fcst = model.forecast(df=df, h=2, freq="D")
+    fcst = model.forecast(df=df, h=2, freq=freq)
 
     assert fcst.equals(expected_fcst)
-    inputs = mock_predictor.forecast_on_df.call_args.kwargs["inputs"]
-    assert pd.api.types.is_datetime64_any_dtype(inputs["ds"])
+    call_kwargs = mock_predictor.forecast_on_df.call_args.kwargs
+    assert pd.api.types.is_datetime64_any_dtype(call_kwargs["inputs"]["ds"])
+    assert call_kwargs["freq"] == "D"
 
 
 @pytest.mark.parametrize("model_class", MODEL_PARAMS)
