@@ -68,6 +68,10 @@ class TabPFN(Forecaster):
                 if using CLIENT mode and not already set in the environment.
             alias (str, optional): Name to use for the model in output DataFrames and
                 logs. Defaults to "TabPFN".
+            reuse_loaded_model (bool, optional): When True (default), reuse
+                loaded checkpoint weights across repeated ``forecast()`` calls
+                via the process-wide LRU cache. Set to False to load and
+                release weights on every call.
 
         Notes:
             **Academic Reference:**

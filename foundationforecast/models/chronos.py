@@ -108,6 +108,11 @@ class Chronos(Forecaster):
                 ChronosFinetuningConfig and the
                 [Chronos-2 quickstart](https://github.com/amazon-science/chronos-forecasting/blob/main/notebooks/chronos-2-quickstart.ipynb)
                 for parameter details.
+            reuse_loaded_model (bool, optional): When True (default), reuse
+                loaded checkpoint weights across repeated ``forecast()`` calls
+                via the process-wide LRU cache. Set to False to load and
+                release weights on every call. Ignored when
+                ``finetuning_config`` is set.
 
         Notes:
             **Available models:**

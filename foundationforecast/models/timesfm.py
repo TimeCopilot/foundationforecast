@@ -495,6 +495,10 @@ class TimesFM(Forecaster):
                 logs. Defaults to `TimesFM`.
             **kwargs (Any): Extra keyword arguments forwarded to the backend
                 model config. Used for TimesFM 2.5 and 3.0 models.
+            reuse_loaded_model (bool, optional): When True (default), reuse
+                loaded checkpoint weights across repeated ``forecast()`` calls
+                via the process-wide LRU cache. Set to False to load and
+                release weights on every call.
 
         Notes:
             **Academic Reference:**

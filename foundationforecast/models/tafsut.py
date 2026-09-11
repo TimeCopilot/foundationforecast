@@ -44,6 +44,10 @@ class Tafsut(Forecaster, _DataProcessor):
                 Adjust based on available memory and model size.
             alias (str, optional): Name to use for the model in output DataFrames
                 and logs. Defaults to "Tafsut".
+            reuse_loaded_model (bool, optional): When True (default), reuse
+                loaded checkpoint weights across repeated ``forecast()`` calls
+                via the process-wide LRU cache. Set to False to load and
+                release weights on every call.
 
         Notes:
             **Resources:**

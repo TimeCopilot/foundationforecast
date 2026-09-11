@@ -75,6 +75,9 @@ class TimeGPT(Forecaster):
                 data before predicting. See ``TimeGPTFinetuningConfig`` and
                 the [TimeGPT fine-tuning docs](https://docs.nixtla.io/forecasting/fine-tuning/steps)
                 for parameter details.
+            reuse_loaded_model (bool, optional): Accepted for API consistency
+                with other forecasters. TimeGPT does not load local weights, so
+                this flag has no effect. Defaults to True.
 
         Notes:
             **Academic Reference:**

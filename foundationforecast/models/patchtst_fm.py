@@ -60,6 +60,10 @@ class PatchTSTFM(Forecaster, _DataProcessor):
                 can improve throughput but require more GPU memory.
             alias (str, optional): Name to use for the model in output DataFrames and
                 logs. Defaults to "PatchTST-FM".
+            reuse_loaded_model (bool, optional): When True (default), reuse
+                loaded checkpoint weights across repeated ``forecast()`` calls
+                via the process-wide LRU cache. Set to False to load and
+                release weights on every call.
 
         Notes:
             **Academic Reference:**

@@ -53,6 +53,10 @@ class T0(Forecaster):
                 to 16. Adjust based on available memory.
             alias (str, optional): Name to use for the model in output DataFrames
                 and logs. Defaults to "t0-alpha".
+            reuse_loaded_model (bool, optional): When True (default), reuse
+                loaded checkpoint weights across repeated ``forecast()`` calls
+                via the process-wide LRU cache. Set to False to load and
+                release weights on every call.
 
         Notes:
             **Requirements:**
