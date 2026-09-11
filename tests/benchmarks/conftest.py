@@ -13,6 +13,16 @@ def panel_df():
 
 
 @pytest.fixture(scope="session")
+def large_panel_df():
+    return generate_series(
+        n_series=100,
+        freq="D",
+        min_length=500,
+        max_length=500,
+    )
+
+
+@pytest.fixture(scope="session")
 def chronos_bolt():
     from foundationforecast.models.chronos import Chronos
 
