@@ -1,0 +1,72 @@
+name: CodSpeed
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: codspeed-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmarks-core:
+    name: CodSpeed core
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run core benchmarks
+        uses: CodSpeedHQ/action@v5
+        with:
+          mode: simulation
+          run: uv run pytest tests/benchmarks/test_core.py --codspeed -m benchmark -o addopts=
+
+  benchmarks-models:
+    name: CodSpeed models
+    runs-on: codspeed-macro
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Cache HuggingFace Models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface/hub/
+          key: ${{ runner.os }}-huggingface-codspeed-${{ hashFiles('tests/benchmarks/**') }}
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run model benchmarks
+        uses: CodSpeedHQ/action@v5
+        with:
+          mode: walltime
+          run: uv run pytest tests/benchmarks/test_models.py --codspeed -m benchmark -o addopts=
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}

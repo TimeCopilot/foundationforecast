@@ -6,6 +6,7 @@ requires = ["hatchling"]
 dev = [
   "mktestdocs>=0.2.5",
   "pre-commit",
+  "pytest-codspeed>=5.0.3",
   "pytest-cov>=6.0",
   "pytest-mock>=3.15.1",
   "pytest-rerunfailures>=15.1",
@@ -94,8 +95,9 @@ omit = ["tests/*"]
 packages = ["foundationforecast"]
 
 [tool.pytest.ini_options]
-addopts = "-m 'not docs'"
+addopts = "-m 'not docs and not benchmark'"
 markers = [
+  "benchmark: marks CodSpeed performance benchmarks",
   "docs: marks tests related to documentation",
   "models: marks tests that download model weights",
 ]
