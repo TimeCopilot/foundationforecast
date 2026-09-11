@@ -13,7 +13,11 @@ from timesfm3 import ModelConfig, TimesFM3Evaluator
 from timesfm_v1.timesfm_base import DEFAULT_QUANTILES as DEFAULT_QUANTILES_TFM
 from tqdm import tqdm
 
-from ..core.forecaster import Forecaster, QuantileConverter
+from ..core.forecaster import (
+    Forecaster,
+    QuantileConverter,
+    maybe_convert_col_to_datetime,
+)
 from ..core.utils import TimeSeriesDataset
 
 # Legacy HF repo IDs from GIFT-Eval submissions without "pytorch" in the name.
@@ -98,6 +102,7 @@ class _TimesFMV1(Forecaster):
         quantiles: list[float] | None = None,
     ) -> pd.DataFrame:
         freq = self._maybe_infer_freq(df, freq)
+        df = maybe_convert_col_to_datetime(df, "ds")
         qc = QuantileConverter(level=level, quantiles=quantiles)
         if qc.quantiles is not None and len(qc.quantiles) != len(DEFAULT_QUANTILES_TFM):
             raise ValueError(
