@@ -11,5 +11,5 @@
 
 # Model weight cache
 
-See [Model Weight Cache](../../model-weight-cache.md) for ``reuse_loaded_model``,
+See [Model Weight Cache](../../../model-weight-cache.md) for ``reuse_loaded_model``,
 ``clear_model_cache()``, and ``set_max_cached_models()``.

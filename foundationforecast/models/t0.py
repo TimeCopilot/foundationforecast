@@ -96,7 +96,9 @@ class T0(Forecaster):
         config_path = hf_hub_download(self.repo_id, CONFIG_NAME)
         with open(config_path, encoding="utf-8") as f:
             config = json.load(f)
-        return T0Forecaster.from_pretrained(self.repo_id, **config).to(self.device).eval()
+        return (
+            T0Forecaster.from_pretrained(self.repo_id, **config).to(self.device).eval()
+        )
 
     @contextmanager
     def _get_model(self) -> T0Forecaster:
