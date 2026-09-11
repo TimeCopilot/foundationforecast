@@ -28,7 +28,9 @@ class DatasetTouchingModel(Forecaster):
 
 @pytest.mark.parametrize("n_models", [3, 5], ids=["3-models", "5-models"])
 def test_foundation_forecast_multi_model(benchmark, large_panel_df, n_models):
-    models = [DatasetTouchingModel(alias=f"DatasetTouch{i}") for i in range(n_models)]
+    models: list[Forecaster] = [
+        DatasetTouchingModel(alias=f"DatasetTouch{i}") for i in range(n_models)
+    ]
     forecaster = FoundationForecast(models=models)
     result = benchmark(forecaster.forecast, large_panel_df, h=12, freq="D")
     assert len(result) == large_panel_df["unique_id"].nunique() * 12
