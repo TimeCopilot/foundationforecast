@@ -20,7 +20,7 @@ cd experiments/gift-eval
 uv sync
 ```
 
-Installs the in-repo editable `foundationforecast` package from the monorepo root (`../..`), not PyPI — so local runs and CI always use the current wrapper code.
+Installs the in-repo editable `foundationforecast` package from the monorepo root (`../..`), not PyPI — so local runs and CI always use the current wrapper code. After changing the library (for example model weight caching), refresh the lock metadata with `uv lock` in this directory so `uv sync --frozen` in CI matches the editable source version.
 
 Requires Python 3.11+.
 

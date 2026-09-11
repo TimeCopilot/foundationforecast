@@ -40,6 +40,7 @@ class TiRex(Forecaster):
         repo_id: str = "NX-AI/TiRex",
         batch_size: int = 16,
         alias: str = "TiRex",
+        reuse_loaded_model: bool = True,
     ):
         """
         Args:
@@ -52,6 +53,10 @@ class TiRex(Forecaster):
                 Adjust based on available memory and model size.
             alias (str, optional): Name to use for the model in output DataFrames
                 and logs. Defaults to "TiRex".
+            reuse_loaded_model (bool, optional): When True (default), reuse
+                loaded checkpoint weights across repeated ``forecast()`` calls
+                via the process-wide LRU cache. Set to False to load and
+                release weights on every call.
 
         Notes:
             **Academic References:**
@@ -75,9 +80,17 @@ class TiRex(Forecaster):
             - TiRex 2.0 natively supports CPU, CUDA, and MPS devices.
             - The model is only available for Python >= 3.11.
         """
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.repo_id = repo_id
         self.batch_size = batch_size
         self.alias = alias
+
+    def _model_cache_prefix(self) -> str:
+        version = "tirex2" if self._is_tirex2() else "tirex"
+        return f"{version}:{self.repo_id}"
+
+    def _model_cache_key(self) -> str:
+        return self._model_cache_prefix()
 
     def _is_tirex2(self) -> bool:
         name = self.repo_id.rstrip("/").split("/")[-1]
@@ -100,33 +113,34 @@ class TiRex(Forecaster):
             with self._get_model_v1() as model:
                 yield model
 
-    @contextmanager
-    def _get_model_v1(self) -> PretrainedModel:
+    def _load_model_v1(self) -> PretrainedModel:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         if device == "cpu":
             # see https://github.com/NX-AI/tirex/tree/main?tab=readme-ov-file#cuda-kernels
             os.environ["TIREX_NO_CUDA"] = "1"
-        model = load_model(self.repo_id, device=device)
-        try:
-            yield model
-        finally:
-            del model
-            torch.cuda.empty_cache()
+        return load_model(self.repo_id, device=device)
 
     @contextmanager
-    def _get_model_v2(self) -> ForecastModel:
+    def _get_model_v1(self) -> PretrainedModel:
+        with self._cached_model(
+            self._load_model_v1,
+            cache_key=self._model_cache_key(),
+        ) as model:
+            yield model
+
+    def _load_model_v2(self) -> ForecastModel:
         from tirex2 import load_model as load_model_v2
 
         device = self._best_device_v2()
-        model = load_model_v2(self.repo_id, device=device)
-        try:
+        return load_model_v2(self.repo_id, device=device)
+
+    @contextmanager
+    def _get_model_v2(self) -> ForecastModel:
+        with self._cached_model(
+            self._load_model_v2,
+            cache_key=self._model_cache_key(),
+        ) as model:
             yield model
-        finally:
-            del model
-            if device == "cuda":
-                torch.cuda.empty_cache()
-            elif device == "mps":
-                torch.mps.empty_cache()
 
     def _forecast_v1(
         self,

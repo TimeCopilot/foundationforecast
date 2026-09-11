@@ -8,3 +8,8 @@
             - maybe_convert_col_to_datetime
             - Forecaster
             - QuantileConverter
+
+# Model weight cache
+
+See [Model Weight Cache](../../../model-weight-cache.md) for ``reuse_loaded_model``,
+``clear_model_cache()``, and ``set_max_cached_models()``.

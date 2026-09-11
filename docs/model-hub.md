@@ -2,6 +2,9 @@
 
 **foundationforecast** provides a unified API for state-of-the-art foundation models for time series forecasting. Run multiple pretrained models through [`FoundationForecast`](api/forecaster.md) with minimal code changes.
 
+!!! tip "Reusing loaded weights"
+    By default, models cache loaded weights across repeated forecasts. See [Model Weight Cache](model-weight-cache.md) for `reuse_loaded_model`, `set_max_cached_models()`, and `clean_cache`.
+
 !!! note "Family example notebooks"
     Example notebooks for foundation model families are in [Examples](examples/index.md#foundation-models).
 

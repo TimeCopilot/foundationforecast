@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 
-import torch
 from gluonts.torch.model.predictor import PyTorchPredictor
 from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
 from uni2ts.model.moirai2 import Moirai2Forecast, Moirai2Module
@@ -34,6 +33,7 @@ class Moirai(GluonTSForecaster):
         past_feat_dynamic_real_dim: int = 0,
         batch_size: int = 32,
         alias: str = "Moirai",
+        reuse_loaded_model: bool = True,
     ):
         """
         Args:
@@ -66,6 +66,10 @@ class Moirai(GluonTSForecaster):
                 32. Adjust based on available memory and model size.
             alias (str, optional): Name to use for the model in output DataFrames and
                 logs. Defaults to "Moirai".
+            reuse_loaded_model (bool, optional): When True (default), reuse
+                loaded checkpoint weights across repeated ``forecast()`` calls
+                via the process-wide LRU cache. Set to False to load and
+                release weights on every call.
 
         Notes:
             **Academic Reference:**
@@ -87,6 +91,7 @@ class Moirai(GluonTSForecaster):
             filename=filename,
             alias=alias,
             num_samples=num_samples,
+            reuse_loaded_model=reuse_loaded_model,
         )
         self.context_length = context_length
         self.patch_size = patch_size
@@ -95,8 +100,17 @@ class Moirai(GluonTSForecaster):
         self.past_feat_dynamic_real_dim = past_feat_dynamic_real_dim
         self.batch_size = batch_size
 
-    @contextmanager
-    def get_predictor(self, prediction_length: int) -> PyTorchPredictor:
+    def _predictor_cache_key(self, prediction_length: int) -> str:
+        prefix = self._model_cache_prefix()
+        assert prefix is not None
+        return (
+            f"{prefix}:{self.context_length}:{self.patch_size}:"
+            f"{self.batch_size}:{self.num_samples}:{self.target_dim}:"
+            f"{self.feat_dynamic_real_dim}:{self.past_feat_dynamic_real_dim}:"
+            f"{prediction_length}"
+        )
+
+    def _build_predictor(self, prediction_length: int) -> PyTorchPredictor:
         kwargs = {
             "prediction_length": prediction_length,
             "context_length": self.context_length,
@@ -118,10 +132,12 @@ class Moirai(GluonTSForecaster):
             module=model_module.from_pretrained(self.repo_id),
             **kwargs,
         )
-        predictor = model.create_predictor(batch_size=self.batch_size)
+        return model.create_predictor(batch_size=self.batch_size)
 
-        try:
+    @contextmanager
+    def get_predictor(self, prediction_length: int) -> PyTorchPredictor:
+        def loader() -> PyTorchPredictor:
+            return self._build_predictor(prediction_length)
+
+        with self._cached_predictor(prediction_length, loader) as predictor:
             yield predictor
-        finally:
-            del predictor, model
-            torch.cuda.empty_cache()

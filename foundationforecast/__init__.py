@@ -1,6 +1,7 @@
 import sys
 
 from ._foundation_forecast import FoundationForecast
+from .core.model_weight_cache import set_max_cached_models
 from .models import (
     Chronos,
     ChronosFinetuningConfig,
@@ -13,6 +14,7 @@ from .models import (
 
 __all__ = [
     "FoundationForecast",
+    "set_max_cached_models",
     "Chronos",
     "ChronosFinetuningConfig",
     "Moirai",

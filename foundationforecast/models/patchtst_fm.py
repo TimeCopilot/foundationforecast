@@ -1,4 +1,3 @@
-import gc
 import logging
 import sys
 from contextlib import contextmanager
@@ -42,6 +41,7 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         context_length: int = 8192,  # default from granite-tsfm
         batch_size: int = 2_048,
         alias: str = "PatchTST-FM",
+        reuse_loaded_model: bool = True,
     ):
         """
         Initialize PatchTSTFM time series foundation model.
@@ -60,6 +60,10 @@ class PatchTSTFM(Forecaster, _DataProcessor):
                 can improve throughput but require more GPU memory.
             alias (str, optional): Name to use for the model in output DataFrames and
                 logs. Defaults to "PatchTST-FM".
+            reuse_loaded_model (bool, optional): When True (default), reuse
+                loaded checkpoint weights across repeated ``forecast()`` calls
+                via the process-wide LRU cache. Set to False to load and
+                release weights on every call.
 
         Notes:
             **Academic Reference:**
@@ -82,6 +86,7 @@ class PatchTSTFM(Forecaster, _DataProcessor):
 
             - `ibm-research/patchtst-fm-r1` (default)
         """
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.repo_id = repo_id
         # self.scale_factor = scale_factor
         self.context_length = context_length
@@ -97,29 +102,16 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         # )
         self.alias = alias
         self.dtype = torch.float32
-        self._model: PatchTSTFMForPrediction | None = None
 
     def _load_model(self) -> PatchTSTFMForPrediction:
-        if self._model is None:
-            self._model = PatchTSTFMForPrediction.from_pretrained(self.repo_id).to(
-                self.device
-            )
-            self._model.eval()
-        return self._model
-
-    def _release_model(self) -> None:
-        if self._model is None:
-            return
-        self._model.cpu()
-        del self._model
-        self._model = None
-        gc.collect()
-        if self.device == "cuda":
-            torch.cuda.empty_cache()
+        model = PatchTSTFMForPrediction.from_pretrained(self.repo_id).to(self.device)
+        model.eval()
+        return model
 
     @contextmanager
     def _get_model(self) -> PatchTSTFMForPrediction:
-        yield self._load_model()
+        with self._cached_model(self._load_model) as model:
+            yield model
 
     @staticmethod
     def _impute_target(target: torch.Tensor) -> torch.Tensor:

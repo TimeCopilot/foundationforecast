@@ -54,6 +54,7 @@ class TimeGPT(Forecaster):
         model: str = "timegpt-1",
         alias: str = "TimeGPT",
         finetuning_config: TimeGPTFinetuningConfig | None = None,
+        reuse_loaded_model: bool = True,
     ):
         """
         Args:
@@ -74,6 +75,9 @@ class TimeGPT(Forecaster):
                 data before predicting. See ``TimeGPTFinetuningConfig`` and
                 the [TimeGPT fine-tuning docs](https://docs.nixtla.io/forecasting/fine-tuning/steps)
                 for parameter details.
+            reuse_loaded_model (bool, optional): Accepted for API consistency
+                with other forecasters. TimeGPT does not load local weights, so
+                this flag has no effect. Defaults to True.
 
         Notes:
             **Academic Reference:**
@@ -94,6 +98,7 @@ class TimeGPT(Forecaster):
             - For more information, see the
               [TimeGPT documentation](https://www.nixtla.io/docs).
         """
+        super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.api_key = api_key
         self.base_url = base_url
         self.max_retries = max_retries
