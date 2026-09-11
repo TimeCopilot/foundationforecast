@@ -1,5 +1,10 @@
+from contextlib import contextmanager
+from io import StringIO
+
+import pandas as pd
 import pytest
 
+from tests.helpers import generate_series
 from foundationforecast.models.timesfm import (
     _GIFT_EVAL_LEGACY_REPOS,
     TimesFM,
@@ -38,6 +43,47 @@ def test_timesfm_routes_3_0_repo():
 def test_timesfm_rejects_non_pytorch_repo():
     with pytest.raises(ValueError, match="JAX backends are not supported"):
         TimesFM(repo_id="google/timesfm-2.0-500m")
+
+
+@pytest.mark.parametrize("freq", ["D", None])
+def test_timesfm_v1_forecast_converts_string_ds_to_datetime(mocker, freq):
+    """JSON roundtrips leave ds as object dtype; forecast must still work."""
+    df = generate_series(n_series=1, freq="D", min_length=14, max_length=14)
+    df = pd.read_json(
+        StringIO(df.to_json(orient="split", date_format="iso")),
+        orient="split",
+    )
+    assert df["ds"].dtype == object
+
+    model = _TimesFMV1(
+        repo_id="google/timesfm-2.0-500m-pytorch",
+        context_length=512,
+        batch_size=32,
+        alias="TimesFM",
+    )
+    last_time = pd.to_datetime(df.groupby("unique_id")["ds"].tail(1).iloc[0])
+    expected_fcst = pd.DataFrame(
+        {
+            "unique_id": [df["unique_id"].iloc[0]] * 2,
+            "ds": pd.date_range(last_time, periods=3, freq="D")[1:],
+            "TimesFM": [1.0, 2.0],
+        }
+    )
+    mock_predictor = mocker.Mock()
+    mock_predictor.forecast_on_df.return_value = expected_fcst
+
+    @contextmanager
+    def fake_predictor(*_args, **_kwargs):
+        yield mock_predictor
+
+    mocker.patch.object(model, "_get_predictor", side_effect=fake_predictor)
+
+    fcst = model.forecast(df=df, h=2, freq=freq)
+
+    assert fcst.equals(expected_fcst)
+    call_kwargs = mock_predictor.forecast_on_df.call_args.kwargs
+    assert pd.api.types.is_datetime64_any_dtype(call_kwargs["inputs"]["ds"])
+    assert call_kwargs["freq"] == "D"
 
 
 @pytest.mark.parametrize("model_class", MODEL_PARAMS)

@@ -39,6 +39,7 @@ nav:
       - Contributing: contributing.md
   - Changelogs:
       - changelogs/index.md
+      - changelogs/v0.1.4.md
       - changelogs/v0.1.3.md
       - changelogs/v0.1.2.md
 

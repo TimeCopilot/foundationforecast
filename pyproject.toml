@@ -6,6 +6,7 @@ requires = ["hatchling"]
 dev = [
   "mktestdocs>=0.2.5",
   "pre-commit",
+  "pytest-codspeed>=5.0.3",
   "pytest-cov>=6.0",
   "pytest-mock>=3.15.1",
   "pytest-rerunfailures>=15.1",
@@ -71,7 +72,7 @@ license = "Apache-2.0"
 name = "foundationforecast"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.1.3"
+version = "0.1.4"
 
 [project.optional-dependencies]
 plot = [
@@ -94,8 +95,9 @@ omit = ["tests/*"]
 packages = ["foundationforecast"]
 
 [tool.pytest.ini_options]
-addopts = "-m 'not docs'"
+addopts = "-m 'not docs and not benchmark'"
 markers = [
+  "benchmark: marks CodSpeed performance benchmarks",
   "docs: marks tests related to documentation",
   "models: marks tests that download model weights",
 ]
