@@ -53,10 +53,17 @@ jobs:
           path: ~/.cache/huggingface/hub/
           key: ${{ runner.os }}-huggingface-${{ hashFiles('**/tests/') }}
 
+      - name: Cache TabPFN checkpoints
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/tabpfn
+          key: ${{ runner.os }}-tabpfn-v1-${{ matrix.python-version }}
+
       - name: Run tests
         run: uv run pytest ${{ matrix.coverage && '--cov=foundationforecast --cov-report=term-missing' || '' }}
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          TABPFN_TOKEN: ${{ secrets.TABPFN_TOKEN }}
 
       - name: Test import FoundationForecast and Chronos
         run: uv run -- python -c "from foundationforecast import FoundationForecast; from foundationforecast.models import Chronos"

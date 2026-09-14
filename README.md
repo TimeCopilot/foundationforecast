@@ -86,7 +86,7 @@ Licenses verified against Hugging Face model cards. Check the model card for you
 - **Apache-2.0**, **MIT**: generally fine for commercial production (retain notices; T0† is also gated on Hugging Face: accept terms and set `HF_TOKEN`).
 - **CC-BY-NC-4.0** (Moirai), **CC-BY-NC-SA-4.0** (PatchTST-FM): **non-commercial** only; not for revenue-generating production without a separate agreement from the rights holder.
 - **TimesFM 3.0**: weights for `google/timesfm-3.0-pytorch` are [non-commercial](https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE); TimesFM 1.0–2.5 checkpoints remain Apache-2.0.
-- **TabPFN NC**‡: TabPFN-2.6+ weights are non-commercial; production requires a [Prior Labs commercial license or API](https://docs.priorlabs.ai/models). First use also requires accepting terms at [ux.priorlabs.ai](https://ux.priorlabs.ai) (`TABPFN_TOKEN`).
+- **TabPFN NC**‡: TabPFN-2.6+ and TabPFN-3 weights are non-commercial; production requires a [Prior Labs commercial license or API](https://docs.priorlabs.ai/models). First LOCAL use requires accepting terms at [ux.priorlabs.ai](https://ux.priorlabs.ai) (`TABPFN_TOKEN`). TabPFN-3 is LOCAL-only today.
 - **Community / Apache-2.0** (TiRex): TiRex 1.0 uses the [NXAI Community License](https://huggingface.co/NX-AI/TiRex/blob/main/LICENSE) (commercial limits for large enterprises); TiRex 2.0 is Apache-2.0.
 - **Nixtla API**§: hosted service via `NIXTLA_API_KEY`; production under [Nixtla terms/pricing](https://www.nixtla.io/docs), not open weights.
 
@@ -104,7 +104,7 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 - **PatchTST-FM:** `ibm-research/patchtst-fm-r1`
 - **Sundial:** `thuml/sundial-base-128m`
 - **T0:** `theforecastingcompany/t0-alpha`
-- **TabPFN:** `tabpfn-local`, `tabpfn-client`
+- **TabPFN:** default `tabpfn-v2-regressor-2noar4o2.ckpt`; TabPFN-3 via `model_path="tabpfn-v3-regressor-v3_20260506_timeseries.ckpt"` (LOCAL, `TABPFN_TOKEN`); or CLIENT mode with a Prior Labs API token
 - **Tafsut:** `Tafsut-FM/tafsut-univariate-base`
 - **TiRex:** `NX-AI/TiRex`, `NX-AI/TiRex-2`
 - **TimeGPT:** pass `model=` to `TimeGPT()`, e.g. `timegpt-1`, [`timegpt-1-long-horizon`](https://www.nixtla.io/docs/forecasting/model-version/longhorizon_model), `timegpt-2-mini`, `timegpt-2`, `timegpt-2-pro`
