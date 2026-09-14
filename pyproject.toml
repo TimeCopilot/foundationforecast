@@ -12,6 +12,7 @@ dev = [
   "pytest-rerunfailures>=15.1",
   "pytest-xdist>=3.8.0",
   "pytest>=8.0",
+  "python-dotenv>=1.0",
   "ruff>=0.12",
 ]
 docs = [
@@ -51,7 +52,7 @@ dependencies = [
   "nixtla>=0.7.0",
   "pandas>=2.2.0 ; python_full_version >= '3.13'",
   "scipy",
-  "tabpfn-time-series==1.0.3 ; python_full_version < '3.13'",
+  "tabpfn-time-series>=1.2.0 ; python_full_version < '3.13'",
   "tafsut>=0.1.0",
   "tfc-t0>=0.2.3 ; python_full_version >= '3.11' and python_full_version < '3.14'",
   "timecopilot-chronos-forecasting>=0.2.2",

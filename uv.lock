@@ -1123,26 +1123,57 @@ wheels = [
 
 [[package]]
 dependencies = [
-  {extra = ["http"], name = "fsspec"},
+  {extra = ["http"], marker = "python_full_version < '3.13'", name = "fsspec", source = {registry = "https://pypi.org/simple"}, version = "2026.2.0"},
+  {marker = "python_full_version < '3.13'", name = "dill"},
+  {marker = "python_full_version < '3.13'", name = "filelock"},
+  {marker = "python_full_version < '3.13'", name = "httpx"},
+  {marker = "python_full_version < '3.13'", name = "huggingface-hub"},
+  {marker = "python_full_version < '3.13'", name = "multiprocess"},
   {marker = "python_full_version < '3.13'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "1.26.4"},
+  {marker = "python_full_version < '3.13'", name = "packaging"},
   {marker = "python_full_version < '3.13'", name = "pandas", source = {registry = "https://pypi.org/simple"}, version = "2.1.4"},
   {marker = "python_full_version < '3.13'", name = "pyarrow", source = {registry = "https://pypi.org/simple"}, version = "23.0.1"},
+  {marker = "python_full_version < '3.13'", name = "pyyaml"},
+  {marker = "python_full_version < '3.13'", name = "requests"},
   {marker = "python_full_version < '3.13'", name = "tqdm", source = {registry = "https://pypi.org/simple"}, version = "4.67.3"},
-  {marker = "python_full_version >= '3.13'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.2"},
-  {marker = "python_full_version >= '3.13'", name = "pandas", source = {registry = "https://pypi.org/simple"}, version = "2.3.3"},
-  {marker = "python_full_version >= '3.13'", name = "pyarrow", source = {registry = "https://pypi.org/simple"}, version = "25.0.1"},
-  {marker = "python_full_version >= '3.13'", name = "tqdm", source = {registry = "https://pypi.org/simple"}, version = "4.70.0"},
-  {name = "dill"},
-  {name = "filelock"},
-  {name = "httpx"},
-  {name = "huggingface-hub"},
-  {name = "multiprocess"},
-  {name = "packaging"},
-  {name = "pyyaml"},
-  {name = "requests"},
-  {name = "xxhash"},
+  {marker = "python_full_version < '3.13'", name = "xxhash"},
 ]
 name = "datasets"
+resolution-markers = [
+  "python_full_version < '3.11'",
+  "python_full_version == '3.11.*'",
+  "python_full_version == '3.12.*'",
+]
+sdist = {hash = "sha256:0f0c1c3d56ffff2c93b2f4c63c95bac94f3d7e8621aea2a2a576275233bba772", size = 605649, upload-time = "2026-04-27T15:43:57.384Z", url = "https://files.pythonhosted.org/packages/66/34/14cd8e76f907f7d4dca2334cfeec9f81d30fd15c25a015f99aaea694eaed/datasets-4.8.5.tar.gz"}
+source = {registry = "https://pypi.org/simple"}
+version = "4.8.5"
+wheels = [
+  {hash = "sha256:5079900781719c0e063a8efdd2cd95a31ad0c63209178669cd23cf1b926149ff", size = 528973, upload-time = "2026-04-27T15:43:53.702Z", url = "https://files.pythonhosted.org/packages/65/99/00f3196036501b53032c4b1ab8337a0b978dee832ed276dae3815df4e8b5/datasets-4.8.5-py3-none-any.whl"},
+]
+
+[[package]]
+dependencies = [
+  {extra = ["http"], marker = "python_full_version >= '3.13'", name = "fsspec", source = {registry = "https://pypi.org/simple"}, version = "2026.6.0"},
+  {marker = "python_full_version >= '3.13'", name = "dill"},
+  {marker = "python_full_version >= '3.13'", name = "filelock"},
+  {marker = "python_full_version >= '3.13'", name = "httpx"},
+  {marker = "python_full_version >= '3.13'", name = "huggingface-hub"},
+  {marker = "python_full_version >= '3.13'", name = "multiprocess"},
+  {marker = "python_full_version >= '3.13'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.2"},
+  {marker = "python_full_version >= '3.13'", name = "packaging"},
+  {marker = "python_full_version >= '3.13'", name = "pandas", source = {registry = "https://pypi.org/simple"}, version = "2.3.3"},
+  {marker = "python_full_version >= '3.13'", name = "pyarrow", source = {registry = "https://pypi.org/simple"}, version = "25.0.1"},
+  {marker = "python_full_version >= '3.13'", name = "pyyaml"},
+  {marker = "python_full_version >= '3.13'", name = "requests"},
+  {marker = "python_full_version >= '3.13'", name = "tqdm", source = {registry = "https://pypi.org/simple"}, version = "4.70.0"},
+  {marker = "python_full_version >= '3.13'", name = "xxhash"},
+]
+name = "datasets"
+resolution-markers = [
+  "python_full_version == '3.13.*'",
+  "python_full_version == '3.14.*'",
+  "python_full_version >= '3.15'",
+]
 sdist = {hash = "sha256:ce22bb851efd7494f08aad33b940803784434f6e77763d00679a0dc45fcf686a", size = 641498, upload-time = "2026-07-28T11:09:12.016Z", url = "https://files.pythonhosted.org/packages/0a/5b/836516269d4f618efe621661cfb6f9acc57e6f95265db3efaee48a5ffe04/datasets-5.0.1.tar.gz"}
 source = {registry = "https://pypi.org/simple"}
 version = "5.0.1"
@@ -1308,6 +1339,22 @@ wheels = [
 ]
 
 [[package]]
+dependencies = [
+  {marker = "python_full_version < '3.11'", name = "scipy", source = {registry = "https://pypi.org/simple"}, version = "1.15.3"},
+  {marker = "python_full_version < '3.13'", name = "datasets", source = {registry = "https://pypi.org/simple"}, version = "4.8.5"},
+  {marker = "python_full_version < '3.13'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "1.26.4"},
+  {marker = "python_full_version < '3.13'", name = "pydantic"},
+  {marker = "python_full_version >= '3.11' and python_full_version < '3.13'", name = "scipy", source = {registry = "https://pypi.org/simple"}, version = "1.17.1"},
+]
+name = "fev"
+sdist = {hash = "sha256:509ab1f0ed82355c0b707825b96ff032aaaf817f9e26324b0b9ffe61d0fc36c9", size = 111181, upload-time = "2026-08-31T12:04:33.704Z", url = "https://files.pythonhosted.org/packages/eb/9e/af21153b05aff027f5d861f80f28740221c79c42e02c0c7c071c0c1a51e5/fev-0.10.0.tar.gz"}
+source = {registry = "https://pypi.org/simple"}
+version = "0.10.0"
+wheels = [
+  {hash = "sha256:de83fcd73920fc8823e3b2c388ffb4e612e6bc2ab61b27ec991c91e70aea128f", size = 47649, upload-time = "2026-08-31T12:04:32.331Z", url = "https://files.pythonhosted.org/packages/d3/35/ea4bf38e4f5bcfce13513cc708400522637844f56afcbe4b363259bea8ed/fev-0.10.0-py3-none-any.whl"},
+]
+
+[[package]]
 name = "filelock"
 sdist = {hash = "sha256:c33351e1f49cae33414acbc6d56784e6ecee82514ec90795da1161fc4836b5b8", size = 217172, upload-time = "2026-07-29T22:46:04.895Z", url = "https://files.pythonhosted.org/packages/f6/57/3ba6e6cb097f85b855b00163d169f35365f44277df044dcf96d55b8f62a3/filelock-3.32.2.tar.gz"}
 source = {registry = "https://pypi.org/simple"}
@@ -1427,6 +1474,7 @@ dev = [
   {name = "pytest-mock"},
   {name = "pytest-rerunfailures"},
   {name = "pytest-xdist"},
+  {name = "python-dotenv"},
   {name = "ruff"},
 ]
 docs = [
@@ -1447,7 +1495,7 @@ requires-dist = [
   {extras = ["torch"], name = "gluonts"},
   {marker = "extra == 'plot'", name = "matplotlib", specifier = ">=3.10.6"},
   {marker = "extra == 'plot'", name = "plotly", specifier = ">=6.3.1"},
-  {marker = "python_full_version < '3.13'", name = "tabpfn-time-series", specifier = "==1.0.3"},
+  {marker = "python_full_version < '3.13'", name = "tabpfn-time-series", specifier = ">=1.2.0"},
   {marker = "python_full_version < '3.13'", name = "transformers", specifier = ">=4.41,<6"},
   {marker = "python_full_version < '3.14'", name = "timecopilot-uni2ts", specifier = ">=0.1.3"},
   {marker = "python_full_version >= '3.11' and python_full_version < '3.14'", name = "tfc-t0", specifier = ">=0.2.3"},
@@ -1478,6 +1526,7 @@ dev = [
   {name = "pytest-mock", specifier = ">=3.15.1"},
   {name = "pytest-rerunfailures", specifier = ">=15.1"},
   {name = "pytest-xdist", specifier = ">=3.8.0"},
+  {name = "python-dotenv", specifier = ">=1.0"},
   {name = "ruff", specifier = ">=0.12"},
 ]
 docs = [
@@ -1621,6 +1670,30 @@ wheels = [
 
 [[package]]
 name = "fsspec"
+resolution-markers = [
+  "python_full_version < '3.11'",
+  "python_full_version == '3.11.*'",
+  "python_full_version == '3.12.*'",
+]
+sdist = {hash = "sha256:6544e34b16869f5aacd5b90bdf1a71acb37792ea3ddf6125ee69a22a53fb8bff", size = 313441, upload-time = "2026-02-05T21:50:53.743Z", url = "https://files.pythonhosted.org/packages/51/7c/f60c259dcbf4f0c47cc4ddb8f7720d2dcdc8888c8e5ad84c73ea4531cc5b/fsspec-2026.2.0.tar.gz"}
+source = {registry = "https://pypi.org/simple"}
+version = "2026.2.0"
+wheels = [
+  {hash = "sha256:98de475b5cb3bd66bedd5c4679e87b4fdfe1a3bf4d707b151b3c07e58c9a2437", size = 202505, upload-time = "2026-02-05T21:50:51.819Z", url = "https://files.pythonhosted.org/packages/e6/ab/fb21f4c939bb440104cc2b396d3be1d9b7a9fd3c6c2a53d98c45b3d7c954/fsspec-2026.2.0-py3-none-any.whl"},
+]
+
+[package.optional-dependencies]
+http = [
+  {marker = "python_full_version < '3.13'", name = "aiohttp"},
+]
+
+[[package]]
+name = "fsspec"
+resolution-markers = [
+  "python_full_version == '3.13.*'",
+  "python_full_version == '3.14.*'",
+  "python_full_version >= '3.15'",
+]
 sdist = {hash = "sha256:f5bac145310fe30e16e1471bd6840b2d990d609e872251d7e674241822abf01a", size = 313646, upload-time = "2026-06-16T01:57:28.105Z", url = "https://files.pythonhosted.org/packages/10/a1/ae4e3e5003468d6391d2c77b6fa1cd73bd5d13511d81c642d7b28ac90ed4/fsspec-2026.6.0.tar.gz"}
 source = {registry = "https://pypi.org/simple"}
 version = "2026.6.0"
@@ -1630,7 +1703,7 @@ wheels = [
 
 [package.optional-dependencies]
 http = [
-  {name = "aiohttp"},
+  {marker = "python_full_version >= '3.13'", name = "aiohttp"},
 ]
 
 [[package]]
@@ -1861,11 +1934,12 @@ zstd = [
 [[package]]
 dependencies = [
   {marker = "platform_machine == 'AMD64' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'", name = "hf-xet"},
+  {marker = "python_full_version < '3.13'", name = "fsspec", source = {registry = "https://pypi.org/simple"}, version = "2026.2.0"},
   {marker = "python_full_version < '3.13'", name = "tqdm", source = {registry = "https://pypi.org/simple"}, version = "4.67.3"},
+  {marker = "python_full_version >= '3.13'", name = "fsspec", source = {registry = "https://pypi.org/simple"}, version = "2026.6.0"},
   {marker = "python_full_version >= '3.13'", name = "tqdm", source = {registry = "https://pypi.org/simple"}, version = "4.70.0"},
   {name = "click"},
   {name = "filelock"},
-  {name = "fsspec"},
   {name = "httpx"},
   {name = "packaging"},
   {name = "pyyaml"},
@@ -2632,7 +2706,8 @@ wheels = [
 
 [[package]]
 dependencies = [
-  {extra = ["http"], name = "fsspec"},
+  {extra = ["http"], marker = "python_full_version < '3.13'", name = "fsspec", source = {registry = "https://pypi.org/simple"}, version = "2026.2.0"},
+  {extra = ["http"], marker = "python_full_version >= '3.13'", name = "fsspec", source = {registry = "https://pypi.org/simple"}, version = "2026.6.0"},
   {marker = "python_full_version < '3.13'", name = "tqdm", source = {registry = "https://pypi.org/simple"}, version = "4.67.3"},
   {marker = "python_full_version >= '3.13'", name = "tqdm", source = {registry = "https://pypi.org/simple"}, version = "4.70.0"},
   {name = "lightning-utilities"},
@@ -5072,7 +5147,8 @@ wheels = [
 
 [[package]]
 dependencies = [
-  {extra = ["http"], name = "fsspec"},
+  {extra = ["http"], marker = "python_full_version < '3.13'", name = "fsspec", source = {registry = "https://pypi.org/simple"}, version = "2026.2.0"},
+  {extra = ["http"], marker = "python_full_version >= '3.13'", name = "fsspec", source = {registry = "https://pypi.org/simple"}, version = "2026.6.0"},
   {marker = "python_full_version < '3.13'", name = "tqdm", source = {registry = "https://pypi.org/simple"}, version = "4.67.3"},
   {marker = "python_full_version >= '3.13'", name = "tqdm", source = {registry = "https://pypi.org/simple"}, version = "4.70.0"},
   {name = "lightning-utilities"},
@@ -6135,7 +6211,9 @@ wheels = [
 
 [[package]]
 dependencies = [
-  {marker = "python_full_version < '3.13'", name = "datasets"},
+  {marker = "python_full_version < '3.13'", name = "backoff"},
+  {marker = "python_full_version < '3.13'", name = "datasets", source = {registry = "https://pypi.org/simple"}, version = "4.8.5"},
+  {marker = "python_full_version < '3.13'", name = "fev"},
   {marker = "python_full_version < '3.13'", name = "gluonts"},
   {marker = "python_full_version < '3.13'", name = "pandas", source = {registry = "https://pypi.org/simple"}, version = "2.1.4"},
   {marker = "python_full_version < '3.13'", name = "python-dotenv"},
@@ -6143,14 +6221,15 @@ dependencies = [
   {marker = "python_full_version < '3.13'", name = "statsmodels"},
   {marker = "python_full_version < '3.13'", name = "tabpfn"},
   {marker = "python_full_version < '3.13'", name = "tabpfn-client"},
+  {marker = "python_full_version < '3.13'", name = "tabpfn-common-utils"},
   {marker = "python_full_version < '3.13'", name = "tqdm", source = {registry = "https://pypi.org/simple"}, version = "4.67.3"},
 ]
 name = "tabpfn-time-series"
-sdist = {hash = "sha256:f0922f73dc4760cc4919b76381443f1b7287f694bb832c5675b5f4f4929fdb6b", size = 468774, upload-time = "2025-07-16T13:21:44.809Z", url = "https://files.pythonhosted.org/packages/33/8e/82cea00d409a298144b569e4ec4eeb057f89d79c9b2a17d6c5025a7570ac/tabpfn_time_series-1.0.3.tar.gz"}
+sdist = {hash = "sha256:c94d0f63c0f921be56e91b9c50724ef49e2b95df72fa22d960c4d52df1d3f2db", size = 870612, upload-time = "2026-06-17T09:53:25.74Z", url = "https://files.pythonhosted.org/packages/7d/2d/a64cace11ba108366b8a5948e1b9060ab18d1a0c0740fe1216c7d6c536f7/tabpfn_time_series-1.2.0.tar.gz"}
 source = {registry = "https://pypi.org/simple"}
-version = "1.0.3"
+version = "1.2.0"
 wheels = [
-  {hash = "sha256:0f2436e1a3a87c91315852ab7f8151dcf15c3c2bee4d86e5ee569c0f7ee0f59a", size = 33340, upload-time = "2025-07-16T13:21:43.886Z", url = "https://files.pythonhosted.org/packages/c8/bf/13c7fdeeacaf7302b80755e85dcb01d8f47a9ddbac57adef263f0194820c/tabpfn_time_series-1.0.3-py3-none-any.whl"},
+  {hash = "sha256:3358d222a3056190dc7862d5a9e8a7e7a311d374a1f2d6bc1b3f342201bfbd8f", size = 61562, upload-time = "2026-06-17T09:53:24.728Z", url = "https://files.pythonhosted.org/packages/85/bd/16798914a924497d162e7b0978fec94031fa86dc96956a179cc6d1d879c7/tabpfn_time_series-1.2.0-py3-none-any.whl"},
 ]
 
 [[package]]
@@ -6281,11 +6360,12 @@ wheels = [
 [[package]]
 dependencies = [
   {extra = ["torch"], marker = "python_full_version >= '3.11' and python_full_version < '3.14'", name = "transformers"},
+  {marker = "python_full_version == '3.13.*'", name = "datasets", source = {registry = "https://pypi.org/simple"}, version = "5.0.1"},
   {marker = "python_full_version == '3.13.*'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.2"},
   {marker = "python_full_version == '3.13.*'", name = "pandas", source = {registry = "https://pypi.org/simple"}, version = "2.3.3"},
+  {marker = "python_full_version >= '3.11' and python_full_version < '3.13'", name = "datasets", source = {registry = "https://pypi.org/simple"}, version = "4.8.5"},
   {marker = "python_full_version >= '3.11' and python_full_version < '3.13'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "1.26.4"},
   {marker = "python_full_version >= '3.11' and python_full_version < '3.13'", name = "pandas", source = {registry = "https://pypi.org/simple"}, version = "2.1.4"},
-  {marker = "python_full_version >= '3.11' and python_full_version < '3.14'", name = "datasets"},
   {marker = "python_full_version >= '3.11' and python_full_version < '3.14'", name = "deprecated"},
   {marker = "python_full_version >= '3.11' and python_full_version < '3.14'", name = "einops"},
   {marker = "python_full_version >= '3.11' and python_full_version < '3.14'", name = "scikit-learn", source = {registry = "https://pypi.org/simple"}, version = "1.9.0"},
@@ -6367,18 +6447,19 @@ dependencies = [
   {extra = ["torch"], name = "gluonts"},
   {marker = "python_full_version < '3.11'", name = "matplotlib", source = {registry = "https://pypi.org/simple"}, version = "3.10.9"},
   {marker = "python_full_version < '3.11'", name = "scikit-learn", source = {registry = "https://pypi.org/simple"}, version = "1.7.2"},
+  {marker = "python_full_version < '3.13'", name = "datasets", source = {registry = "https://pypi.org/simple"}, version = "4.8.5"},
   {marker = "python_full_version < '3.13'", name = "pandas", source = {registry = "https://pypi.org/simple"}, version = "2.1.4"},
   {marker = "python_full_version < '3.13'", name = "tqdm", source = {registry = "https://pypi.org/simple"}, version = "4.67.3"},
   {marker = "python_full_version < '3.14'", name = "jaxtyping", source = {registry = "https://pypi.org/simple"}, version = "0.2.38"},
   {marker = "python_full_version >= '3.11'", name = "matplotlib", source = {registry = "https://pypi.org/simple"}, version = "3.11.1"},
   {marker = "python_full_version >= '3.11'", name = "scikit-learn", source = {registry = "https://pypi.org/simple"}, version = "1.9.0"},
+  {marker = "python_full_version >= '3.13'", name = "datasets", source = {registry = "https://pypi.org/simple"}, version = "5.0.1"},
   {marker = "python_full_version >= '3.13'", name = "pandas", source = {registry = "https://pypi.org/simple"}, version = "2.3.3"},
   {marker = "python_full_version >= '3.13'", name = "tqdm", source = {registry = "https://pypi.org/simple"}, version = "4.70.0"},
   {marker = "python_full_version >= '3.14'", name = "jaxtyping", source = {registry = "https://pypi.org/simple"}, version = "0.3.11"},
   {name = "beartype"},
   {name = "black"},
   {name = "boto3"},
-  {name = "datasets"},
   {name = "dill"},
   {name = "einops"},
   {name = "isort"},
@@ -6429,8 +6510,8 @@ wheels = [
 dependencies = [
   {marker = "python_full_version < '3.11'", name = "jax", source = {registry = "https://pypi.org/simple"}, version = "0.6.2"},
   {marker = "python_full_version < '3.11'", name = "scipy", source = {registry = "https://pypi.org/simple"}, version = "1.15.3"},
+  {marker = "python_full_version < '3.13'", name = "datasets", source = {registry = "https://pypi.org/simple"}, version = "4.8.5"},
   {marker = "python_full_version < '3.13'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "1.26.4"},
-  {marker = "python_full_version < '3.14'", name = "datasets"},
   {marker = "python_full_version < '3.14'", name = "einops"},
   {marker = "python_full_version < '3.14'", name = "gluonts"},
   {marker = "python_full_version < '3.14'", name = "huggingface-hub"},
@@ -6443,6 +6524,7 @@ dependencies = [
   {marker = "python_full_version < '3.14'", name = "safetensors"},
   {marker = "python_full_version < '3.14'", name = "tensorboard"},
   {marker = "python_full_version < '3.14'", name = "torch"},
+  {marker = "python_full_version == '3.13.*'", name = "datasets", source = {registry = "https://pypi.org/simple"}, version = "5.0.1"},
   {marker = "python_full_version == '3.13.*'", name = "jax", source = {registry = "https://pypi.org/simple"}, version = "0.11.0"},
   {marker = "python_full_version == '3.13.*'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.2"},
   {marker = "python_full_version == '3.13.*'", name = "scipy", source = {registry = "https://pypi.org/simple"}, version = "1.18.0"},
@@ -6566,15 +6648,16 @@ wheels = [
 dependencies = [
   {extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "sys_platform == 'linux'", name = "cuda-toolkit"},
   {marker = "python_full_version < '3.11'", name = "networkx", source = {registry = "https://pypi.org/simple"}, version = "3.4.2"},
+  {marker = "python_full_version < '3.13'", name = "fsspec", source = {registry = "https://pypi.org/simple"}, version = "2026.2.0"},
   {marker = "python_full_version < '3.15' and sys_platform == 'linux'", name = "cuda-bindings"},
   {marker = "python_full_version < '3.15' and sys_platform == 'linux'", name = "triton"},
   {marker = "python_full_version >= '3.11'", name = "networkx", source = {registry = "https://pypi.org/simple"}, version = "3.6.1"},
+  {marker = "python_full_version >= '3.13'", name = "fsspec", source = {registry = "https://pypi.org/simple"}, version = "2026.6.0"},
   {marker = "sys_platform == 'linux'", name = "nvidia-cudnn-cu13"},
   {marker = "sys_platform == 'linux'", name = "nvidia-cusparselt-cu13"},
   {marker = "sys_platform == 'linux'", name = "nvidia-nccl-cu13"},
   {marker = "sys_platform == 'linux'", name = "nvidia-nvshmem-cu13"},
   {name = "filelock"},
-  {name = "fsspec"},
   {name = "jinja2"},
   {name = "setuptools"},
   {name = "sympy"},
