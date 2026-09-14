@@ -43,13 +43,13 @@ class TabPFN(Forecaster):
 
     def __init__(
         self,
-        model_path: str = TABPFN_V2_MODEL,
         features: list[FeatureGenerator] | None = None,
         context_length: int = 4096,
         mode: TabPFNMode | None = None,
         api_key: str | None = None,
         alias: str = "TabPFN",
         reuse_loaded_model: bool = True,
+        model_path: str = TABPFN_V2_MODEL,
     ):
         """
         Args:
@@ -119,6 +119,8 @@ class TabPFN(Forecaster):
         self.context_length = context_length
         if mode is None:
             mode = TabPFNMode.LOCAL if torch.cuda.is_available() else TabPFNMode.CLIENT
+        if model_path == TABPFN_V3_MODEL and mode != TabPFNMode.LOCAL:
+            raise ValueError("TabPFN-3 is LOCAL-only; pass mode=TabPFNMode.LOCAL.")
         if mode == TabPFNMode.CLIENT and api_key is not None:
             set_access_token(api_key)
         self.mode = mode

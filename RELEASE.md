@@ -14,7 +14,7 @@ git tag v0.1.6
 git push origin v0.1.6
 ```
 
-The [Release workflow](.github/workflows/release.yaml) publishes automatically on tag push.
+The [Release workflow](https://github.com/TimeCopilot/foundationforecast/blob/main/.github/workflows/release.yaml) publishes automatically on tag push.
 
 ## After publish
 
