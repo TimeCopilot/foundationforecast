@@ -29,6 +29,7 @@ nav:
           - Chronos: examples/chronos-family.ipynb
           - TimesFM: examples/timesfm-family.ipynb
           - TiRex: examples/tirex-family.ipynb
+          - TabPFN: examples/tabpfn-family.ipynb
           - Toto: examples/toto-family.ipynb
       - Finetuning: examples/finetuning.ipynb
   - API Reference:
