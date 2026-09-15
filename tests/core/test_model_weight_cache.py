@@ -242,9 +242,7 @@ def test_foundation_forecast_clean_cache_includes_fallback(mocker):
     class FailingModel(Forecaster):
         alias = "FailingModel"
 
-        def forecast(
-            self, df, h, freq=None, level=None, quantiles=None, panel=None, **kwargs
-        ):
+        def forecast(self, df, h, freq=None, level=None, quantiles=None):
             raise RuntimeError("Intentional failure")
 
     fallback = Chronos(repo_id="amazon/chronos-t5-tiny", alias="Fallback")

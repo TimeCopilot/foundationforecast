@@ -1,10 +1,35 @@
 from __future__ import annotations
 
+import inspect
+from collections.abc import Callable
+
 import pandas as pd
 import utilsforecast.processing as ufp
 
 from .forecaster import Forecaster, maybe_infer_freq
 from .utils import PanelData, process_panel_from_df
+
+
+def _accepts_kwarg(fn: Callable[..., object], name: str) -> bool:
+    try:
+        parameters = inspect.signature(fn).parameters
+    except (TypeError, ValueError):
+        return False
+    return any(
+        param.name == name or param.kind == inspect.Parameter.VAR_KEYWORD
+        for param in parameters.values()
+    )
+
+
+def _with_panel_kwargs(
+    fn: Callable[..., object],
+    known_kwargs: dict[str, object],
+    panel: PanelData | None,
+) -> dict[str, object]:
+    call_kwargs = dict(known_kwargs)
+    if panel is not None and _accepts_kwarg(fn, "panel"):
+        call_kwargs["panel"] = panel
+    return call_kwargs
 
 
 class MultiModelForecasterMixin:
@@ -68,16 +93,16 @@ class MultiModelForecasterMixin:
             }
             if attr != "detect_anomalies":
                 known_kwargs["quantiles"] = quantiles
-            if panel is not None:
-                known_kwargs["panel"] = panel
             fn = getattr(model, attr)
+            call_kwargs = _with_panel_kwargs(fn, known_kwargs, panel)
             try:
-                res_df_model = fn(**known_kwargs, **kwargs)
+                res_df_model = fn(**call_kwargs, **kwargs)
             except (ValueError, RuntimeError) as e:
                 if self.fallback_model is None:
                     raise e
                 fn = getattr(self.fallback_model, attr)
-                res_df_model = fn(**known_kwargs, **kwargs)
+                fallback_kwargs = _with_panel_kwargs(fn, known_kwargs, panel)
+                res_df_model = fn(**fallback_kwargs, **kwargs)
                 res_df_model = res_df_model.rename(
                     columns={
                         col: (

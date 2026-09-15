@@ -130,6 +130,36 @@ def test_foundation_forecast_fallback_model():
     assert len(fcst_df) == 2
 
 
+def test_foundation_forecast_fallback_with_legacy_forecaster():
+    class LegacyFailingModel(Forecaster):
+        alias = "LegacyFailingModel"
+
+        def forecast(self, df, h, freq=None, level=None, quantiles=None):
+            raise RuntimeError("Intentional failure")
+
+    class LegacyFallbackModel(Forecaster):
+        alias = "LegacyFallbackModel"
+
+        def forecast(self, df, h, freq=None, level=None, quantiles=None):
+            n = len(df["unique_id"].unique()) * h
+            return pd.DataFrame(
+                {
+                    "unique_id": ["A"] * n,
+                    "ds": pd.date_range("2020-01-01", periods=n, freq="D"),
+                    "LegacyFallbackModel": range(n),
+                }
+            )
+
+    df = generate_series(n_series=1, freq="D", min_length=10)
+    forecaster = FoundationForecast(
+        models=[LegacyFailingModel()],
+        fallback_model=LegacyFallbackModel(),
+    )
+    fcst_df = forecaster.forecast(df=df, h=2, freq="D")
+    assert "LegacyFailingModel" in fcst_df.columns
+    assert len(fcst_df) == 2
+
+
 def test_foundation_forecast_no_fallback_raises():
     class FailingModel(Forecaster):
         alias = "FailingModel"
