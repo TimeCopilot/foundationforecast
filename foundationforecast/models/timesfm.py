@@ -133,7 +133,7 @@ class _TimesFMV1(Forecaster):
         qc = QuantileConverter(level=level, quantiles=quantiles)
         with self._get_predictor(
             prediction_length=h,
-            quantiles=DEFAULT_QUANTILES_TFM if qc.quantiles is not None else None,
+            quantiles=DEFAULT_QUANTILES_TFM,
         ) as predictor:
             fcst_df = predictor.forecast_on_df(
                 inputs=df,
@@ -261,12 +261,6 @@ class _TimesFMV2_p5(Forecaster):
     ) -> pd.DataFrame:
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        if qc.quantiles is not None and len(qc.quantiles) != len(DEFAULT_QUANTILES_TFM):
-            raise ValueError(
-                "TimesFM only supports the default quantiles, "
-                "please use the default quantiles or default level, "
-                "see https://github.com/google-research/timesfm/issues/286"
-            )
         dataset = TimeSeriesDataset.from_df(
             df,
             batch_size=self.batch_size,
@@ -281,10 +275,18 @@ class _TimesFMV2_p5(Forecaster):
             )
         fcst_df[self.alias] = fcsts_mean_np.reshape(-1, 1)
         if qc.quantiles is not None:
-            for i, q in enumerate(qc.quantiles):
-                fcst_df[f"{self.alias}-q-{int(q * 100)}"] = fcsts_quantiles_np[
-                    ..., i + 1  # skip the first quantile (mean)
-                ].reshape(-1, 1)
+            native_vals = fcsts_quantiles_np[..., 1:]
+            resolved = resolve_quantile_values(
+                DEFAULT_QUANTILES_TFM,
+                native_vals,
+                qc.quantiles,
+            )
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                resolved,
+            )
             fcst_df = qc.maybe_convert_quantiles_to_level(
                 fcst_df,
                 models=[self.alias],
@@ -385,12 +387,6 @@ class _TimesFMV3(Forecaster):
     ) -> pd.DataFrame:
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        if qc.quantiles is not None and len(qc.quantiles) != len(DEFAULT_QUANTILES_TFM):
-            raise ValueError(
-                "TimesFM only supports the default quantiles, "
-                "please use the default quantiles or default level, "
-                "see https://github.com/google-research/timesfm/issues/286"
-            )
         dataset = TimeSeriesDataset.from_df(
             df,
             batch_size=self.batch_size,
@@ -405,10 +401,17 @@ class _TimesFMV3(Forecaster):
             )
         fcst_df[self.alias] = fcsts_mean_np.reshape(-1, 1)
         if qc.quantiles is not None:
-            for i, q in enumerate(qc.quantiles):
-                fcst_df[f"{self.alias}-q-{int(q * 100)}"] = fcsts_quantiles_np[
-                    ..., i
-                ].reshape(-1, 1)
+            resolved = resolve_quantile_values(
+                DEFAULT_QUANTILES_TFM,
+                fcsts_quantiles_np,
+                qc.quantiles,
+            )
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                resolved,
+            )
             fcst_df = qc.maybe_convert_quantiles_to_level(
                 fcst_df,
                 models=[self.alias],
