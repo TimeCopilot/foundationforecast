@@ -304,18 +304,6 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
         # scale_factor = self.scale_factor or get_fixed_factor(freq)
         with self._get_model() as model:
-            cfg = model.config
-            supported_quantiles = cfg.quantile_levels
-            if qc.quantiles is not None and not set(qc.quantiles).issubset(
-                supported_quantiles
-            ):
-                raise ValueError(
-                    "PatchTSTFM only supports the default quantiles, "
-                    f"supported quantiles are {supported_quantiles}, "
-                    f"quantiles provided are {qc.quantiles}, "
-                    "please use the default quantiles or default level."
-                )
-
             fcsts_mean_np, fcsts_quantiles_np = self._predict(
                 model,
                 dataset,

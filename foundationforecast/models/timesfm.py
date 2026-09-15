@@ -18,6 +18,7 @@ from ..core.forecaster import (
     QuantileConverter,
     maybe_convert_col_to_datetime,
 )
+from ..core.quantiles import resolve_quantile_values
 from ..core.utils import TimeSeriesDataset
 
 # Legacy HF repo IDs from GIFT-Eval submissions without "pytorch" in the name.
@@ -130,15 +131,9 @@ class _TimesFMV1(Forecaster):
         df = maybe_convert_col_to_datetime(df, "ds")
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        if qc.quantiles is not None and len(qc.quantiles) != len(DEFAULT_QUANTILES_TFM):
-            raise ValueError(
-                "TimesFM only supports the default quantiles, "
-                "please use the default quantiles or default level, "
-                "see https://github.com/google-research/timesfm/issues/286"
-            )
         with self._get_predictor(
             prediction_length=h,
-            quantiles=qc.quantiles or DEFAULT_QUANTILES_TFM,
+            quantiles=DEFAULT_QUANTILES_TFM if qc.quantiles is not None else None,
         ) as predictor:
             fcst_df = predictor.forecast_on_df(
                 inputs=df,
@@ -148,11 +143,26 @@ class _TimesFMV1(Forecaster):
                 num_jobs=1,
             )
         if qc.quantiles is not None:
+            native_cols = [
+                f"{self.alias}-q-{int(q * 100)}" for q in DEFAULT_QUANTILES_TFM
+            ]
             renamer = {
                 f"{self.alias}-q-{q}": f"{self.alias}-q-{int(q * 100)}"
-                for q in qc.quantiles
+                for q in DEFAULT_QUANTILES_TFM
             }
             fcst_df = fcst_df.rename(columns=renamer)
+            native_vals = fcst_df[native_cols].to_numpy()
+            resolved = resolve_quantile_values(
+                DEFAULT_QUANTILES_TFM,
+                native_vals,
+                qc.quantiles,
+            )
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                resolved,
+            )
             fcst_df = qc.maybe_convert_quantiles_to_level(
                 fcst_df,
                 models=[self.alias],
