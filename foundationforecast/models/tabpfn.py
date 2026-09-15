@@ -154,6 +154,7 @@ class TabPFN(Forecaster):
             "y": "target",
         }
         tsdf = df.rename(columns=renamer)
+        tsdf["item_id"] = tsdf["item_id"].astype(str)
         tsdf = TimeSeriesDataFrame(tsdf.set_index(["item_id", "timestamp"]))
         if self.context_length > 0:
             tsdf = tsdf.slice_by_timestep(-self.context_length, None)
