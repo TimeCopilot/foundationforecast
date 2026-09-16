@@ -25,6 +25,8 @@ from utilsforecast.processing import (
     vertical_concat,
 )
 
+from .quantiles import validate_levels
+
 T = TypeVar("T")
 
 
@@ -212,6 +214,19 @@ class Forecaster:
             return get_seasonality(freq)
         return get_seasonality(freq)
 
+    @staticmethod
+    def _assign_quantile_forecasts(
+        fcst_df: pd.DataFrame,
+        alias: str,
+        quantiles: list[float],
+        fcsts_quantiles_np: np.ndarray,
+    ) -> pd.DataFrame:
+        q_cols = [f"{alias}-q-{int(q * 100)}" for q in quantiles]
+        q_vals = [fcsts_quantiles_np[..., i].reshape(-1) for i in range(len(quantiles))]
+        for q_col, q_val in zip(q_cols, q_vals, strict=True):
+            fcst_df = ufp.assign_columns(fcst_df, q_col, q_val)
+        return fcst_df
+
     def forecast(
         self,
         df: pd.DataFrame,
@@ -349,7 +364,23 @@ class Forecaster:
 
 
 class QuantileConverter:
-    """Handles inputs and outputs for probabilistic forecasts."""
+    """Handles inputs and outputs for probabilistic forecasts.
+
+    Pass either ``level`` (confidence intervals as percentages) or ``quantiles``
+    (values in ``(0, 1)``), but not both. The point forecast is always returned
+    in the model alias column regardless of which probabilistic API is used.
+
+    When ``level`` is provided, each level ``L`` maps to symmetric quantiles
+    ``(α/2, 1 − α/2)`` with ``α = 1 − L/100``. The output uses
+    ``{alias}-lo-{L}`` and ``{alias}-hi-{L}`` columns.
+
+    When ``quantiles`` is provided, the output uses ``{alias}-q-{pct}`` columns
+    where ``pct = int(100 × quantile)``.
+
+    Fixed-knot models interpolate linearly from their native quantile knots to
+    the requested levels or quantiles, clamping to edge knots when needed. See
+    ``foundationforecast.core.quantiles`` for edge-clamping semantics.
+    """
 
     def __init__(
         self,
@@ -373,13 +404,15 @@ class QuantileConverter:
                 "You must not provide both `level` and `quantiles` simultaneously."
             )
         if quantiles is None and level is not None:
+            validated_level = validate_levels(level)
+            assert validated_level is not None
             _quantiles = []
-            for lv in level:
+            for lv in validated_level:
                 q_lo, q_hi = QuantileConverter._level_to_quantiles(lv)
                 _quantiles.append(q_lo)
                 _quantiles.append(q_hi)
             quantiles = sorted(set(_quantiles))
-            return level, quantiles, True
+            return validated_level, quantiles, True
         if level is None and quantiles is not None:
             if not all(0 < q < 1 for q in quantiles):
                 raise ValueError("`quantiles` should be floats between 0 and 1.")
@@ -431,12 +464,6 @@ class QuantileConverter:
         out_cols = [c for c in df.columns if "-q-" not in c]
         df = ufp.copy_if_pandas(df, deep=False)
         for model in models:
-            if 0 in self.level:
-                mid_col = f"{model}-q-50"
-                if mid_col in df:
-                    df = ufp.assign_columns(df, model, df[mid_col])
-                    if model not in out_cols:
-                        out_cols.append(model)
             for lv in self.level:
                 q_lo, q_hi = self._level_to_quantiles(lv)
                 lo_src = f"{model}-q-{int(q_lo * 100)}"

@@ -13,6 +13,7 @@ from tsfm_public import FlowStateForPrediction
 from tsfm_public.models.flowstate.utils.utils import get_fixed_factor
 
 from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
+from ..core.quantiles import resolve_quantile_values
 from ..core.utils import TimeSeriesDataset
 
 
@@ -287,29 +288,27 @@ class FlowState(Forecaster, _DataProcessor):
         with self._get_model() as model:
             cfg = model.config
             supported_quantiles = cfg.quantiles
-            if qc.quantiles is not None and not np.allclose(
-                qc.quantiles,
-                supported_quantiles,
-            ):
-                raise ValueError(
-                    "FlowState only supports the default quantiles, "
-                    f"supported quantiles are {supported_quantiles}, "
-                    "please use the default quantiles or default level, "
-                )
             fcsts_mean_np, fcsts_quantiles_np = self._predict(
                 model,
                 dataset,
                 h,
-                quantiles=qc.quantiles,
+                quantiles=supported_quantiles if qc.quantiles is not None else None,
                 supported_quantiles=supported_quantiles,
                 scale_factor=scale_factor,
             )
         fcst_df[self.alias] = fcsts_mean_np.reshape(-1, 1)
         if qc.quantiles is not None and fcsts_quantiles_np is not None:
-            for i, q in enumerate(qc.quantiles):
-                fcst_df[f"{self.alias}-q-{int(q * 100)}"] = fcsts_quantiles_np[
-                    ..., i
-                ].reshape(-1, 1)
+            fcsts_quantiles_np = resolve_quantile_values(
+                supported_quantiles,
+                fcsts_quantiles_np,
+                qc.quantiles,
+            )
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                fcsts_quantiles_np,
+            )
             fcst_df = qc.maybe_convert_quantiles_to_level(
                 fcst_df,
                 models=[self.alias],
