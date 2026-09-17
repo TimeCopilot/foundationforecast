@@ -24,7 +24,7 @@ def test_t0_forecast_passes_quantile_levels(mocker):
 
     mock_forecaster = MagicMock()
     mock_out = MagicMock()
-    mock_out.quantiles.cpu.return_value.numpy.return_value = np.ones((2, 3, 1))
+    mock_out.quantiles.cpu.return_value.numpy.return_value = np.ones((2, 3, 3))
     mock_forecaster.predict.return_value = mock_out
 
     mock_cm = MagicMock()
