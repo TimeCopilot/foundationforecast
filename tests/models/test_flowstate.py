@@ -11,9 +11,35 @@ if sys.version_info < (3, 11) or sys.version_info >= (3, 14):
 
 from tests.helpers import generate_series  # noqa: E402
 from foundationforecast import FoundationForecast
-from foundationforecast.models.flowstate import FlowState  # noqa: E402
+from foundationforecast.models.flowstate import (  # noqa: E402
+    FlowState,
+    _normalize_freq_for_scale_factor,
+)
 
 pytestmark = pytest.mark.models
+
+
+@pytest.mark.parametrize(
+    ("freq", "expected"),
+    [
+        ("h", "H"),
+        ("6h", "6H"),
+        ("15min", "15T"),
+        ("MS", "M"),
+        ("ME", "M"),
+        ("D", "D"),
+        ("W-MON", "W-MON"),
+    ],
+)
+def test_normalize_freq_for_scale_factor(freq, expected):
+    assert _normalize_freq_for_scale_factor(freq) == expected
+
+
+def test_flowstate_inferred_hourly_freq():
+    df = generate_series(n_series=1, freq="H", min_length=20, max_length=20)
+    model = FlowState(batch_size=2)
+    fcst = model.forecast(df, h=1)
+    assert len(fcst) == 1
 
 
 def test_flowstate_h1_single_uid():
