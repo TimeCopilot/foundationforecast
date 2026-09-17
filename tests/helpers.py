@@ -49,7 +49,8 @@ class DummyModel(Forecaster):
         super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.alias = alias
 
-    def forecast(self, df, h, freq=None, level=None, quantiles=None):
+    def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
+        _ = panel
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
         last_times = df.groupby("unique_id")["ds"].max()
@@ -79,7 +80,8 @@ class SeasonalNaiveModel(Forecaster):
         super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.season_length = season_length
 
-    def forecast(self, df, h, freq=None, level=None, quantiles=None):
+    def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
+        _ = panel
         freq = self._maybe_infer_freq(df, freq)
         season_length = self._maybe_get_seasonality(freq)
         results = []

@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -8,6 +9,7 @@ from tests.helpers import (
     generate_series_with_anomalies,
 )
 from foundationforecast.core.forecaster import (
+    Forecaster,
     QuantileConverter,
     get_seasonality,
     maybe_infer_freq,
@@ -83,9 +85,9 @@ def test_prepare_level_and_quantiles_with_levels():
 @pytest.mark.parametrize(
     "quantiles,expected_level",
     [
-        ([0.1, 0.5, 0.9], [0, 80]),
-        ([0.1, 0.5, 0.2, 0.9], [0, 60, 80]),
-        ([0.5], [0]),
+        ([0.1, 0.5, 0.9], [80]),
+        ([0.1, 0.5, 0.2, 0.9], [60, 80]),
+        ([0.5], None),
     ],
 )
 def test_prepare_level_and_quantiles_with_quantiles(quantiles, expected_level):
@@ -345,3 +347,20 @@ def test_validate_input():
 def test_validate_input_errors(df, h, match):
     with pytest.raises(ValueError, match=match):
         DummyModel().validate_input(df, h)
+
+
+def test_assign_quantile_forecasts():
+    fcst_df = pd.DataFrame(index=range(4))
+    quantiles = [0.1, 0.5, 0.9]
+    fcsts_quantiles_np = np.ones((2, 2, len(quantiles)))
+    out = Forecaster._assign_quantile_forecasts(
+        fcst_df,
+        "dummy",
+        quantiles,
+        fcsts_quantiles_np,
+    )
+    assert list(out.columns) == [
+        "dummy-q-10",
+        "dummy-q-50",
+        "dummy-q-90",
+    ]
