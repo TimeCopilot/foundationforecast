@@ -250,6 +250,14 @@ models:
       repo_id: theforecastingcompany/t0-alpha
       batch_size: 32
 
+  theforecastingcompany--t0-beta:
+    class: foundationforecast.models.t0.T0
+    reference_slug: null
+    kwargs:
+      repo_id: theforecastingcompany/t0-beta
+      alias: t0-beta
+      batch_size: 16
+
   thuml--sundial-base-128m:
     class: foundationforecast.models.sundial.Sundial
     reference_slug: sundial_base_128m
