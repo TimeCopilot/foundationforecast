@@ -51,6 +51,9 @@ class PatchTSTFM(Forecaster, _DataProcessor):
                 load the PatchTST-FM model from. Supported models:
 
                 - `ibm-research/patchtst-fm-r1`
+                - `ibm-granite/granite-timeseries-patchtst-fm-r1`
+                - `ibm-granite/granite-timeseries-patchtst-fm-r2` (requires
+                  `granite-tsfm>=0.3.9`)
 
             context_length (int, optional): Maximum context length (input window size)
                 for the model. Controls how much history is used for each forecast.
@@ -75,7 +78,10 @@ class PatchTSTFM(Forecaster, _DataProcessor):
             **Resources:**
 
             - GitHub: [ibm-granite/granite-tsfm](https://github.com/ibm-granite/granite-tsfm)
-            - HuggingFace Models: [ibm-research/patchtst-fm-r1](https://huggingface.co/ibm-research/patchtst-fm-r1)
+            - HuggingFace Models:
+              [ibm-research/patchtst-fm-r1](https://huggingface.co/ibm-research/patchtst-fm-r1),
+              [ibm-granite/granite-timeseries-patchtst-fm-r1](https://huggingface.co/ibm-granite/granite-timeseries-patchtst-fm-r1),
+              [ibm-granite/granite-timeseries-patchtst-fm-r2](https://huggingface.co/ibm-granite/granite-timeseries-patchtst-fm-r2)
 
             **Technical Details:**
 
@@ -85,6 +91,8 @@ class PatchTSTFM(Forecaster, _DataProcessor):
             **Supported Models:**
 
             - `ibm-research/patchtst-fm-r1` (default)
+            - `ibm-granite/granite-timeseries-patchtst-fm-r1`
+            - `ibm-granite/granite-timeseries-patchtst-fm-r2`
         """
         super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.repo_id = repo_id
