@@ -4,7 +4,6 @@ from contextlib import contextmanager
 if sys.version_info >= (3, 13):
     raise ImportError("TabPFN requires Python < 3.13")
 
-import numpy as np
 import pandas as pd
 import torch
 from tabpfn_client import set_access_token
@@ -26,6 +25,7 @@ from tabpfn_time_series.features.feature_generator_base import (
 )
 
 from ..core.forecaster import Forecaster, QuantileConverter
+from ..core.quantiles import resolve_quantile_values
 
 TABPFN_V2_MODEL = "tabpfn-v2-regressor-2noar4o2.ckpt"
 TABPFN_V3_MODEL = "tabpfn-v3-regressor-v3_20260506_timeseries.ckpt"
@@ -163,7 +163,11 @@ class TabPFN(Forecaster):
         if quantiles is None:
             fcst_df = model.predict(tsdf, future_tsdf)
         else:
-            fcst_df = model.predict(tsdf, future_tsdf, quantiles=quantiles)
+            fcst_df = model.predict(
+                tsdf,
+                future_tsdf,
+                quantiles=list(DEFAULT_QUANTILE_CONFIG),
+            )
         fcst_df = fcst_df.reset_index()
         re_renamer = {v: k for k, v in renamer.items()}
         re_renamer["target"] = self.alias
@@ -171,15 +175,20 @@ class TabPFN(Forecaster):
         if quantiles is None:
             fcst_df = fcst_df[["unique_id", "ds", self.alias]]
         else:
-            q_renamer = {
-                q_orig: f"{self.alias}-q-{int(100 * q_user)}"
-                for q_orig, q_user in zip(
-                    DEFAULT_QUANTILE_CONFIG,
-                    quantiles,
-                    strict=True,
-                )
-            }
-            fcst_df = fcst_df.rename(columns=q_renamer)
+            native_cols = list(DEFAULT_QUANTILE_CONFIG)
+            native_vals = fcst_df[native_cols].to_numpy()
+            resolved = resolve_quantile_values(
+                DEFAULT_QUANTILE_CONFIG,
+                native_vals,
+                quantiles,
+            )
+            fcst_df = fcst_df[["unique_id", "ds", self.alias]]
+            fcst_df = self._assign_quantile_forecasts(
+                pd.DataFrame(fcst_df),
+                self.alias,
+                quantiles,
+                resolved,
+            )
         return pd.DataFrame(fcst_df)
 
     def forecast(
@@ -238,14 +247,6 @@ class TabPFN(Forecaster):
         """
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        if qc.quantiles is not None and not np.allclose(
-            qc.quantiles,
-            DEFAULT_QUANTILE_CONFIG,
-        ):
-            raise ValueError(
-                "TabPFN only supports the default quantiles, "
-                "please use the default quantiles or default level, "
-            )
         with self._get_model() as model:
             fcst_df = self._forecast(
                 model,

@@ -57,3 +57,53 @@ anomalies_df = ff.detect_anomalies(df=df, freq="MS", level=99)
 * **`freq`** must match your data's timestamp spacing. Irregular or gapped series may fail inference.
 * **`h`** should cover the horizon you care about for evaluation or deployment.
 * For **anomaly detection**, use a horizon aligned with the seasonal cycle when possible.
+
+
+## Probabilistic forecasting (`level` and `quantiles`)
+
+Foundation models support two mutually exclusive ways to request probabilistic
+forecasts in `forecast()` and `cross_validation()`:
+
+### `level` — prediction intervals
+
+Pass confidence levels as percentages, e.g. `level=[80, 95]`. Each level `L`
+maps to symmetric quantiles `(α/2, 1 − α/2)` with `α = 1 − L/100`. The output
+includes `{model}-lo-{L}` and `{model}-hi-{L}` columns.
+
+```python
+fcst_df = ff.forecast(df=df, h=12, freq="MS", level=[80, 95])
+```
+
+### `quantiles` — direct quantile forecasts
+
+Pass quantile levels in `(0, 1)`, e.g. `quantiles=[0.1, 0.5, 0.9]`. The output
+includes `{model}-q-{pct}` columns where `pct = int(100 × quantile)`.
+
+```python
+fcst_df = ff.forecast(df=df, h=12, freq="MS", quantiles=[0.1, 0.5, 0.9])
+```
+
+### Point forecasts
+
+The point forecast is **always** returned in the `{model}` column, regardless of
+whether you use `level` or `quantiles`. You do not need a special level to
+request the median.
+
+### Interpolation on fixed-knot models
+
+Some models (TiRex, TimesFM, TabPFN, FlowState, Tafsut, Toto 2.0, …) predict a
+fixed set of native quantile **knots** internally. When you request levels or
+quantiles that do not exactly match those knots, the library linearly
+interpolates between adjacent knots.
+
+### Edge clamping
+
+When a requested quantile falls **outside** the model's native knot range, the
+value at the nearest edge knot is returned (same semantics as `numpy.interp`).
+Values are not extrapolated beyond the model's trained quantile range.
+
+For example, on a model with native knots `0.1` through `0.9`:
+
+- `level=[95]` maps to quantiles `0.025` and `0.975`, which are clamped to
+  `0.1` and `0.9` respectively.
+- `quantiles=[0.01]` returns the same forecast as `quantiles=[0.1]`.
