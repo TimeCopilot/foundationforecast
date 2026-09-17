@@ -61,14 +61,15 @@ class T0(Forecaster):
         Notes:
             **Requirements:**
 
-            - T0 requires Python 3.11 to 3.13 (via the
-              [`tfc-t0`](https://pypi.org/project/tfc-t0/) package).
+            - T0 requires Python 3.11 to 3.13 and ``tfc-t0>=0.5.0`` (required
+              for ``t0-beta``; also supports ``t0-alpha``).
 
             **Available models:**
 
             | Model ID                                                                                          | Parameters |
             | ------------------------------------------------------------------------------------------------- | ---------- |
             | [`theforecastingcompany/t0-alpha`](https://huggingface.co/theforecastingcompany/t0-alpha)         | ~102M      |
+            | [`theforecastingcompany/t0-beta`](https://huggingface.co/theforecastingcompany/t0-beta)           | ~256M      |
 
             **Resources:**
 
@@ -79,9 +80,9 @@ class T0(Forecaster):
 
             - The model is loaded onto the best available device (GPU if
               available, otherwise CPU).
-            - T0 predicts 5 quantile knots (0.1, 0.25, 0.5, 0.75, 0.9); the
-              median (0.5) is used as the point forecast and other requested
-              quantiles are obtained by linear interpolation across the knots.
+            - ``t0-alpha`` predicts 5 quantile knots (0.1, 0.25, 0.5, 0.75, 0.9);
+              ``t0-beta`` predicts 21 native levels (0.01–0.99). Requested
+              quantiles are interpolated; the median (0.5) is the point forecast.
             - NaN values in the context are treated as missing observations.
             - T0 natively supports past and known-future covariates through its
               `predict` API; this integration currently exposes the univariate
@@ -194,7 +195,7 @@ class T0(Forecaster):
                 out = model.predict(
                     self._to_context(batch),
                     horizon=h,
-                    quantiles=pred_quantiles,
+                    quantile_levels=pred_quantiles,
                 )
                 # shape: (batch, h, n_quantiles)
                 fcsts.append(out.quantiles.cpu().numpy())
