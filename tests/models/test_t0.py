@@ -12,8 +12,8 @@ if sys.version_info < (3, 11) or sys.version_info >= (3, 14):
 
 import pandas as pd  # noqa: E402
 
-from foundationforecast.models.t0 import T0  # noqa: E402
 from tests.helpers import generate_series  # noqa: E402
+from foundationforecast.models.t0 import T0  # noqa: E402
 
 pytestmark = pytest.mark.models
 
