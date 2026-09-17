@@ -190,7 +190,10 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         # scale_factor: float,
     ) -> tuple[np.ndarray, np.ndarray | None]:
         targets = self._prepare_targets(batch)
-        quantile_levels = DEFAULT_QUANTILES if quantiles is None else quantiles
+        if quantiles is None:
+            quantile_levels = DEFAULT_QUANTILES
+        else:
+            quantile_levels = sorted(set(quantiles) | {0.5})
 
         outputs = self._run_model_on_targets(model, targets, h, quantile_levels)
 
@@ -200,15 +203,13 @@ class PatchTSTFM(Forecaster, _DataProcessor):
             fcsts.append(fcst)
 
         fcst = torch.stack(fcsts, dim=0)  # (batch, h, quantiles)
-        median_idx = (
-            quantile_levels.index(0.5)
-            if 0.5 in quantile_levels
-            else len(quantile_levels) // 2
-        )
+        median_idx = quantile_levels.index(0.5)
         fcst_mean_np = fcst[..., median_idx].detach().cpu().numpy()
-        fcst_quantiles_np = (
-            fcst.detach().cpu().numpy() if quantiles is not None else None
-        )
+        if quantiles is None:
+            fcst_quantiles_np = None
+        else:
+            q_indices = [quantile_levels.index(q) for q in quantiles]
+            fcst_quantiles_np = fcst[..., q_indices].detach().cpu().numpy()
         return fcst_mean_np, fcst_quantiles_np
 
     def _predict(

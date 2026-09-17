@@ -25,7 +25,7 @@ from utilsforecast.processing import (
     vertical_concat,
 )
 
-from .quantiles import validate_levels
+from .quantiles import _LEVEL_ZERO_ERROR
 
 T = TypeVar("T")
 
@@ -222,6 +222,11 @@ class Forecaster:
         fcsts_quantiles_np: np.ndarray,
     ) -> pd.DataFrame:
         q_cols = [f"{alias}-q-{int(q * 100)}" for q in quantiles]
+        if len(q_cols) != len(set(q_cols)):
+            raise ValueError(
+                "Requested quantiles map to duplicate output column names "
+                f"(using int(100 × quantile) suffixes): {quantiles}"
+            )
         q_vals = [fcsts_quantiles_np[..., i].reshape(-1) for i in range(len(quantiles))]
         for q_col, q_val in zip(q_cols, q_vals, strict=True):
             fcst_df = ufp.assign_columns(fcst_df, q_col, q_val)
@@ -404,15 +409,15 @@ class QuantileConverter:
                 "You must not provide both `level` and `quantiles` simultaneously."
             )
         if quantiles is None and level is not None:
-            validated_level = validate_levels(level)
-            assert validated_level is not None
+            if 0 in level:
+                raise ValueError(_LEVEL_ZERO_ERROR)
             _quantiles = []
-            for lv in validated_level:
+            for lv in level:
                 q_lo, q_hi = QuantileConverter._level_to_quantiles(lv)
                 _quantiles.append(q_lo)
                 _quantiles.append(q_hi)
             quantiles = sorted(set(_quantiles))
-            return validated_level, quantiles, True
+            return level, quantiles, True
         if level is None and quantiles is not None:
             if not all(0 < q < 1 for q in quantiles):
                 raise ValueError("`quantiles` should be floats between 0 and 1.")

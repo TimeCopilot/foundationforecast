@@ -81,7 +81,8 @@ def interpolate_quantiles(
         raise ValueError("`knot_quantiles` must be a non-empty 1-D sequence.")
     if len(knot_qs) == 1:
         v = np.moveaxis(knot_values, axis, -1)
-        return np.repeat(v[..., :1], len(requested_quantiles), axis=-1)
+        out = np.repeat(v[..., :1], len(requested_quantiles), axis=-1)
+        return np.moveaxis(out, -1, axis) if axis != -1 else out
 
     requested = np.clip(
         np.asarray(requested_quantiles, dtype=np.float64),

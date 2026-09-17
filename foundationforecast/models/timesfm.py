@@ -157,6 +157,7 @@ class _TimesFMV1(Forecaster):
                 native_vals,
                 qc.quantiles,
             )
+            fcst_df = fcst_df[["unique_id", "ds", self.alias]]
             fcst_df = self._assign_quantile_forecasts(
                 fcst_df,
                 self.alias,

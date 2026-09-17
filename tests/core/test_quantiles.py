@@ -60,6 +60,28 @@ def test_interpolate_quantiles_single_knot():
     np.testing.assert_allclose(result, np.repeat(knot_values, 2, axis=-1))
 
 
+def test_interpolate_quantiles_single_knot_non_default_axis():
+    knot_values = np.array([[4.0, 5.0]])
+    result = interpolate_quantiles([0.5], knot_values, [0.1, 0.9], axis=0)
+    assert result.shape == (2, 2)
+    np.testing.assert_allclose(result, [[4.0, 5.0], [4.0, 5.0]])
+
+
+def test_assign_quantile_forecasts_rejects_duplicate_columns():
+    import pandas as pd
+
+    from foundationforecast.core.forecaster import Forecaster
+
+    fcst_df = pd.DataFrame({"unique_id": ["a"], "ds": [1], "m": [1.0]})
+    with pytest.raises(ValueError, match="duplicate output column names"):
+        Forecaster._assign_quantile_forecasts(
+            fcst_df,
+            "m",
+            [0.151, 0.159],
+            __import__("numpy").array([[1.0, 2.0]]),
+        )
+
+
 def test_resolve_quantile_values_subset():
     knot_qs = [0.1, 0.5, 0.9]
     knot_values = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
