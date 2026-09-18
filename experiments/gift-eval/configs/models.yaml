@@ -242,6 +242,15 @@ models:
       repo_id: ibm-granite/granite-timeseries-patchtst-fm-r1
       batch_size: 32
 
+  ibm-granite--granite-timeseries-patchtst-fm-r2:
+    class: foundationforecast.models.patchtst_fm.PatchTSTFM
+    reference_slug: Granite-PatchTST-FM-r2
+    max_length: 8192
+    kwargs:
+      repo_id: ibm-granite/granite-timeseries-patchtst-fm-r2
+      context_length: 8192
+      batch_size: 32
+
   # --- Other foundation models ---
   theforecastingcompany--t0-alpha:
     class: foundationforecast.models.t0.T0

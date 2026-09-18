@@ -48,6 +48,7 @@ classifiers = [
 ]
 dependencies = [
   "gluonts[torch]",
+  "granite-tsfm>=0.3.9 ; python_full_version >= '3.11' and python_full_version < '3.14'",
   "huggingface-hub>=0.36.2,<2.0",
   "nixtla>=0.7.0",
   "pandas>=2.2.0 ; python_full_version >= '3.13'",
@@ -56,7 +57,6 @@ dependencies = [
   "tafsut>=0.1.0",
   "tfc-t0>=0.5.0 ; python_full_version >= '3.11' and python_full_version < '3.14'",
   "timecopilot-chronos-forecasting>=0.2.2",
-  "timecopilot-granite-tsfm>=0.2.1 ; python_full_version >= '3.11' and python_full_version < '3.14'",
   "timecopilot-timesfm>=0.4.0",
   "timecopilot-tirex2>=0.1.0 ; python_full_version >= '3.11'",
   "timecopilot-tirex>=0.1.1 ; python_full_version >= '3.11'",

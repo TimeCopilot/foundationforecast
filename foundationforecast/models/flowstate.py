@@ -16,6 +16,23 @@ from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
 from ..core.utils import PanelData, TimeSeriesDataset
 
 
+def _normalize_freq_for_scale_factor(freq: str) -> str:
+    """Map pandas freq aliases to strings accepted by granite-tsfm get_fixed_factor."""
+    if freq in {"MS", "ME"}:
+        return "M"
+    if freq == "h":
+        return "H"
+    if freq == "min":
+        return "T"
+    if freq.endswith("min") and freq[:-3].isdigit():
+        return f"{freq[:-3]}T"
+    if len(freq) > 1 and freq.endswith("h") and freq[:-1].isdigit():
+        return f"{freq[:-1]}H"
+    if len(freq) == 1 and freq.isalpha() and freq.islower():
+        return freq.upper()
+    return freq
+
+
 class FlowState(Forecaster, _DataProcessor):
     """
     FlowState is the first time-scale adjustable Time Series Foundation Model (TSFM),
@@ -285,7 +302,9 @@ class FlowState(Forecaster, _DataProcessor):
             panel=panel,
         )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
-        scale_factor = self.scale_factor or get_fixed_factor(freq)
+        scale_factor = self.scale_factor or get_fixed_factor(
+            _normalize_freq_for_scale_factor(freq)
+        )
         with self._get_model() as model:
             cfg = model.config
             supported_quantiles = cfg.quantiles
