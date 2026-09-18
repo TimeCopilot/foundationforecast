@@ -1,5 +1,6 @@
 # Representative CI subset for replication verification (Chronos on two datasets).
 # Every job is HF-verified in tests/test_replication.py after Modal run_ci.
+# New models (TiRex-2, Granite PatchTST-FM r2) are added alongside existing entries.
 jobs:
   - model_key: amazon--chronos-bolt-small
     dataset_name: m4_weekly
