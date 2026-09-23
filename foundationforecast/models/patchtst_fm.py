@@ -51,6 +51,8 @@ class PatchTSTFM(Forecaster, _DataProcessor):
                 load the PatchTST-FM model from. Supported models:
 
                 - `ibm-research/patchtst-fm-r1`
+                - `ibm-granite/granite-timeseries-patchtst-fm-r1`
+                - `ibm-granite/granite-timeseries-patchtst-fm-r2`
 
             context_length (int, optional): Maximum context length (input window size)
                 for the model. Controls how much history is used for each forecast.
@@ -82,9 +84,20 @@ class PatchTSTFM(Forecaster, _DataProcessor):
             - The model is loaded onto the best available device (GPU if
               available, otherwise CPU).
 
+            **License:**
+
+            - `ibm-research/patchtst-fm-r1` weights are
+              [CC-BY-NC-SA-4.0](https://huggingface.co/ibm-research/patchtst-fm-r1)
+              (non-commercial).
+            - Granite checkpoints (`ibm-granite/granite-timeseries-patchtst-fm-r1`
+              and `r2`) use permissive open licenses (Apache-2.0; r2 is also
+              dual-licensed with OpenMDW 1.0).
+
             **Supported Models:**
 
             - `ibm-research/patchtst-fm-r1` (default)
+            - `ibm-granite/granite-timeseries-patchtst-fm-r1`
+            - `ibm-granite/granite-timeseries-patchtst-fm-r2`
         """
         super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.repo_id = repo_id

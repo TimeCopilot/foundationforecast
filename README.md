@@ -101,7 +101,7 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 - **Chronos:** `amazon/chronos-t5-{tiny,mini,small,base,large}`, `amazon/chronos-bolt-{tiny,mini,small,base}`, `amazon/chronos-2`
 - **FlowState:** `ibm-research/flowstate`, `ibm-granite/granite-timeseries-flowstate-r1`
 - **Moirai:** `Salesforce/moirai-{1.0,1.1,2.0}-R-{small,base,large}`, `Salesforce/moirai-moe-1.0-R-*`
-- **PatchTST-FM:** `ibm-research/patchtst-fm-r1`
+- **PatchTST-FM:** `ibm-research/patchtst-fm-r1` (NC), `ibm-granite/granite-timeseries-patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r2`
 - **Sundial:** `thuml/sundial-base-128m`
 - **T0:** `theforecastingcompany/t0-alpha`
 - **TabPFN:** default `tabpfn-v2-regressor-2noar4o2.ckpt`; TabPFN-3 via `model_path="tabpfn-v3-regressor-v3_20260506_timeseries.ckpt"` (LOCAL, `TABPFN_TOKEN`); or CLIENT mode with a Prior Labs API token
