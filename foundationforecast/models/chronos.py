@@ -280,14 +280,14 @@ class Chronos(Forecaster):
                 ]
             fcsts_mean_np = torch.cat(fcsts_mean).numpy()
             fcsts_quantiles_np = torch.cat(fcsts_quantiles).numpy()
-            quantile_axis = 1 if fcsts_quantiles_np.ndim == 3 else -1
+            # After concat, all pipelines use (batch, horizon, n_quantiles).
             fcsts_quantiles_np = select_clipped_quantile_values(
                 backend_qs,
                 fcsts_quantiles_np,
                 quantiles,
                 q_min=q_min,
                 q_max=q_max,
-                axis=quantile_axis,
+                axis=-1,
             )
         else:
             fcsts = [
