@@ -13,6 +13,7 @@ from toto2 import Toto2Model
 from tqdm import tqdm
 
 from ..core.forecaster import Forecaster, QuantileConverter
+from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
 
 # Config key that only appears in Toto 2.0 checkpoints (a Toto2ModelConfig field).
@@ -332,19 +333,10 @@ class Toto(Forecaster):
         knots_np = np.concatenate(knot_fcsts, axis=1)
         fcsts_mean_np = knots_np[median_idx]
         if quantiles is not None:
-            # interpolate requested quantiles across the fixed knots, per
-            # (series, horizon) position. np.interp clamps at the edge knots.
-            knots_arr = np.asarray(knots)
-            fcsts_quantiles_np = np.stack(
-                [
-                    np.apply_along_axis(
-                        lambda col, _q=q: np.interp(_q, knots_arr, col),
-                        axis=0,
-                        arr=knots_np,
-                    )
-                    for q in quantiles
-                ],
-                axis=-1,
+            fcsts_quantiles_np = resolve_quantile_values(
+                knots,
+                np.moveaxis(knots_np, 0, -1),
+                quantiles,
             )
         else:
             fcsts_quantiles_np = None

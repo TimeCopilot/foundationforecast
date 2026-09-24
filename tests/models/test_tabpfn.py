@@ -24,7 +24,7 @@ load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 pytestmark = pytest.mark.models
 
 DEFAULT_QUANTILES = [round(i * 0.1, 1) for i in range(1, 10)]
-DEFAULT_LEVEL = [0, 20, 40, 60, 80]
+DEFAULT_LEVEL = [20, 40, 60, 80]
 
 TABPFN_CASES = [
     pytest.param(TABPFN_V2_MODEL, 4096, "TabPFN-2", id="v2"),
@@ -149,5 +149,5 @@ def test_tabpfn_local_level_forecast(
     assert len(fcst.columns) == 3 + len(lv_cols)
     assert all(col in fcst.columns for col in lv_cols)
     assert not any("-q-" in col for col in fcst.columns)
-    for lo, hi in zip(lv_cols[2::2], lv_cols[3::2], strict=False):
+    for lo, hi in zip(lv_cols[::2], lv_cols[1::2], strict=False):
         assert fcst[lo].le(fcst[hi]).all()

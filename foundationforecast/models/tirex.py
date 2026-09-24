@@ -16,6 +16,7 @@ from tirex.base import PretrainedModel
 from tqdm import tqdm
 
 from ..core.forecaster import Forecaster, QuantileConverter
+from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
 
 if TYPE_CHECKING:
@@ -241,6 +242,11 @@ class TiRex(Forecaster):
                 named in the format "model-q-{percentile}", where {percentile}
                 = 100 × quantile value.
 
+        Notes:
+            This model predicts fixed native quantile knots (0.1 through 0.9)
+            internally, then linearly interpolates (with edge clamping) to
+            any requested ``level`` or ``quantiles``.
+
         Returns:
             pd.DataFrame:
                 DataFrame containing forecast results. Includes:
@@ -254,13 +260,6 @@ class TiRex(Forecaster):
         """
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        if qc.quantiles is not None and len(qc.quantiles) != len(
-            DEFAULT_QUANTILES_TIREX
-        ):
-            raise ValueError(
-                "TiRex only supports the default quantiles, "
-                "please use the default quantiles or default level, "
-            )
         dataset = self._make_timeseries_dataset(
             df,
             batch_size=self.batch_size,
@@ -274,10 +273,15 @@ class TiRex(Forecaster):
                 model,
                 dataset,
                 h,
-                quantiles=qc.quantiles,
+                quantiles=DEFAULT_QUANTILES_TIREX if qc.quantiles is not None else None,
             )
         fcst_df[self.alias] = fcsts_mean_np.reshape(-1, 1)
         if qc.quantiles is not None and fcsts_quantiles_np is not None:
+            fcsts_quantiles_np = resolve_quantile_values(
+                DEFAULT_QUANTILES_TIREX,
+                fcsts_quantiles_np,
+                qc.quantiles,
+            )
             fcst_df = self._assign_quantile_forecasts(
                 fcst_df,
                 self.alias,

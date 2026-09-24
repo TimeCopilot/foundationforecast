@@ -15,6 +15,11 @@ from chronos import (
 from tqdm import tqdm
 
 from ..core.forecaster import Forecaster, QuantileConverter
+from ..core.quantiles import (
+    DEFAULT_NATIVE_QUANTILE_RANGE,
+    backend_quantile_levels,
+    select_clipped_quantile_values,
+)
 from ..core.utils import PanelData, TimeSeriesDataset, process_panel_from_df
 
 
@@ -234,6 +239,13 @@ class Chronos(Forecaster):
         ) as model:
             yield model
 
+    @staticmethod
+    def _quantile_range(model: BaseChronosPipeline) -> tuple[float, float]:
+        qs = getattr(model, "quantiles", None)
+        if qs:
+            return float(min(qs)), float(max(qs))
+        return DEFAULT_NATIVE_QUANTILE_RANGE
+
     def _predict(
         self,
         model: BaseChronosPipeline,
@@ -243,11 +255,18 @@ class Chronos(Forecaster):
     ) -> tuple[np.ndarray, np.ndarray | None]:
         """handles distinction between predict and predict_quantiles"""
         if quantiles is not None:
+            q_min, q_max = self._quantile_range(model)
+            backend_qs = backend_quantile_levels(
+                quantiles,
+                q_min=q_min,
+                q_max=q_max,
+                include_median=False,
+            )
             fcsts = [
                 model.predict_quantiles(
                     batch,
                     prediction_length=h,
-                    quantile_levels=quantiles,
+                    quantile_levels=backend_qs,
                 )
                 for batch in tqdm(dataset)
             ]  # list of tuples
@@ -261,6 +280,15 @@ class Chronos(Forecaster):
                 ]
             fcsts_mean_np = torch.cat(fcsts_mean).numpy()
             fcsts_quantiles_np = torch.cat(fcsts_quantiles).numpy()
+            # After concat, all pipelines use (batch, horizon, n_quantiles).
+            fcsts_quantiles_np = select_clipped_quantile_values(
+                backend_qs,
+                fcsts_quantiles_np,
+                quantiles,
+                q_min=q_min,
+                q_max=q_max,
+                axis=-1,
+            )
         else:
             fcsts = [
                 model.predict(

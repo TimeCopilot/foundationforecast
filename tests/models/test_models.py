@@ -171,7 +171,8 @@ def test_using_quantiles(model):
 
 @pytest.mark.parametrize("model", models)
 def test_using_level(model):
-    level = [0, 20, 40, 60, 80]  # corresponds to qs [0.1, 0.2, ..., 0.9]
+    # 20/40/60/80 hit native decile knots; 50 maps to 0.25/0.75 (interpolated)
+    level = [20, 40, 50, 60, 80]
     df = generate_series(n_series=2, freq="D")
     fcst_df = model.forecast(
         df=df,
@@ -186,7 +187,6 @@ def test_using_level(model):
     assert all(col in fcst_df.columns for col in exp_lv_cols)
     assert not any(("-q-" in col) for col in fcst_df.columns)
     # test monotonicity of levels
-    exp_lv_cols = exp_lv_cols[2:]  # remove level 0
     for c1, c2 in zip(exp_lv_cols[:-1:2], exp_lv_cols[1::2], strict=False):
         if "chronos" in model.alias.lower() or "median" in model.alias.lower():
             # sometimes it gives this condition

@@ -12,6 +12,11 @@ from tqdm import tqdm
 from tsfm_public import PatchTSTFMForPrediction
 
 from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
+from ..core.quantiles import (
+    PATCHTST_FM_QUANTILE_RANGE,
+    backend_quantile_levels,
+    select_clipped_quantile_values,
+)
 from ..core.utils import PanelData, TimeSeriesDataset
 
 logger = logging.getLogger(__name__)
@@ -198,7 +203,16 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         # scale_factor: float,
     ) -> tuple[np.ndarray, np.ndarray | None]:
         targets = self._prepare_targets(batch)
-        quantile_levels = DEFAULT_QUANTILES if quantiles is None else quantiles
+        q_min, q_max = PATCHTST_FM_QUANTILE_RANGE
+        if quantiles is None:
+            quantile_levels = DEFAULT_QUANTILES
+        else:
+            quantile_levels = backend_quantile_levels(
+                quantiles,
+                q_min=q_min,
+                q_max=q_max,
+                include_median=True,
+            )
 
         outputs = self._run_model_on_targets(model, targets, h, quantile_levels)
 
@@ -208,15 +222,20 @@ class PatchTSTFM(Forecaster, _DataProcessor):
             fcsts.append(fcst)
 
         fcst = torch.stack(fcsts, dim=0)  # (batch, h, quantiles)
-        median_idx = (
-            quantile_levels.index(0.5)
-            if 0.5 in quantile_levels
-            else len(quantile_levels) // 2
-        )
-        fcst_mean_np = fcst[..., median_idx].detach().cpu().numpy()
-        fcst_quantiles_np = (
-            fcst.detach().cpu().numpy() if quantiles is not None else None
-        )
+        median_idx = quantile_levels.index(float(np.clip(0.5, q_min, q_max)))
+        fcst_np = fcst.detach().cpu().numpy()
+        fcst_mean_np = fcst_np[..., median_idx]
+        if quantiles is None:
+            fcst_quantiles_np = None
+        else:
+            fcst_quantiles_np = select_clipped_quantile_values(
+                quantile_levels,
+                fcst_np,
+                quantiles,
+                q_min=q_min,
+                q_max=q_max,
+                axis=-1,
+            )
         return fcst_mean_np, fcst_quantiles_np
 
     def _predict(
@@ -314,18 +333,6 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
         # scale_factor = self.scale_factor or get_fixed_factor(freq)
         with self._get_model() as model:
-            cfg = model.config
-            supported_quantiles = cfg.quantile_levels
-            if qc.quantiles is not None and not set(qc.quantiles).issubset(
-                supported_quantiles
-            ):
-                raise ValueError(
-                    "PatchTSTFM only supports the default quantiles, "
-                    f"supported quantiles are {supported_quantiles}, "
-                    f"quantiles provided are {qc.quantiles}, "
-                    "please use the default quantiles or default level."
-                )
-
             fcsts_mean_np, fcsts_quantiles_np = self._predict(
                 model,
                 dataset,
