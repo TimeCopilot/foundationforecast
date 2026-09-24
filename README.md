@@ -118,10 +118,11 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 
 ## News
 
-Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.8.md) for full release notes.
+Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.9.md) for full release notes.
 
 | When | What | Checkpoint / detail |
 |------|------|---------------------|
+| Sep 2026 | **Quantile interpolation** | Arbitrary `level` / `quantiles` on fixed-knot models with edge clamping; removed `level=0` sentinel ([v0.1.9](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.9.md)) |
 | Sep 2026 | [**Granite PatchTST-FM r2**](https://huggingface.co/ibm-granite/granite-timeseries-patchtst-fm-r2) | `ibm-granite/granite-timeseries-patchtst-fm-r2` — Apache-2.0 / OpenMDW; requires `granite-tsfm>=0.3.9` ([v0.1.8](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.8.md)) |
 | Sep 2026 | [**T0 beta**](https://huggingface.co/theforecastingcompany/t0-beta) | `theforecastingcompany/t0-beta` — requires `tfc-t0>=0.5.0` ([v0.1.8](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.8.md)) |
 | Sep 2026 | **TiRex-2 zeroshot (GIFT-Eval CI)** | `NX-AI/TiRex-2-gifteval-zs` added to gift-eval replication ([v0.1.8](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.8.md)) |
