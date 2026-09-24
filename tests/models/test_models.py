@@ -171,7 +171,8 @@ def test_using_quantiles(model):
 
 @pytest.mark.parametrize("model", models)
 def test_using_level(model):
-    level = [20, 40, 60, 80]  # corresponds to qs [0.1, 0.2, ..., 0.9]
+    # 20/40/60/80 hit native decile knots; 50 maps to 0.25/0.75 (interpolated)
+    level = [20, 40, 50, 60, 80]
     df = generate_series(n_series=2, freq="D")
     fcst_df = model.forecast(
         df=df,
