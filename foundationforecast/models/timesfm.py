@@ -19,7 +19,7 @@ from ..core.forecaster import (
     maybe_convert_col_to_datetime,
 )
 from ..core.quantiles import resolve_quantile_values
-from ..core.utils import TimeSeriesDataset
+from ..core.utils import PanelData, TimeSeriesDataset
 
 # Legacy HF repo IDs from GIFT-Eval submissions without "pytorch" in the name.
 # Still loaded via timesfm_v1 PyTorch checkpoints (JAX is not supported).
@@ -127,6 +127,7 @@ class _TimesFMV1(Forecaster):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         df = maybe_convert_col_to_datetime(df, "ds")
         freq = self._maybe_infer_freq(df, freq)
@@ -259,13 +260,15 @@ class _TimesFMV2_p5(Forecaster):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        dataset = TimeSeriesDataset.from_df(
+        dataset = self._make_timeseries_dataset(
             df,
             batch_size=self.batch_size,
             dtype=torch.float32,
+            panel=panel,
         )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
         with self._get_predictor(prediction_length=h) as model:
@@ -385,13 +388,15 @@ class _TimesFMV3(Forecaster):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        dataset = TimeSeriesDataset.from_df(
+        dataset = self._make_timeseries_dataset(
             df,
             batch_size=self.batch_size,
             dtype=torch.float32,
+            panel=panel,
         )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
         with self._get_predictor(prediction_length=h) as forecaster:

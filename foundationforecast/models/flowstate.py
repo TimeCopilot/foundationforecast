@@ -14,7 +14,24 @@ from tsfm_public.models.flowstate.utils.utils import get_fixed_factor
 
 from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
 from ..core.quantiles import resolve_quantile_values
-from ..core.utils import TimeSeriesDataset
+from ..core.utils import PanelData, TimeSeriesDataset
+
+
+def _normalize_freq_for_scale_factor(freq: str) -> str:
+    """Map pandas freq aliases to strings accepted by granite-tsfm get_fixed_factor."""
+    if freq in {"MS", "ME"}:
+        return "M"
+    if freq == "h":
+        return "H"
+    if freq == "min":
+        return "T"
+    if freq.endswith("min") and freq[:-3].isdigit():
+        return f"{freq[:-3]}T"
+    if len(freq) > 1 and freq.endswith("h") and freq[:-1].isdigit():
+        return f"{freq[:-1]}H"
+    if len(freq) == 1 and freq.isalpha() and freq.islower():
+        return freq.upper()
+    return freq
 
 
 class FlowState(Forecaster, _DataProcessor):
@@ -229,6 +246,7 @@ class FlowState(Forecaster, _DataProcessor):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         """Generate forecasts for time series data using the model.
 
@@ -278,13 +296,16 @@ class FlowState(Forecaster, _DataProcessor):
         """
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        dataset = TimeSeriesDataset.from_df(
+        dataset = self._make_timeseries_dataset(
             df,
             batch_size=self.batch_size,
             dtype=self.dtype,
+            panel=panel,
         )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
-        scale_factor = self.scale_factor or get_fixed_factor(freq)
+        scale_factor = self.scale_factor or get_fixed_factor(
+            _normalize_freq_for_scale_factor(freq)
+        )
         with self._get_model() as model:
             cfg = model.config
             supported_quantiles = cfg.quantiles

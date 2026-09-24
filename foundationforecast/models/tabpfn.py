@@ -26,6 +26,7 @@ from tabpfn_time_series.features.feature_generator_base import (
 
 from ..core.forecaster import Forecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
+from ..core.utils import PanelData
 
 TABPFN_V2_MODEL = "tabpfn-v2-regressor-2noar4o2.ckpt"
 TABPFN_V3_MODEL = "tabpfn-v3-regressor-v3_20260506_timeseries.ckpt"
@@ -198,7 +199,9 @@ class TabPFN(Forecaster):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
+        # NOTE: 'panel' is accepted for API compatibility; this model does not use it.
         """Generate forecasts for time series data using the model.
 
         This method produces point forecasts and, optionally, prediction

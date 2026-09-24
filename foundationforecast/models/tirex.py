@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 from ..core.forecaster import Forecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
-from ..core.utils import TimeSeriesDataset
+from ..core.utils import PanelData, TimeSeriesDataset
 
 if TYPE_CHECKING:
     from tirex2.api_adapter import ForecastModel
@@ -205,6 +205,7 @@ class TiRex(Forecaster):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         """Generate forecasts for time series data using the model.
 
@@ -259,9 +260,10 @@ class TiRex(Forecaster):
         """
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        dataset = TimeSeriesDataset.from_df(
+        dataset = self._make_timeseries_dataset(
             df,
             batch_size=self.batch_size,
+            panel=panel,
         )
 
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)

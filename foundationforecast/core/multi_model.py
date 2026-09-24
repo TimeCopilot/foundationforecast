@@ -1,8 +1,35 @@
 from __future__ import annotations
 
+import inspect
+from collections.abc import Callable
+
 import pandas as pd
+import utilsforecast.processing as ufp
 
 from .forecaster import Forecaster, maybe_infer_freq
+from .utils import PanelData, process_panel_from_df
+
+
+def _accepts_kwarg(fn: Callable[..., object], name: str) -> bool:
+    try:
+        parameters = inspect.signature(fn).parameters
+    except (TypeError, ValueError):
+        return False
+    return any(
+        param.name == name or param.kind == inspect.Parameter.VAR_KEYWORD
+        for param in parameters.values()
+    )
+
+
+def _with_panel_kwargs(
+    fn: Callable[..., object],
+    known_kwargs: dict[str, object],
+    panel: PanelData | None,
+) -> dict[str, object]:
+    call_kwargs = dict(known_kwargs)
+    if panel is not None and _accepts_kwarg(fn, "panel"):
+        call_kwargs["panel"] = panel
+    return call_kwargs
 
 
 class MultiModelForecasterMixin:
@@ -49,10 +76,13 @@ class MultiModelForecasterMixin:
         freq: str | None,
         level: list[int | float] | None,
         quantiles: list[float] | None,
+        panel: PanelData | None = None,
         **kwargs,
     ) -> pd.DataFrame:
         Forecaster.validate_input(df, h)
         freq = maybe_infer_freq(df, freq)
+        if panel is None and attr == "forecast":
+            panel = process_panel_from_df(df)
         res_df: pd.DataFrame | None = None
         for model in self.models:
             known_kwargs = {
@@ -64,13 +94,15 @@ class MultiModelForecasterMixin:
             if attr != "detect_anomalies":
                 known_kwargs["quantiles"] = quantiles
             fn = getattr(model, attr)
+            call_kwargs = _with_panel_kwargs(fn, known_kwargs, panel)
             try:
-                res_df_model = fn(**known_kwargs, **kwargs)
+                res_df_model = fn(**call_kwargs, **kwargs)
             except (ValueError, RuntimeError) as e:
                 if self.fallback_model is None:
                     raise e
                 fn = getattr(self.fallback_model, attr)
-                res_df_model = fn(**known_kwargs, **kwargs)
+                fallback_kwargs = _with_panel_kwargs(fn, known_kwargs, panel)
+                res_df_model = fn(**fallback_kwargs, **kwargs)
                 res_df_model = res_df_model.rename(
                     columns={
                         col: (
@@ -86,7 +118,7 @@ class MultiModelForecasterMixin:
             else:
                 if "y" in res_df_model:
                     res_df_model = res_df_model.drop(columns=["y"])
-                res_df = res_df.merge(res_df_model, on=merge_on, how="left")
+                res_df = ufp.join(res_df, res_df_model, on=merge_on, how="left")
             if self.clean_cache:
                 self._clean_model_cache()
         if res_df is None:
@@ -100,6 +132,7 @@ class MultiModelForecasterMixin:
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         return self._call_models(
             "forecast",
@@ -109,6 +142,7 @@ class MultiModelForecasterMixin:
             freq=freq,
             level=level,
             quantiles=quantiles,
+            panel=panel,
         )
 
     def cross_validation(

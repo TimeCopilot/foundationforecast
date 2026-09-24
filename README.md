@@ -84,7 +84,8 @@ Licenses verified against Hugging Face model cards. Check the model card for you
 <details><summary><strong>What this means for production</strong></summary>
 
 - **Apache-2.0**, **MIT**: generally fine for commercial production (retain notices; T0† is also gated on Hugging Face: accept terms and set `HF_TOKEN`).
-- **CC-BY-NC-4.0** (Moirai), **CC-BY-NC-SA-4.0** (PatchTST-FM): **non-commercial** only; not for revenue-generating production without a separate agreement from the rights holder.
+- **CC-BY-NC-4.0** (Moirai), **CC-BY-NC-SA-4.0** (PatchTST-FM r1 checkpoints): **non-commercial** only; not for revenue-generating production without a separate agreement from the rights holder.
+- **Apache-2.0 / OpenMDW 1.0** (Granite PatchTST-FM r2): commercial-friendly; choose either license per the [model card](https://huggingface.co/ibm-granite/granite-timeseries-patchtst-fm-r2).
 - **TimesFM 3.0**: weights for `google/timesfm-3.0-pytorch` are [non-commercial](https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE); TimesFM 1.0–2.5 checkpoints remain Apache-2.0.
 - **TabPFN NC**‡: TabPFN-2.6+ and TabPFN-3 weights are non-commercial; production requires a [Prior Labs commercial license or API](https://docs.priorlabs.ai/models). First LOCAL use requires accepting terms at [ux.priorlabs.ai](https://ux.priorlabs.ai) (`TABPFN_TOKEN`). TabPFN-3 is LOCAL-only today.
 - **Community / Apache-2.0** (TiRex): TiRex 1.0 uses the [NXAI Community License](https://huggingface.co/NX-AI/TiRex/blob/main/LICENSE) (commercial limits for large enterprises); TiRex 2.0 is Apache-2.0.
@@ -101,9 +102,9 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 - **Chronos:** `amazon/chronos-t5-{tiny,mini,small,base,large}`, `amazon/chronos-bolt-{tiny,mini,small,base}`, `amazon/chronos-2`
 - **FlowState:** `ibm-research/flowstate`, `ibm-granite/granite-timeseries-flowstate-r1`
 - **Moirai:** `Salesforce/moirai-{1.0,1.1,2.0}-R-{small,base,large}`, `Salesforce/moirai-moe-1.0-R-*`
-- **PatchTST-FM:** `ibm-research/patchtst-fm-r1`
+- **PatchTST-FM:** `ibm-research/patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r2` (r2 requires `granite-tsfm>=0.3.9`)
 - **Sundial:** `thuml/sundial-base-128m`
-- **T0:** `theforecastingcompany/t0-alpha`
+- **T0:** `theforecastingcompany/t0-alpha`, `theforecastingcompany/t0-beta` (requires `tfc-t0>=0.5.0`)
 - **TabPFN:** default `tabpfn-v2-regressor-2noar4o2.ckpt`; TabPFN-3 via `model_path="tabpfn-v3-regressor-v3_20260506_timeseries.ckpt"` (LOCAL, `TABPFN_TOKEN`); or CLIENT mode with a Prior Labs API token
 - **Tafsut:** `Tafsut-FM/tafsut-univariate-base`
 - **TiRex:** `NX-AI/TiRex`, `NX-AI/TiRex-2`
@@ -112,6 +113,20 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 - **Toto:** `Datadog/Toto-Open-Base-1.0`, `Datadog/Toto-2.0-{4m,22m,313m,1B,2.5B}`
 
 </details>
+
+---
+
+## News
+
+Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.8.md) for full release notes.
+
+| When | What | Checkpoint / detail |
+|------|------|---------------------|
+| Sep 2026 | [**Granite PatchTST-FM r2**](https://huggingface.co/ibm-granite/granite-timeseries-patchtst-fm-r2) | `ibm-granite/granite-timeseries-patchtst-fm-r2` — Apache-2.0 / OpenMDW; requires `granite-tsfm>=0.3.9` ([v0.1.8](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.8.md)) |
+| Sep 2026 | [**T0 beta**](https://huggingface.co/theforecastingcompany/t0-beta) | `theforecastingcompany/t0-beta` — requires `tfc-t0>=0.5.0` ([v0.1.8](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.8.md)) |
+| Sep 2026 | **TiRex-2 zeroshot (GIFT-Eval CI)** | `NX-AI/TiRex-2-gifteval-zs` added to gift-eval replication ([v0.1.8](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.8.md)) |
+| Sep 2026 | **Shared panel processing** | Faster multi-model forecasts via reused panel path across forecasters ([v0.1.8](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.8.md)) |
+| Sep 2026 | [**TabPFN-3**](https://arxiv.org/abs/2501.02945) (LOCAL) | `model_path="tabpfn-v3-regressor-v3_20260506_timeseries.ckpt"` ([v0.1.7](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.7.md)) |
 
 ---
 

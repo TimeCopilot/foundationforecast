@@ -48,15 +48,15 @@ classifiers = [
 ]
 dependencies = [
   "gluonts[torch]",
+  "granite-tsfm>=0.3.9 ; python_full_version >= '3.11' and python_full_version < '3.14'",
   "huggingface-hub>=0.36.2,<2.0",
   "nixtla>=0.7.0",
   "pandas>=2.2.0 ; python_full_version >= '3.13'",
   "scipy",
   "tabpfn-time-series>=1.2.0 ; python_full_version < '3.13'",
   "tafsut>=0.1.0",
-  "tfc-t0>=0.2.3 ; python_full_version >= '3.11' and python_full_version < '3.14'",
+  "tfc-t0>=0.5.0 ; python_full_version >= '3.11' and python_full_version < '3.14'",
   "timecopilot-chronos-forecasting>=0.2.2",
-  "timecopilot-granite-tsfm>=0.2.1 ; python_full_version >= '3.11' and python_full_version < '3.14'",
   "timecopilot-timesfm>=0.4.0",
   "timecopilot-tirex2>=0.1.0 ; python_full_version >= '3.11'",
   "timecopilot-tirex>=0.1.1 ; python_full_version >= '3.11'",
@@ -73,7 +73,7 @@ license = "Apache-2.0"
 name = "foundationforecast"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.1.7"
+version = "0.1.8"
 
 [project.optional-dependencies]
 plot = [

@@ -88,10 +88,13 @@ When adding a new foundation model:
 **foundationforecast** uses forked Python packages maintained under custom names on PyPI:
 
 - **chronos-forecasting** — [`timecopilot-chronos-forecasting`](https://pypi.org/project/timecopilot-chronos-forecasting/)
-- **granite-tsfm** — [`timecopilot-granite-tsfm`](https://pypi.org/project/timecopilot-granite-tsfm/)
 - **timesfm** — [`timecopilot-timesfm`](https://pypi.org/project/timecopilot-timesfm/)
 - **tirex** — [`timecopilot-tirex`](https://pypi.org/project/timecopilot-tirex/)
 - **toto** — [`timecopilot-toto`](https://pypi.org/project/timecopilot-toto/)
 - **uni2ts** — [`timecopilot-uni2ts`](https://pypi.org/project/timecopilot-uni2ts/)
+
+FlowState and PatchTST-FM use upstream [`granite-tsfm`](https://pypi.org/project/granite-tsfm/)
+(`>=0.3.9`; PatchTST-FM r2 requires overlapping-patch support). The former
+`timecopilot-granite-tsfm` fork is no longer a dependency.
 
 See the [TimeCopilot contributing guide](https://timecopilot.dev/community/contributing/) for upstream fork links.

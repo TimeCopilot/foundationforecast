@@ -12,7 +12,7 @@ from tqdm import tqdm
 from tsfm_public import PatchTSTFMForPrediction
 
 from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
-from ..core.utils import TimeSeriesDataset
+from ..core.utils import PanelData, TimeSeriesDataset
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +51,9 @@ class PatchTSTFM(Forecaster, _DataProcessor):
                 load the PatchTST-FM model from. Supported models:
 
                 - `ibm-research/patchtst-fm-r1`
+                - `ibm-granite/granite-timeseries-patchtst-fm-r1`
+                - `ibm-granite/granite-timeseries-patchtst-fm-r2` (requires
+                  `granite-tsfm>=0.3.9`)
 
             context_length (int, optional): Maximum context length (input window size)
                 for the model. Controls how much history is used for each forecast.
@@ -75,7 +78,10 @@ class PatchTSTFM(Forecaster, _DataProcessor):
             **Resources:**
 
             - GitHub: [ibm-granite/granite-tsfm](https://github.com/ibm-granite/granite-tsfm)
-            - HuggingFace Models: [ibm-research/patchtst-fm-r1](https://huggingface.co/ibm-research/patchtst-fm-r1)
+            - HuggingFace Models:
+              [ibm-research/patchtst-fm-r1](https://huggingface.co/ibm-research/patchtst-fm-r1),
+              [ibm-granite/granite-timeseries-patchtst-fm-r1](https://huggingface.co/ibm-granite/granite-timeseries-patchtst-fm-r1),
+              [ibm-granite/granite-timeseries-patchtst-fm-r2](https://huggingface.co/ibm-granite/granite-timeseries-patchtst-fm-r2)
 
             **Technical Details:**
 
@@ -85,6 +91,8 @@ class PatchTSTFM(Forecaster, _DataProcessor):
             **Supported Models:**
 
             - `ibm-research/patchtst-fm-r1` (default)
+            - `ibm-granite/granite-timeseries-patchtst-fm-r1`
+            - `ibm-granite/granite-timeseries-patchtst-fm-r2`
         """
         super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.repo_id = repo_id
@@ -248,6 +256,7 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         freq: str | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
     ) -> pd.DataFrame:
         """Generate forecasts for time series data using the model.
 
@@ -297,10 +306,11 @@ class PatchTSTFM(Forecaster, _DataProcessor):
         """
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
-        dataset = TimeSeriesDataset.from_df(
+        dataset = self._make_timeseries_dataset(
             df,
             batch_size=self.batch_size,
             dtype=self.dtype,
+            panel=panel,
         )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
         # scale_factor = self.scale_factor or get_fixed_factor(freq)
@@ -317,10 +327,12 @@ class PatchTSTFM(Forecaster, _DataProcessor):
 
         # should only enter when quantiles are used
         if qc.quantiles is not None and fcsts_quantiles_np is not None:
-            for i, q in enumerate(qc.quantiles):
-                fcst_df[f"{self.alias}-q-{int(q * 100)}"] = fcsts_quantiles_np[
-                    ..., i
-                ].reshape(-1)
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                fcsts_quantiles_np,
+            )
             fcst_df = qc.maybe_convert_quantiles_to_level(
                 fcst_df,
                 models=[self.alias],
