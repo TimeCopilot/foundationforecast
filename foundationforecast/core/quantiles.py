@@ -32,6 +32,12 @@ FIXED_KNOT_QUANTILES_NOTE = (
     "``quantiles``. See ``foundationforecast.core.quantiles`` for details."
 )
 
+# Documented native quantile ranges for backends that evaluate quantiles directly.
+PATCHTST_FM_QUANTILE_RANGE = (0.01, 0.99)
+T0_ALPHA_QUANTILE_RANGE = (0.1, 0.9)
+T0_BETA_QUANTILE_RANGE = (0.01, 0.99)
+DEFAULT_NATIVE_QUANTILE_RANGE = (0.01, 0.99)
+
 
 def validate_levels(level: Sequence[int | float] | None) -> list[int | float] | None:
     """Validate levels, rejecting the legacy ``level=0`` sentinel."""
@@ -41,6 +47,54 @@ def validate_levels(level: Sequence[int | float] | None) -> list[int | float] | 
     if any(lv == 0 for lv in levels):
         raise ValueError(_LEVEL_ZERO_ERROR)
     return levels
+
+
+def _match_quantile_level(levels: Sequence[float], q: float) -> int:
+    arr = np.asarray(levels, dtype=np.float64)
+    matches = np.where(np.isclose(arr, q, rtol=0.0, atol=1e-9))[0]
+    if matches.size == 0:
+        raise ValueError(
+            f"Quantile level {q} missing from backend output levels {list(levels)}"
+        )
+    return int(matches[0])
+
+
+def clip_quantiles_to_range(
+    quantiles: Sequence[float],
+    q_min: float,
+    q_max: float,
+) -> np.ndarray:
+    """Clip quantile levels to ``[q_min, q_max]`` for backend evaluation."""
+    return np.clip(np.asarray(quantiles, dtype=np.float64), q_min, q_max)
+
+
+def backend_quantile_levels(
+    requested: Sequence[float],
+    *,
+    q_min: float,
+    q_max: float,
+    include_median: bool = True,
+) -> list[float]:
+    """Unique sorted quantile levels to request from a native quantile backend."""
+    levels = {float(q) for q in clip_quantiles_to_range(requested, q_min, q_max)}
+    if include_median:
+        levels.add(float(np.clip(0.5, q_min, q_max)))
+    return sorted(levels)
+
+
+def select_clipped_quantile_values(
+    backend_levels: Sequence[float],
+    values: np.ndarray,
+    requested: Sequence[float],
+    *,
+    q_min: float,
+    q_max: float,
+    axis: int = -1,
+) -> np.ndarray:
+    """Map backend forecasts to user-requested quantiles with edge clamping."""
+    clipped = clip_quantiles_to_range(requested, q_min, q_max)
+    indices = [_match_quantile_level(backend_levels, float(q)) for q in clipped]
+    return np.take(values, indices, axis=axis)
 
 
 def _knot_indices(

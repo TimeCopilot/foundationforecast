@@ -14,6 +14,12 @@ from t0 import T0Forecaster
 from tqdm import tqdm
 
 from ..core.forecaster import Forecaster, QuantileConverter
+from ..core.quantiles import (
+    T0_ALPHA_QUANTILE_RANGE,
+    T0_BETA_QUANTILE_RANGE,
+    backend_quantile_levels,
+    select_clipped_quantile_values,
+)
 from ..core.utils import PanelData
 
 
@@ -110,6 +116,11 @@ class T0(Forecaster):
         with self._cached_model(self._load_model) as model:
             yield model
 
+    def _quantile_range(self) -> tuple[float, float]:
+        if "beta" in self.repo_id:
+            return T0_BETA_QUANTILE_RANGE
+        return T0_ALPHA_QUANTILE_RANGE
+
     def _to_context(self, batch: list[torch.Tensor]) -> torch.Tensor:
         """Left-pad a ragged batch with NaN (treated as missing by T0)."""
         max_len = min(
@@ -188,10 +199,17 @@ class T0(Forecaster):
             df, batch_size=self.batch_size, panel=panel
         )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
-        # T0 interpolates arbitrary quantile levels from its trained knots,
-        # so the median and any user-requested quantiles come from one pass.
-        pred_quantiles = sorted(set(qc.quantiles or []) | {0.5})
-        median_idx = pred_quantiles.index(0.5)
+        q_min, q_max = self._quantile_range()
+        if qc.quantiles is not None:
+            pred_quantiles = backend_quantile_levels(
+                qc.quantiles,
+                q_min=q_min,
+                q_max=q_max,
+                include_median=True,
+            )
+        else:
+            pred_quantiles = [0.5]
+        median_idx = pred_quantiles.index(float(np.clip(0.5, q_min, q_max)))
         fcsts: list[np.ndarray] = []
         with self._get_model() as model:
             for batch in tqdm(dataset):
@@ -205,10 +223,20 @@ class T0(Forecaster):
         fcsts_np = np.concatenate(fcsts, axis=0)
         fcst_df[self.alias] = fcsts_np[..., median_idx].reshape(-1, 1)
         if qc.quantiles is not None:
-            for q in qc.quantiles:
-                fcst_df[f"{self.alias}-q-{int(q * 100)}"] = fcsts_np[
-                    ..., pred_quantiles.index(q)
-                ].reshape(-1, 1)
+            fcsts_quantiles_np = select_clipped_quantile_values(
+                pred_quantiles,
+                fcsts_np,
+                qc.quantiles,
+                q_min=q_min,
+                q_max=q_max,
+                axis=-1,
+            )
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                fcsts_quantiles_np,
+            )
             fcst_df = qc.maybe_convert_quantiles_to_level(
                 fcst_df,
                 models=[self.alias],

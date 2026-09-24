@@ -2,8 +2,10 @@ import numpy as np
 import pytest
 
 from foundationforecast.core.quantiles import (
+    backend_quantile_levels,
     interpolate_quantiles,
     resolve_quantile_values,
+    select_clipped_quantile_values,
     validate_levels,
 )
 
@@ -96,6 +98,39 @@ def test_resolve_quantile_values_subset():
     knot_values = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
     result = resolve_quantile_values(knot_qs, knot_values, [0.1, 0.9])
     np.testing.assert_allclose(result, [[1.0, 3.0], [4.0, 6.0]])
+
+
+def test_backend_quantile_levels_clips_and_includes_median():
+    levels = backend_quantile_levels(
+        [0.005, 0.995],
+        q_min=0.01,
+        q_max=0.99,
+        include_median=True,
+    )
+    assert levels == [0.01, 0.5, 0.99]
+
+
+def test_select_clipped_quantile_values_honors_request_order():
+    backend = [0.01, 0.5, 0.99]
+    values = np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]])  # (1, 2, 3)
+    out = select_clipped_quantile_values(
+        backend,
+        values,
+        [0.005, 0.995],
+        q_min=0.01,
+        q_max=0.99,
+        axis=-1,
+    )
+    assert out.shape == (1, 2, 2)
+    np.testing.assert_allclose(out[0, 0], [1.0, 3.0])
+    np.testing.assert_allclose(out[0, 1], [4.0, 6.0])
+
+
+def test_resolve_quantile_values_clamps_out_of_range():
+    knot_qs = [0.1, 0.9]
+    knot_values = np.array([[1.0, 9.0], [2.0, 8.0]])
+    result = resolve_quantile_values(knot_qs, knot_values, [0.005, 0.995])
+    np.testing.assert_allclose(result, [[1.0, 9.0], [2.0, 8.0]])
 
 
 def test_resolve_quantile_values_interpolates():

@@ -98,12 +98,19 @@ interpolates between adjacent knots.
 
 ### Edge clamping
 
-When a requested quantile falls **outside** the model's native knot range, the
-value at the nearest edge knot is returned (same semantics as `numpy.interp`).
-Values are not extrapolated beyond the model's trained quantile range.
+When a requested quantile falls **outside** the range the model supports, the
+forecast is computed at the nearest in-range quantile (same semantics as
+`numpy.interp` on fixed knots). Values are not extrapolated beyond that range.
+Output column names still reflect **your** request (`level` / `quantiles`).
+
+Fixed-knot models interpolate between native knots and clamp to the knot edges.
+Native quantile backends (for example PatchTST-FM, T0, Chronos) clamp to their
+documented quantile range before calling the model, then map results back to
+your requested levels.
 
 For example, on a model with native knots `0.1` through `0.9`:
 
 - `level=[95]` maps to quantiles `0.025` and `0.975`, which are clamped to
-  `0.1` and `0.9` respectively.
-- `quantiles=[0.01]` returns the same forecast as `quantiles=[0.1]`.
+  `0.1` and `0.9` respectively, with columns `{model}-lo-95` and `{model}-hi-95`.
+- `quantiles=[0.01]` returns the same forecast values as `quantiles=[0.1]`, with
+  column `{model}-q-1`.
