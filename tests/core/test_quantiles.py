@@ -82,6 +82,15 @@ def test_assign_quantile_forecasts_rejects_duplicate_columns():
         )
 
 
+def test_interpolate_quantiles_multiple_rows_and_requests():
+    knot_qs = [0.1, 0.9]
+    knot_values = np.array([[0.0, 10.0], [100.0, 200.0]])
+    result = interpolate_quantiles(knot_qs, knot_values, [0.15, 0.85])
+    assert result.shape == (2, 2)
+    np.testing.assert_allclose(result[0], [0.625, 9.375])
+    np.testing.assert_allclose(result[1], [106.25, 193.75])
+
+
 def test_resolve_quantile_values_subset():
     knot_qs = [0.1, 0.5, 0.9]
     knot_values = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])

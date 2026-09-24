@@ -99,7 +99,7 @@ def interpolate_quantiles(
         kind="linear",
         assume_sorted=True,
     )
-    out = interp(requested).T.reshape(*orig_shape, len(requested_quantiles))
+    out = interp(requested).reshape(*orig_shape, len(requested_quantiles))
     return np.moveaxis(out, -1, axis) if axis != -1 else out
 
 
