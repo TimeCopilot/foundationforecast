@@ -38,10 +38,60 @@ T0_ALPHA_QUANTILE_RANGE = (0.1, 0.9)
 T0_BETA_QUANTILE_RANGE = (0.01, 0.99)
 DEFAULT_NATIVE_QUANTILE_RANGE = (0.01, 0.99)
 
+CENTILE_TOLERANCE = 1e-6
+
 
 def quantile_centile_suffix(q: float) -> int:
     """Rounded centile suffix for ``{model}-q-{suffix}`` output columns."""
     return round(q * 100)
+
+
+def quantile_centile(q: float) -> int:
+    """Map a quantile to its integer centile suffix (1–99), rejecting non-centiles."""
+    centile = round(q * 100)
+    if not 1 <= centile <= 99:
+        msg = f"Each quantile must be in (0, 1), got {q!r}"
+        raise ValueError(msg)
+    if abs(q - centile / 100) > CENTILE_TOLERANCE:
+        msg = f"Each quantile must be a centile (100 × q must be an integer), got {q!r}"
+        raise ValueError(msg)
+    return centile
+
+
+def canonical_quantile(q: float) -> float:
+    """Normalize a validated quantile to an exact centile value."""
+    return quantile_centile(q) / 100
+
+
+def validate_quantiles(quantiles: Sequence[float]) -> list[float]:
+    """Validate user ``quantiles`` and return canonical centile values."""
+    normalized: list[float] = []
+    suffixes: list[int] = []
+    for q in quantiles:
+        if not 0 < q < 1:
+            msg = f"Each quantile must be in (0, 1), got {q!r}"
+            raise ValueError(msg)
+        centile = quantile_centile(q)
+        normalized.append(centile / 100)
+        suffixes.append(centile)
+    if len(suffixes) != len(set(suffixes)):
+        msg = (
+            "Requested quantiles map to duplicate output column names "
+            f"(centile suffixes): {list(quantiles)}"
+        )
+        raise ValueError(msg)
+    return normalized
+
+
+def assert_unique_quantile_column_names(model: str, quantiles: Sequence[float]) -> None:
+    """Reject quantile lists that would overwrite the same output column."""
+    columns = [quantile_column_name(model, q) for q in quantiles]
+    if len(columns) != len(set(columns)):
+        msg = (
+            "Requested quantiles map to duplicate output column names "
+            f"(centile suffixes): {list(quantiles)}"
+        )
+        raise ValueError(msg)
 
 
 def quantile_column_name(model: str, q: float) -> str:

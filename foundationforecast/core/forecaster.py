@@ -26,7 +26,12 @@ from utilsforecast.processing import (
     vertical_concat,
 )
 
-from .quantiles import _LEVEL_ZERO_ERROR, quantile_centile_suffix, quantile_column_name
+from .quantiles import (
+    _LEVEL_ZERO_ERROR,
+    quantile_centile_suffix,
+    quantile_column_name,
+    validate_quantiles,
+)
 from .utils import PanelData, TimeSeriesDataset, grouped_std_by_id
 
 T = TypeVar("T")
@@ -438,8 +443,7 @@ class QuantileConverter:
             quantiles = sorted(set(_quantiles))
             return level, quantiles, True
         if level is None and quantiles is not None:
-            if not all(0 < q < 1 for q in quantiles):
-                raise ValueError("`quantiles` should be floats between 0 and 1.")
+            quantiles = validate_quantiles(quantiles)
             level = sorted({abs(int(100 - 200 * q)) for q in quantiles if q != 0.5})
             return level or None, quantiles, False
         return None, None, False
