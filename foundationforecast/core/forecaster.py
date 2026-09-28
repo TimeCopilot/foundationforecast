@@ -28,6 +28,7 @@ from utilsforecast.processing import (
 
 from .quantiles import (
     _LEVEL_ZERO_ERROR,
+    assert_unique_quantile_column_names,
     quantile_centile_suffix,
     quantile_column_name,
     validate_quantiles,
@@ -464,6 +465,8 @@ class QuantileConverter:
             return df
         if self.quantiles is None:
             raise ValueError("No quantiles were provided.")
+        if models:
+            assert_unique_quantile_column_names(models[0], self.quantiles)
         out_cols = [c for c in df.columns if "-lo-" not in c and "-hi-" not in c]
         df = ufp.copy_if_pandas(df, deep=False)
         for model in models:

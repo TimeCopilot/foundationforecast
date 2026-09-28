@@ -164,6 +164,7 @@ def test_maybe_convert_level_to_quantiles(n_models, quantiles):
     [
         (1, [80]),
         (2, [60, 80]),
+        (1, [95]),
     ],
 )
 def test_maybe_convert_quantiles_to_level(n_models, level):
@@ -187,17 +188,17 @@ def test_maybe_convert_quantiles_to_level(n_models, level):
     assert result_df.shape[1] == exp_n_cols
     for model in models:
         for lv in level:
-            alpha = round(1 - lv / 100, 2)
-            q_lo = int((alpha / 2) * 100)
-            q_hi = int((1 - alpha / 2) * 100)
+            q_lo, q_hi = QuantileConverter._level_to_quantiles(lv)
+            lo_src = quantile_column_name(model, q_lo)
+            hi_src = quantile_column_name(model, q_hi)
             pd.testing.assert_series_equal(
                 result_df[f"{model}-lo-{lv}"],
-                df[f"{model}-q-{q_lo}"],
+                df[lo_src],
                 check_names=False,
             )
             pd.testing.assert_series_equal(
                 result_df[f"{model}-hi-{lv}"],
-                df[f"{model}-q-{q_hi}"],
+                df[hi_src],
                 check_names=False,
             )
     pd.testing.assert_frame_equal(
