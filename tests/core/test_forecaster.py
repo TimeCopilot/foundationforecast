@@ -98,6 +98,16 @@ def test_prepare_level_and_quantiles_with_quantiles(quantiles, expected_level):
     assert not qc.level_was_provided
 
 
+def test_quantile_converter_rejects_non_centile_quantiles():
+    with pytest.raises(ValueError, match="centile"):
+        QuantileConverter(quantiles=[0.106])
+
+
+def test_quantile_converter_normalizes_valid_centile_quantiles():
+    qc = QuantileConverter(quantiles=[0.57])
+    assert qc.quantiles == [0.57]
+
+
 def test_quantile_converter_rejects_level_zero():
     with pytest.raises(ValueError, match="level=0"):
         QuantileConverter(level=[0, 80])

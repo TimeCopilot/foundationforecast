@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from foundationforecast.core.quantiles import (
+    assert_unique_quantile_column_names,
     backend_quantile_levels,
     interpolate_quantiles,
     quantile_centile_suffix,
@@ -9,6 +10,7 @@ from foundationforecast.core.quantiles import (
     resolve_quantile_values,
     select_clipped_quantile_values,
     validate_levels,
+    validate_quantiles,
 )
 
 
@@ -69,6 +71,25 @@ def test_interpolate_quantiles_single_knot_non_default_axis():
     result = interpolate_quantiles([0.5], knot_values, [0.1, 0.9], axis=0)
     assert result.shape == (2, 2)
     np.testing.assert_allclose(result, [[4.0, 5.0], [4.0, 5.0]])
+
+
+def test_validate_quantiles_accepts_centiles_including_057():
+    assert validate_quantiles([0.14, 0.57, 0.9]) == [0.14, 0.57, 0.9]
+
+
+def test_validate_quantiles_rejects_non_centile():
+    with pytest.raises(ValueError, match="centile"):
+        validate_quantiles([0.106])
+
+
+def test_validate_quantiles_rejects_duplicate_centile_suffixes():
+    with pytest.raises(ValueError, match="duplicate output column names"):
+        validate_quantiles([0.1, 0.10])
+
+
+def test_assert_unique_quantile_column_names_rejects_duplicates():
+    with pytest.raises(ValueError, match="duplicate output column names"):
+        assert_unique_quantile_column_names("Chronos", [0.151, 0.152])
 
 
 def test_quantile_column_name_uses_rounded_centile_for_057():
