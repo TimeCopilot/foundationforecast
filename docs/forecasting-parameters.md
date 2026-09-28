@@ -76,8 +76,11 @@ fcst_df = ff.forecast(df=df, h=12, freq="MS", level=[80, 95])
 
 ### `quantiles` — direct quantile forecasts
 
-Pass quantile levels in `(0, 1)`, e.g. `quantiles=[0.1, 0.5, 0.9]`. The output
-includes `{model}-q-{pct}` columns where `pct = int(100 × quantile)`.
+Pass quantile levels in `(0, 1)`, e.g. `quantiles=[0.1, 0.5, 0.9]`. Each value
+must be a **centile**: `100 × q` must be an integer (e.g. `0.14`, `0.57`; not
+`0.106` or `0.151`). Two distinct quantiles that map to the same centile suffix
+are rejected. The output includes `{model}-q-{pct}` columns where
+`pct = round(100 × quantile)` (integer centile 1–99).
 
 ```python
 fcst_df = ff.forecast(df=df, h=12, freq="MS", quantiles=[0.1, 0.5, 0.9])
