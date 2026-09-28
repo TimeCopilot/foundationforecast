@@ -53,6 +53,9 @@ def quantile_milli(q: float) -> int:
             f"(1000 × q must be an integer), got {q!r}"
         )
         raise ValueError(msg)
+    if not 1 <= m <= 999:
+        msg = f"Each quantile must be in (0, 1), got {q!r}"
+        raise ValueError(msg)
     return m
 
 

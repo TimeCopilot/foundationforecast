@@ -87,6 +87,13 @@ def test_validate_quantiles_rejects_four_decimal_places():
         validate_quantiles([0.1234])
 
 
+def test_quantile_milli_rejects_near_zero_and_one():
+    with pytest.raises(ValueError, match=r"\(0, 1\)"):
+        validate_quantiles([5e-7])
+    with pytest.raises(ValueError, match=r"\(0, 1\)"):
+        validate_quantiles([0.9999995])
+
+
 def test_validate_quantiles_rejects_duplicate_suffixes():
     with pytest.raises(ValueError, match="duplicate output column names"):
         validate_quantiles([0.1, 0.10])
