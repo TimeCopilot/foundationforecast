@@ -9,6 +9,7 @@ from utilsforecast.data import generate_series as _generate_series
 from utilsforecast.processing import make_future_dataframe
 
 from foundationforecast.core.forecaster import Forecaster, QuantileConverter
+from foundationforecast.core.quantiles import quantile_column_name
 
 
 def generate_series(n_series, freq, **kwargs):
@@ -64,7 +65,7 @@ class DummyModel(Forecaster):
         fcst[self.alias] = 1.0
         if qc.quantiles:
             for q in qc.quantiles:
-                fcst[f"{self.alias}-q-{int(q * 100)}"] = fcst[self.alias] + q
+                fcst[quantile_column_name(self.alias, q)] = fcst[self.alias] + q
             fcst = qc.maybe_convert_quantiles_to_level(fcst, models=[self.alias])
         return fcst
 

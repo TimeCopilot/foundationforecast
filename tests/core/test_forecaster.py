@@ -14,6 +14,7 @@ from foundationforecast.core.forecaster import (
     get_seasonality,
     maybe_infer_freq,
 )
+from foundationforecast.core.quantiles import quantile_column_name
 
 
 def test_get_seasonality_custom_seasonalities():
@@ -135,7 +136,7 @@ def test_maybe_convert_level_to_quantiles(n_models, quantiles):
     for model in models:
         assert qc.quantiles is not None
         for q in qc.quantiles:
-            assert f"{model}-q-{int(q * 100)}" in result_df.columns
+            assert quantile_column_name(model, q) in result_df.columns
         if 0.5 in qc.quantiles:
             pd.testing.assert_series_equal(
                 result_df[f"{model}-q-50"],
@@ -167,7 +168,7 @@ def test_maybe_convert_quantiles_to_level(n_models, level):
     )
     for model in models:
         for q in qc.quantiles:  # type: ignore
-            df[f"{model}-q-{int(q * 100)}"] = q
+            df[quantile_column_name(model, q)] = q
     result_df = qc.maybe_convert_quantiles_to_level(
         df,
         models=models,

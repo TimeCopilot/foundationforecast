@@ -4,6 +4,8 @@ import pytest
 from foundationforecast.core.quantiles import (
     backend_quantile_levels,
     interpolate_quantiles,
+    quantile_centile_suffix,
+    quantile_column_name,
     resolve_quantile_values,
     select_clipped_quantile_values,
     validate_levels,
@@ -69,6 +71,29 @@ def test_interpolate_quantiles_single_knot_non_default_axis():
     np.testing.assert_allclose(result, [[4.0, 5.0], [4.0, 5.0]])
 
 
+def test_quantile_column_name_uses_rounded_centile_for_057():
+    q = 0.57
+    assert quantile_centile_suffix(q) == 57
+    assert quantile_column_name("Chronos", q) == "Chronos-q-57"
+    assert int(q * 100) == 56
+
+
+def test_assign_quantile_forecasts_labels_quantile_057():
+    import pandas as pd
+
+    from foundationforecast.core.forecaster import Forecaster
+
+    fcst_df = pd.DataFrame({"unique_id": ["a"], "ds": [1], "Chronos": [1.0]})
+    result = Forecaster._assign_quantile_forecasts(
+        fcst_df,
+        "Chronos",
+        [0.57],
+        np.array([[2.0]]),
+    )
+    assert "Chronos-q-57" in result.columns
+    assert "Chronos-q-56" not in result.columns
+
+
 def test_assign_quantile_forecasts_rejects_duplicate_columns():
     import pandas as pd
 
@@ -79,7 +104,7 @@ def test_assign_quantile_forecasts_rejects_duplicate_columns():
         Forecaster._assign_quantile_forecasts(
             fcst_df,
             "m",
-            [0.151, 0.159],
+            [0.151, 0.152],
             __import__("numpy").array([[1.0, 2.0]]),
         )
 

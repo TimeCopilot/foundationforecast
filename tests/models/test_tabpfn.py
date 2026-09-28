@@ -13,6 +13,7 @@ from tabpfn.errors import TabPFNLicenseError  # noqa: E402
 from tabpfn_time_series import TabPFNMode  # noqa: E402
 
 from tests.helpers import generate_series  # noqa: E402
+from foundationforecast.core.quantiles import quantile_column_name  # noqa: E402
 from foundationforecast.models.tabpfn import (  # noqa: E402
     TABPFN_V2_MODEL,
     TABPFN_V3_MODEL,
@@ -123,7 +124,7 @@ def test_tabpfn_local_quantile_forecast(
         freq="D",
         quantiles=DEFAULT_QUANTILES,
     )
-    q_cols = [f"{alias}-q-{int(100 * q)}" for q in DEFAULT_QUANTILES]
+    q_cols = [quantile_column_name(alias, q) for q in DEFAULT_QUANTILES]
     assert len(fcst.columns) == 3 + len(q_cols)
     assert all(col in fcst.columns for col in q_cols)
     assert not any("-lo-" in col or "-hi-" in col for col in fcst.columns)

@@ -3,6 +3,7 @@ import pytest
 
 from tests.helpers import generate_series
 from .conftest import models
+from foundationforecast.core.quantiles import quantile_column_name
 
 
 @pytest.mark.parametrize("model", models)
@@ -147,7 +148,7 @@ def test_using_quantiles(model):
         freq="D",
         quantiles=qs,
     )
-    exp_qs_cols = [f"{model.alias}-q-{int(100 * q)}" for q in qs]
+    exp_qs_cols = [quantile_column_name(model.alias, q) for q in qs]
     assert len(exp_qs_cols) == len(fcst_df.columns) - 3
     assert all(col in fcst_df.columns for col in exp_qs_cols)
     assert not any(("-lo-" in col or "-hi-" in col) for col in fcst_df.columns)
