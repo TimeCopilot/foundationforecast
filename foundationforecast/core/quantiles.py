@@ -39,6 +39,16 @@ T0_BETA_QUANTILE_RANGE = (0.01, 0.99)
 DEFAULT_NATIVE_QUANTILE_RANGE = (0.01, 0.99)
 
 
+def quantile_centile_suffix(q: float) -> int:
+    """Rounded centile suffix for ``{model}-q-{suffix}`` output columns."""
+    return round(q * 100)
+
+
+def quantile_column_name(model: str, q: float) -> str:
+    """Canonical quantile column name for a model alias and quantile level."""
+    return f"{model}-q-{quantile_centile_suffix(q)}"
+
+
 def validate_levels(level: Sequence[int | float] | None) -> list[int | float] | None:
     """Validate levels, rejecting the legacy ``level=0`` sentinel."""
     if level is None:

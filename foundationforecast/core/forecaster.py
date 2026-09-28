@@ -26,7 +26,7 @@ from utilsforecast.processing import (
     vertical_concat,
 )
 
-from .quantiles import _LEVEL_ZERO_ERROR
+from .quantiles import _LEVEL_ZERO_ERROR, quantile_centile_suffix, quantile_column_name
 from .utils import PanelData, TimeSeriesDataset, grouped_std_by_id
 
 T = TypeVar("T")
@@ -237,11 +237,12 @@ class Forecaster:
         quantiles: list[float],
         fcsts_quantiles_np: np.ndarray,
     ) -> pd.DataFrame:
-        q_cols = [f"{alias}-q-{int(q * 100)}" for q in quantiles]
-        if len(q_cols) != len(set(q_cols)):
+        q_cols = [quantile_column_name(alias, q) for q in quantiles]
+        suffixes = [quantile_centile_suffix(q) for q in quantiles]
+        if len(suffixes) != len(set(suffixes)):
             raise ValueError(
                 "Requested quantiles map to duplicate output column names "
-                f"(using int(100 × quantile) suffixes): {quantiles}"
+                f"(centile suffixes): {quantiles}"
             )
         q_vals = [fcsts_quantiles_np[..., i].reshape(-1) for i in range(len(quantiles))]
         for q_col, q_val in zip(q_cols, q_vals, strict=True):
@@ -398,7 +399,7 @@ class QuantileConverter:
     ``{alias}-lo-{L}`` and ``{alias}-hi-{L}`` columns.
 
     When ``quantiles`` is provided, the output uses ``{alias}-q-{pct}`` columns
-    where ``pct = int(100 × quantile)``.
+    where ``pct = round(100 × quantile)`` (integer centile suffix).
 
     Fixed-knot models interpolate linearly from their native quantile knots to
     the requested levels or quantiles, clamping to edge knots when needed. See
@@ -470,7 +471,7 @@ class QuantileConverter:
                     hi_or_lo = "lo" if lv > 0 else "hi"
                     lv = abs(lv)
                     col = f"{model}-{hi_or_lo}-{lv}"
-                q_col = f"{model}-q-{int(q * 100)}"
+                q_col = quantile_column_name(model, q)
                 df = ufp.assign_columns(df, q_col, df[col])
                 out_cols.append(q_col)
         return df[out_cols]
@@ -489,8 +490,8 @@ class QuantileConverter:
         for model in models:
             for lv in self.level:
                 q_lo, q_hi = self._level_to_quantiles(lv)
-                lo_src = f"{model}-q-{int(q_lo * 100)}"
-                hi_src = f"{model}-q-{int(q_hi * 100)}"
+                lo_src = quantile_column_name(model, q_lo)
+                hi_src = quantile_column_name(model, q_hi)
                 lo_tgt = f"{model}-lo-{lv}"
                 hi_tgt = f"{model}-hi-{lv}"
                 if lo_src in df and hi_src in df:
