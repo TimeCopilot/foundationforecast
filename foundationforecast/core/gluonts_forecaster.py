@@ -13,6 +13,7 @@ from huggingface_hub import hf_hub_download
 from utilsforecast.processing import make_future_dataframe
 
 from .forecaster import Forecaster, QuantileConverter
+from .quantiles import assert_unique_quantile_column_names, quantile_column_name
 from .utils import PanelData, process_panel_from_df
 
 T = TypeVar("T")
@@ -108,7 +109,8 @@ class GluonTSForecaster(Forecaster):
             }
         )
         if quantiles is not None:
-            q_cols = [f"{model_name}-q-{int(q * 100)}" for q in quantiles]
+            assert_unique_quantile_column_names(model_name, quantiles)
+            q_cols = [quantile_column_name(model_name, q) for q in quantiles]
             q_vals = [fcst.quantile(q) for q in quantiles]
             for q_col, q_val in zip(q_cols, q_vals, strict=True):
                 fcst_df = ufp.assign_columns(fcst_df, q_col, q_val)
@@ -141,7 +143,8 @@ class GluonTSForecaster(Forecaster):
             point_fcsts.reshape(-1),
         )
         if quantiles is not None:
-            q_cols = [f"{model_name}-q-{int(q * 100)}" for q in quantiles]
+            assert_unique_quantile_column_names(model_name, quantiles)
+            q_cols = [quantile_column_name(model_name, q) for q in quantiles]
             q_vals = [
                 np.stack([fcst.quantile(q) for fcst in ordered_fcsts]).reshape(-1)
                 for q in quantiles

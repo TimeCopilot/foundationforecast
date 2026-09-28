@@ -2,11 +2,15 @@ import numpy as np
 import pytest
 
 from foundationforecast.core.quantiles import (
+    assert_unique_quantile_column_names,
     backend_quantile_levels,
     interpolate_quantiles,
+    quantile_column_name,
+    quantile_percent_suffix,
     resolve_quantile_values,
     select_clipped_quantile_values,
     validate_levels,
+    validate_quantiles,
 )
 
 
@@ -20,6 +24,11 @@ def test_validate_levels_rejects_zero():
 def test_validate_levels_passes():
     assert validate_levels([80, 95]) == [80, 95]
     assert validate_levels(None) is None
+
+
+def test_validate_levels_rejects_fractional():
+    with pytest.raises(ValueError, match="integer percent"):
+        validate_levels([95.5])
 
 
 def test_interpolate_quantiles_exact_knots():
@@ -69,6 +78,81 @@ def test_interpolate_quantiles_single_knot_non_default_axis():
     np.testing.assert_allclose(result, [[4.0, 5.0], [4.0, 5.0]])
 
 
+def test_validate_quantiles_accepts_up_to_three_decimals():
+    assert validate_quantiles([0.14, 0.151, 0.57, 0.9]) == [0.14, 0.151, 0.57, 0.9]
+
+
+def test_validate_quantiles_rejects_four_decimal_places():
+    with pytest.raises(ValueError, match="three decimal places"):
+        validate_quantiles([0.1234])
+
+
+def test_quantile_milli_rejects_near_zero_and_one():
+    with pytest.raises(ValueError, match=r"\(0, 1\)"):
+        validate_quantiles([5e-7])
+    with pytest.raises(ValueError, match=r"\(0, 1\)"):
+        validate_quantiles([0.9999995])
+
+
+def test_validate_quantiles_rejects_duplicate_suffixes():
+    with pytest.raises(ValueError, match="duplicate output column names"):
+        validate_quantiles([0.1, 0.10])
+
+
+def test_assert_unique_quantile_column_names_accepts_distinct_sub_centile():
+    assert_unique_quantile_column_names("Chronos", [0.151, 0.152])
+
+
+def test_quantile_percent_suffix_examples():
+    q = 0.57
+    assert quantile_percent_suffix(q) == "57"
+    assert quantile_column_name("Chronos", q) == "Chronos-q-57"
+    assert quantile_percent_suffix(0.15) == "15"
+    assert quantile_percent_suffix(0.151) == "15.1"
+    assert quantile_percent_suffix(0.975) == "97.5"
+    assert quantile_percent_suffix(0.015) == "1.5"
+    assert int(q * 100) == 56
+
+
+def test_assign_quantile_forecasts_level_95_97_distinct_columns():
+    import pandas as pd
+
+    from foundationforecast.core.forecaster import Forecaster, QuantileConverter
+
+    qc = QuantileConverter(level=[95, 97])
+    fcst_df = pd.DataFrame({"unique_id": ["a"], "ds": [1], "Chronos": [1.0]})
+    arr = __import__("numpy").array([[1.0, 2.0, 3.0, 4.0]])
+    result = Forecaster._assign_quantile_forecasts(
+        fcst_df,
+        "Chronos",
+        qc.quantiles,  # type: ignore[arg-type]
+        arr,
+    )
+    expected = {
+        "Chronos-q-1.5",
+        "Chronos-q-2.5",
+        "Chronos-q-97.5",
+        "Chronos-q-98.5",
+    }
+    assert expected <= set(result.columns)
+
+
+def test_assign_quantile_forecasts_labels_quantile_057():
+    import pandas as pd
+
+    from foundationforecast.core.forecaster import Forecaster
+
+    fcst_df = pd.DataFrame({"unique_id": ["a"], "ds": [1], "Chronos": [1.0]})
+    result = Forecaster._assign_quantile_forecasts(
+        fcst_df,
+        "Chronos",
+        [0.57],
+        np.array([[2.0]]),
+    )
+    assert "Chronos-q-57" in result.columns
+    assert "Chronos-q-56" not in result.columns
+
+
 def test_assign_quantile_forecasts_rejects_duplicate_columns():
     import pandas as pd
 
@@ -79,7 +163,7 @@ def test_assign_quantile_forecasts_rejects_duplicate_columns():
         Forecaster._assign_quantile_forecasts(
             fcst_df,
             "m",
-            [0.151, 0.159],
+            [0.15, 0.150],
             __import__("numpy").array([[1.0, 2.0]]),
         )
 

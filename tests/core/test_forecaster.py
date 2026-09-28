@@ -14,6 +14,7 @@ from foundationforecast.core.forecaster import (
     get_seasonality,
     maybe_infer_freq,
 )
+from foundationforecast.core.quantiles import quantile_column_name
 
 
 def test_get_seasonality_custom_seasonalities():
@@ -97,6 +98,21 @@ def test_prepare_level_and_quantiles_with_quantiles(quantiles, expected_level):
     assert not qc.level_was_provided
 
 
+def test_quantile_converter_rejects_too_many_decimal_places():
+    with pytest.raises(ValueError, match="three decimal places"):
+        QuantileConverter(quantiles=[0.1234])
+
+
+def test_quantile_converter_normalizes_valid_quantiles():
+    qc = QuantileConverter(quantiles=[0.151, 0.57])
+    assert qc.quantiles == [0.151, 0.57]
+
+
+def test_quantile_converter_rejects_fractional_level():
+    with pytest.raises(ValueError, match="integer percent"):
+        QuantileConverter(level=[95.5])
+
+
 def test_quantile_converter_rejects_level_zero():
     with pytest.raises(ValueError, match="level=0"):
         QuantileConverter(level=[0, 80])
@@ -135,7 +151,7 @@ def test_maybe_convert_level_to_quantiles(n_models, quantiles):
     for model in models:
         assert qc.quantiles is not None
         for q in qc.quantiles:
-            assert f"{model}-q-{int(q * 100)}" in result_df.columns
+            assert quantile_column_name(model, q) in result_df.columns
         if 0.5 in qc.quantiles:
             pd.testing.assert_series_equal(
                 result_df[f"{model}-q-50"],
@@ -153,6 +169,7 @@ def test_maybe_convert_level_to_quantiles(n_models, quantiles):
     [
         (1, [80]),
         (2, [60, 80]),
+        (1, [95]),
     ],
 )
 def test_maybe_convert_quantiles_to_level(n_models, level):
@@ -167,7 +184,7 @@ def test_maybe_convert_quantiles_to_level(n_models, level):
     )
     for model in models:
         for q in qc.quantiles:  # type: ignore
-            df[f"{model}-q-{int(q * 100)}"] = q
+            df[quantile_column_name(model, q)] = q
     result_df = qc.maybe_convert_quantiles_to_level(
         df,
         models=models,
@@ -176,17 +193,17 @@ def test_maybe_convert_quantiles_to_level(n_models, level):
     assert result_df.shape[1] == exp_n_cols
     for model in models:
         for lv in level:
-            alpha = round(1 - lv / 100, 2)
-            q_lo = int((alpha / 2) * 100)
-            q_hi = int((1 - alpha / 2) * 100)
+            q_lo, q_hi = QuantileConverter._level_to_quantiles(lv)
+            lo_src = quantile_column_name(model, q_lo)
+            hi_src = quantile_column_name(model, q_hi)
             pd.testing.assert_series_equal(
                 result_df[f"{model}-lo-{lv}"],
-                df[f"{model}-q-{q_lo}"],
+                df[lo_src],
                 check_names=False,
             )
             pd.testing.assert_series_equal(
                 result_df[f"{model}-hi-{lv}"],
-                df[f"{model}-q-{q_hi}"],
+                df[hi_src],
                 check_names=False,
             )
     pd.testing.assert_frame_equal(

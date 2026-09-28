@@ -4,6 +4,7 @@ import pytest
 from tests.helpers import DummyModel, generate_series
 from foundationforecast import FoundationForecast
 from foundationforecast.core.forecaster import Forecaster
+from foundationforecast.core.quantiles import quantile_column_name
 from foundationforecast.models.moirai import Moirai
 
 
@@ -94,7 +95,7 @@ def test_foundation_forecast_forecast_with_quantiles(models):
     for model in models:
         assert model.alias in fcst_df.columns
         for q in quantiles:
-            assert f"{model.alias}-q-{int(100 * q)}" in fcst_df.columns
+            assert quantile_column_name(model.alias, q) in fcst_df.columns
 
 
 def test_foundation_forecast_fallback_model():

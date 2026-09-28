@@ -3,6 +3,7 @@ import pytest
 
 from tests.helpers import generate_series
 from .conftest import models
+from foundationforecast.core.quantiles import quantile_column_name
 
 
 @pytest.mark.parametrize("model", models)
@@ -139,7 +140,8 @@ def test_passing_both_level_and_quantiles(model):
 
 @pytest.mark.parametrize("model", models)
 def test_using_quantiles(model):
-    qs = [round(i * 0.1, 1) for i in range(1, 10)]
+    # 0.57: int(100×q) truncates to 56; output must use suffix 57 (100×q text).
+    qs = [round(i * 0.1, 1) for i in range(1, 10)] + [0.57]
     df = generate_series(n_series=3, freq="D")
     fcst_df = model.forecast(
         df=df,
@@ -147,12 +149,17 @@ def test_using_quantiles(model):
         freq="D",
         quantiles=qs,
     )
-    exp_qs_cols = [f"{model.alias}-q-{int(100 * q)}" for q in qs]
+    exp_qs_cols = [quantile_column_name(model.alias, q) for q in qs]
     assert len(exp_qs_cols) == len(fcst_df.columns) - 3
     assert all(col in fcst_df.columns for col in exp_qs_cols)
+    legacy_057 = f"{model.alias}-q-{int(0.57 * 100)}"
+    assert legacy_057 not in fcst_df.columns
     assert not any(("-lo-" in col or "-hi-" in col) for col in fcst_df.columns)
-    # test monotonicity of quantiles
-    for c1, c2 in zip(exp_qs_cols[:-1], exp_qs_cols[1:], strict=False):
+    # test monotonicity of quantiles (sorted by q, not request order)
+    ordered_q_cols = [
+        quantile_column_name(model.alias, q) for q in sorted(qs, key=float)
+    ]
+    for c1, c2 in zip(ordered_q_cols[:-1], ordered_q_cols[1:], strict=False):
         if "chronos" in model.alias.lower() or "median" in model.alias.lower():
             # sometimes it gives this condition
             assert fcst_df[c1].le(fcst_df[c2]).all()

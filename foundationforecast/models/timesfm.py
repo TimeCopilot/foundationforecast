@@ -18,7 +18,7 @@ from ..core.forecaster import (
     QuantileConverter,
     maybe_convert_col_to_datetime,
 )
-from ..core.quantiles import resolve_quantile_values
+from ..core.quantiles import quantile_column_name, resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
 
 # Legacy HF repo IDs from GIFT-Eval submissions without "pytorch" in the name.
@@ -145,10 +145,10 @@ class _TimesFMV1(Forecaster):
             )
         if qc.quantiles is not None:
             native_cols = [
-                f"{self.alias}-q-{int(q * 100)}" for q in DEFAULT_QUANTILES_TFM
+                quantile_column_name(self.alias, q) for q in DEFAULT_QUANTILES_TFM
             ]
             renamer = {
-                f"{self.alias}-q-{q}": f"{self.alias}-q-{int(q * 100)}"
+                f"{self.alias}-q-{q}": quantile_column_name(self.alias, q)
                 for q in DEFAULT_QUANTILES_TFM
             }
             fcst_df = fcst_df.rename(columns=renamer)
