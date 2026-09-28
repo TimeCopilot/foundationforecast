@@ -66,9 +66,10 @@ forecasts in `forecast()` and `cross_validation()`:
 
 ### `level` — prediction intervals
 
-Pass confidence levels as percentages, e.g. `level=[80, 95]`. Each level `L`
-maps to symmetric quantiles `(α/2, 1 − α/2)` with `α = 1 − L/100`. The output
-includes `{model}-lo-{L}` and `{model}-hi-{L}` columns.
+Pass confidence levels as **integer** percentages, e.g. `level=[80, 95]`. Each
+level `L` maps to symmetric quantiles `(α/2, 1 − α/2)` with `α = 1 − L/100`.
+Fractional levels (e.g. `95.5`) are not supported. The output includes
+`{model}-lo-{L}` and `{model}-hi-{L}` columns.
 
 ```python
 fcst_df = ff.forecast(df=df, h=12, freq="MS", level=[80, 95])
@@ -76,11 +77,11 @@ fcst_df = ff.forecast(df=df, h=12, freq="MS", level=[80, 95])
 
 ### `quantiles` — direct quantile forecasts
 
-Pass quantile levels in `(0, 1)`, e.g. `quantiles=[0.1, 0.5, 0.9]`. Each value
-must be a **centile**: `100 × q` must be an integer (e.g. `0.14`, `0.57`; not
-`0.106` or `0.151`). Two distinct quantiles that map to the same centile suffix
-are rejected. The output includes `{model}-q-{pct}` columns where
-`pct = round(100 × quantile)` (integer centile 1–99).
+Pass quantile levels in `(0, 1)`, e.g. `quantiles=[0.1, 0.151, 0.9]`. Each value
+may have **at most three decimal places** (`1000 × q` must be an integer). Two
+distinct quantiles that map to the same output suffix are rejected. The output
+includes `{model}-q-{pct}` columns where `pct` is the minimal decimal text for
+`100 × quantile` (e.g. `0.15` → `-q-15`, `0.151` → `-q-15.1`).
 
 ```python
 fcst_df = ff.forecast(df=df, h=12, freq="MS", quantiles=[0.1, 0.5, 0.9])

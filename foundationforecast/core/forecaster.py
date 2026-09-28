@@ -27,10 +27,10 @@ from utilsforecast.processing import (
 )
 
 from .quantiles import (
-    _LEVEL_ZERO_ERROR,
     assert_unique_quantile_column_names,
-    quantile_centile_suffix,
     quantile_column_name,
+    quantile_percent_suffix,
+    validate_levels,
     validate_quantiles,
 )
 from .utils import PanelData, TimeSeriesDataset, grouped_std_by_id
@@ -244,11 +244,11 @@ class Forecaster:
         fcsts_quantiles_np: np.ndarray,
     ) -> pd.DataFrame:
         q_cols = [quantile_column_name(alias, q) for q in quantiles]
-        suffixes = [quantile_centile_suffix(q) for q in quantiles]
+        suffixes = [quantile_percent_suffix(q) for q in quantiles]
         if len(suffixes) != len(set(suffixes)):
             raise ValueError(
                 "Requested quantiles map to duplicate output column names "
-                f"(centile suffixes): {quantiles}"
+                f"(100 × q suffixes): {quantiles}"
             )
         q_vals = [fcsts_quantiles_np[..., i].reshape(-1) for i in range(len(quantiles))]
         for q_col, q_val in zip(q_cols, q_vals, strict=True):
@@ -405,7 +405,12 @@ class QuantileConverter:
     ``{alias}-lo-{L}`` and ``{alias}-hi-{L}`` columns.
 
     When ``quantiles`` is provided, the output uses ``{alias}-q-{pct}`` columns
-    where ``pct = round(100 × quantile)`` (integer centile suffix).
+    where ``pct`` is the minimal decimal text for ``100 × quantile`` (up to three
+    decimal places on ``q``; e.g. ``0.151`` → ``15.1``).
+
+    When ``level`` is provided, each level must be an **integer** percent; derived
+    quantiles use the same ``-q-{pct}`` naming internally before conversion to
+    ``lo``/``hi`` columns.
 
     Fixed-knot models interpolate linearly from their native quantile knots to
     the requested levels or quantiles, clamping to edge knots when needed. See
@@ -434,8 +439,8 @@ class QuantileConverter:
                 "You must not provide both `level` and `quantiles` simultaneously."
             )
         if quantiles is None and level is not None:
-            if 0 in level:
-                raise ValueError(_LEVEL_ZERO_ERROR)
+            level = validate_levels(level)
+            assert level is not None
             _quantiles = []
             for lv in level:
                 q_lo, q_hi = QuantileConverter._level_to_quantiles(lv)

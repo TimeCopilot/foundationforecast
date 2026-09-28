@@ -98,14 +98,19 @@ def test_prepare_level_and_quantiles_with_quantiles(quantiles, expected_level):
     assert not qc.level_was_provided
 
 
-def test_quantile_converter_rejects_non_centile_quantiles():
-    with pytest.raises(ValueError, match="centile"):
-        QuantileConverter(quantiles=[0.106])
+def test_quantile_converter_rejects_too_many_decimal_places():
+    with pytest.raises(ValueError, match="three decimal places"):
+        QuantileConverter(quantiles=[0.1234])
 
 
-def test_quantile_converter_normalizes_valid_centile_quantiles():
-    qc = QuantileConverter(quantiles=[0.57])
-    assert qc.quantiles == [0.57]
+def test_quantile_converter_normalizes_valid_quantiles():
+    qc = QuantileConverter(quantiles=[0.151, 0.57])
+    assert qc.quantiles == [0.151, 0.57]
+
+
+def test_quantile_converter_rejects_fractional_level():
+    with pytest.raises(ValueError, match="integer percent"):
+        QuantileConverter(level=[95.5])
 
 
 def test_quantile_converter_rejects_level_zero():

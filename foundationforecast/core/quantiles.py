@@ -38,46 +38,50 @@ T0_ALPHA_QUANTILE_RANGE = (0.1, 0.9)
 T0_BETA_QUANTILE_RANGE = (0.01, 0.99)
 DEFAULT_NATIVE_QUANTILE_RANGE = (0.01, 0.99)
 
-CENTILE_TOLERANCE = 1e-6
+QUANTILE_GRID_TOLERANCE = 1e-6
 
 
-def quantile_centile_suffix(q: float) -> int:
-    """Rounded centile suffix for ``{model}-q-{suffix}`` output columns."""
-    return round(q * 100)
-
-
-def quantile_centile(q: float) -> int:
-    """Map a quantile to its integer centile suffix (1–99), rejecting non-centiles."""
-    centile = round(q * 100)
-    if not 1 <= centile <= 99:
+def quantile_milli(q: float) -> int:
+    """Map ``q`` to integer ``m`` with ``q ≈ m/1000`` (at most three decimal places)."""
+    if not 0 < q < 1:
         msg = f"Each quantile must be in (0, 1), got {q!r}"
         raise ValueError(msg)
-    if abs(q - centile / 100) > CENTILE_TOLERANCE:
-        msg = f"Each quantile must be a centile (100 × q must be an integer), got {q!r}"
+    m = round(q * 1000)
+    if abs(q - m / 1000) > QUANTILE_GRID_TOLERANCE:
+        msg = (
+            "Each quantile must have at most three decimal places "
+            f"(1000 × q must be an integer), got {q!r}"
+        )
         raise ValueError(msg)
-    return centile
+    return m
+
+
+def quantile_percent_suffix(q: float) -> str:
+    """Minimal text for ``100 × q`` (``0.15`` → ``15``, ``0.151`` → ``15.1``)."""
+    m = quantile_milli(q)
+    whole, frac = divmod(m, 10)
+    if frac == 0:
+        return str(whole)
+    return f"{whole}.{frac}"
 
 
 def canonical_quantile(q: float) -> float:
-    """Normalize a validated quantile to an exact centile value."""
-    return quantile_centile(q) / 100
+    """Normalize a validated quantile to an exact thousandths-grid value."""
+    return quantile_milli(q) / 1000
 
 
 def validate_quantiles(quantiles: Sequence[float]) -> list[float]:
-    """Validate user ``quantiles`` and return canonical centile values."""
+    """Validate user ``quantiles`` and return canonical thousandths-grid values."""
     normalized: list[float] = []
-    suffixes: list[int] = []
+    suffixes: list[str] = []
     for q in quantiles:
-        if not 0 < q < 1:
-            msg = f"Each quantile must be in (0, 1), got {q!r}"
-            raise ValueError(msg)
-        centile = quantile_centile(q)
-        normalized.append(centile / 100)
-        suffixes.append(centile)
+        m = quantile_milli(q)
+        normalized.append(m / 1000)
+        suffixes.append(quantile_percent_suffix(m / 1000))
     if len(suffixes) != len(set(suffixes)):
         msg = (
             "Requested quantiles map to duplicate output column names "
-            f"(centile suffixes): {list(quantiles)}"
+            f"(100 × q suffixes): {list(quantiles)}"
         )
         raise ValueError(msg)
     return normalized
@@ -89,23 +93,30 @@ def assert_unique_quantile_column_names(model: str, quantiles: Sequence[float]) 
     if len(columns) != len(set(columns)):
         msg = (
             "Requested quantiles map to duplicate output column names "
-            f"(centile suffixes): {list(quantiles)}"
+            f"(100 × q suffixes): {list(quantiles)}"
         )
         raise ValueError(msg)
 
 
 def quantile_column_name(model: str, q: float) -> str:
     """Canonical quantile column name for a model alias and quantile level."""
-    return f"{model}-q-{quantile_centile_suffix(q)}"
+    return f"{model}-q-{quantile_percent_suffix(q)}"
 
 
 def validate_levels(level: Sequence[int | float] | None) -> list[int | float] | None:
-    """Validate levels, rejecting the legacy ``level=0`` sentinel."""
+    """Validate levels: integer percents only, rejecting ``level=0``."""
     if level is None:
         return None
     levels = list(level)
     if any(lv == 0 for lv in levels):
         raise ValueError(_LEVEL_ZERO_ERROR)
+    for lv in levels:
+        if isinstance(lv, bool):
+            msg = f"Each level must be an integer percent, got {lv!r}"
+            raise ValueError(msg)
+        if isinstance(lv, float) and not lv.is_integer():
+            msg = f"Each level must be an integer percent, got {lv!r}"
+            raise ValueError(msg)
     return levels
 
 

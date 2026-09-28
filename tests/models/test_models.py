@@ -140,7 +140,7 @@ def test_passing_both_level_and_quantiles(model):
 
 @pytest.mark.parametrize("model", models)
 def test_using_quantiles(model):
-    # 0.57: int(100×q) truncates to 56; output must use centile suffix 57.
+    # 0.57: int(100×q) truncates to 56; output must use suffix 57 (100×q text).
     qs = [round(i * 0.1, 1) for i in range(1, 10)] + [0.57]
     df = generate_series(n_series=3, freq="D")
     fcst_df = model.forecast(
