@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="docs/assets/logo-dark.svg#gh-dark-mode-only" alt="FoundationForecast" width="900" style="display:block;margin:0 auto;">
-  <img src="docs/assets/logo-light.svg#gh-light-mode-only" alt="FoundationForecast" width="900" style="display:block;margin:0 auto;">
+  <img src="https://github.com/user-attachments/assets/5be92ebf-61e2-4ac0-80d9-866c520eca94#gh-dark-mode-only" alt="FoundationForecast" width="900" style="display:block;margin:0 auto;">
+  <img src="https://github.com/user-attachments/assets/00950f29-8200-43c6-88a9-808c9da24e83#gh-light-mode-only" alt="FoundationForecast" width="900" style="display:block;margin:0 auto;">
 </div>
 <div align="center">
   <em>The API for the time series foundation era · Forecast · Cross-validation · Anomaly detection</em>
@@ -66,18 +66,18 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 
 | | Model | Forecast | CV | Anomalies | Intervals | Finetuning | License |
 |:-:|---|:-:|:-:|:-:|:-:|:-:|---|
-| <img src="docs/assets/logos/amazon.png" width="30" alt=""> | [Chronos](https://arxiv.org/abs/2403.07815) | ✓ | ✓ | ✓ | ✓ | ✓ | Apache-2.0 |
-| <img src="docs/assets/logos/ibm.png" width="30" alt=""> | [FlowState](https://arxiv.org/abs/2508.05287) | ✓ | ✓ | ✓ | ✓ | | Apache-2.0 |
-| <img src="docs/assets/logos/salesforce.png" width="30" alt=""> | [Moirai](https://arxiv.org/abs/2402.02592) | ✓ | ✓ | ✓ | ✓ | | CC-BY-NC-4.0 |
-| <img src="docs/assets/logos/ibm.png" width="30" alt=""> | [PatchTST-FM](https://arxiv.org/abs/2602.06909) | ✓ | ✓ | ✓ | ✓ | | CC-BY-NC-SA-4.0 |
-| <img src="docs/assets/logos/thuml.png" width="30" alt=""> | [Sundial](https://arxiv.org/abs/2502.00816) | ✓ | ✓ | ✓ | ✓ | | Apache-2.0 |
-| <img src="docs/assets/logos/tfc.png" width="30" alt=""> | [T0](https://huggingface.co/theforecastingcompany/t0-alpha) | ✓ | ✓ | ✓ | ✓ | | Apache-2.0† |
-| <img src="docs/assets/logos/priorlabs.png" width="30" alt=""> | [TabPFN](https://arxiv.org/abs/2501.02945) | ✓ | ✓ | ✓ | ✓ | | TabPFN NC‡ |
-| <img src="docs/assets/logos/tafsut.png" width="30" alt=""> | [Tafsut](https://github.com/Tafsut-FM/tafsut) | ✓ | ✓ | ✓ | ✓ | | MIT |
-| <img src="docs/assets/logos/nx-ai.png" width="30" alt=""> | [TiRex](https://arxiv.org/abs/2505.23719) | ✓ | ✓ | ✓ | ✓ | | Community / Apache-2.0 |
-| <img src="docs/assets/logos/nixtla.png" width="30" alt=""> | [TimeGPT](https://arxiv.org/abs/2310.03589) | ✓ | ✓ | ✓ | ✓ | ✓ | Nixtla API§ |
-| <img src="docs/assets/logos/google.png" width="30" alt=""> | [TimesFM](https://arxiv.org/abs/2310.10688) | ✓ | ✓ | ✓ | ✓ | | Apache-2.0 |
-| <img src="docs/assets/logos/datadog.png" width="30" alt=""> | [Toto](https://arxiv.org/abs/2505.14766) | ✓ | ✓ | ✓ | ✓ | | Apache-2.0 |
+| <img src="https://github.com/user-attachments/assets/65b73acc-b7e9-4508-ac72-446101276d1e" width="30" alt=""> | [Chronos](https://arxiv.org/abs/2403.07815) | ✓ | ✓ | ✓ | ✓ | ✓ | Apache-2.0 |
+| <img src="https://github.com/user-attachments/assets/77aba8ce-3c04-4d7f-b7e4-8e9a3804ffa7" width="30" alt=""> | [FlowState](https://arxiv.org/abs/2508.05287) | ✓ | ✓ | ✓ | ✓ | | Apache-2.0 |
+| <img src="https://github.com/user-attachments/assets/1c354c18-7046-4e80-a194-2d094d5cb257" width="30" alt=""> | [Moirai](https://arxiv.org/abs/2402.02592) | ✓ | ✓ | ✓ | ✓ | | CC-BY-NC-4.0 |
+| <img src="https://github.com/user-attachments/assets/77aba8ce-3c04-4d7f-b7e4-8e9a3804ffa7" width="30" alt=""> | [PatchTST-FM](https://arxiv.org/abs/2602.06909) | ✓ | ✓ | ✓ | ✓ | | CC-BY-NC-SA-4.0 |
+| <img src="https://github.com/user-attachments/assets/c8753033-2980-4592-9333-dbd2e84cdaa9" width="30" alt=""> | [Sundial](https://arxiv.org/abs/2502.00816) | ✓ | ✓ | ✓ | ✓ | | Apache-2.0 |
+| <img src="https://github.com/user-attachments/assets/5a4f5188-4092-4d40-8563-664b843fa0c0" width="30" alt=""> | [T0](https://huggingface.co/theforecastingcompany/t0-alpha) | ✓ | ✓ | ✓ | ✓ | | Apache-2.0† |
+| <img src="https://github.com/user-attachments/assets/c6e62b58-4ca3-4f2b-8598-a15f2bf78cad" width="30" alt=""> | [TabPFN](https://arxiv.org/abs/2501.02945) | ✓ | ✓ | ✓ | ✓ | | TabPFN NC‡ |
+| <img src="https://github.com/user-attachments/assets/c9e6674b-be4a-422c-b86b-5ec35c8d1b17" width="30" alt=""> | [Tafsut](https://github.com/Tafsut-FM/tafsut) | ✓ | ✓ | ✓ | ✓ | | MIT |
+| <img src="https://github.com/user-attachments/assets/7cd10da0-0661-4786-a4d7-cf497c2ac24a" width="30" alt=""> | [TiRex](https://arxiv.org/abs/2505.23719) | ✓ | ✓ | ✓ | ✓ | | Community / Apache-2.0 |
+| <img src="https://github.com/user-attachments/assets/87d065bf-ab28-493b-b2a5-8688ed8fbe17" width="30" alt=""> | [TimeGPT](https://arxiv.org/abs/2310.03589) | ✓ | ✓ | ✓ | ✓ | ✓ | Nixtla API§ |
+| <img src="https://github.com/user-attachments/assets/94ff995f-d1b0-4bc6-bb3f-bb1c0c5fbe0a" width="30" alt=""> | [TimesFM](https://arxiv.org/abs/2310.10688) | ✓ | ✓ | ✓ | ✓ | | Apache-2.0 |
+| <img src="https://github.com/user-attachments/assets/19d6dc6c-eabc-4029-9cb1-14dea973953a" width="30" alt=""> | [Toto](https://arxiv.org/abs/2505.14766) | ✓ | ✓ | ✓ | ✓ | | Apache-2.0 |
 
 Licenses verified against Hugging Face model cards. Check the model card for your `repo_id` when in doubt.
 
