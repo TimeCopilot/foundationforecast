@@ -13,7 +13,7 @@ CANONICAL_TARGET_COL = "y"
 
 @dataclass(frozen=True)
 class PanelColumns:
-    """User-facing panel column names (Nixtla / utilsforecast convention)."""
+    """User-facing panel id, time, and target column names."""
 
     id_col: str = CANONICAL_ID_COL
     time_col: str = CANONICAL_TIME_COL
