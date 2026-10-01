@@ -7,6 +7,7 @@ import pandas as pd
 import utilsforecast.processing as ufp
 
 from .forecaster import Forecaster, maybe_infer_freq
+from .panel_columns import resolve_panel_columns
 from .utils import PanelData, process_panel_from_df
 
 
@@ -70,19 +71,30 @@ class MultiModelForecasterMixin:
     def _call_models(
         self,
         attr: str,
-        merge_on: list[str],
         df: pd.DataFrame,
         h: int | None,
         freq: str | None,
         level: list[int | float] | None,
         quantiles: list[float] | None,
         panel: PanelData | None = None,
+        id_col: str | None = None,
+        time_col: str | None = None,
+        target_col: str | None = None,
         **kwargs,
     ) -> pd.DataFrame:
-        Forecaster.validate_input(df, h)
-        freq = maybe_infer_freq(df, freq)
+        cols = resolve_panel_columns(self, id_col, time_col, target_col)
+        Forecaster.validate_input(df, h, cols)
+        df_work = cols.to_canonical(df)
+        freq = maybe_infer_freq(df_work, freq)
         if panel is None and attr == "forecast":
-            panel = process_panel_from_df(df)
+            panel = process_panel_from_df(df_work)
+        merge_on = cols.merge_keys() if attr == "forecast" else cols.cv_merge_keys()
+        if "X_df" in kwargs and kwargs["X_df"] is not None:
+            kwargs = dict(kwargs)
+            kwargs["X_df"] = cols.to_canonical(kwargs["X_df"])
+        if "futr_df" in kwargs and kwargs["futr_df"] is not None:
+            kwargs = dict(kwargs)
+            kwargs["futr_df"] = cols.to_canonical(kwargs["futr_df"])
         res_df: pd.DataFrame | None = None
         for model in self.models:
             known_kwargs = {
@@ -90,6 +102,9 @@ class MultiModelForecasterMixin:
                 "h": h,
                 "freq": freq,
                 "level": level,
+                "id_col": cols.id_col,
+                "time_col": cols.time_col,
+                "target_col": cols.target_col,
             }
             if attr != "detect_anomalies":
                 known_kwargs["quantiles"] = quantiles
@@ -116,8 +131,8 @@ class MultiModelForecasterMixin:
             if res_df is None:
                 res_df = res_df_model
             else:
-                if "y" in res_df_model:
-                    res_df_model = res_df_model.drop(columns=["y"])
+                if cols.target_col in res_df_model:
+                    res_df_model = res_df_model.drop(columns=[cols.target_col])
                 res_df = ufp.join(res_df, res_df_model, on=merge_on, how="left")
             if self.clean_cache:
                 self._clean_model_cache()
@@ -137,10 +152,12 @@ class MultiModelForecasterMixin:
         *,
         futr_df: pd.DataFrame | None = None,
         futr_exog_list: list[str] | None = None,
+        id_col: str | None = None,
+        time_col: str | None = None,
+        target_col: str | None = None,
     ) -> pd.DataFrame:
         return self._call_models(
             "forecast",
-            merge_on=["unique_id", "ds"],
             df=df,
             h=h,
             freq=freq,
@@ -150,6 +167,9 @@ class MultiModelForecasterMixin:
             X_df=X_df,
             futr_df=futr_df,
             futr_exog_list=futr_exog_list,
+            id_col=id_col,
+            time_col=time_col,
+            target_col=target_col,
         )
 
     def cross_validation(
@@ -165,10 +185,12 @@ class MultiModelForecasterMixin:
         *,
         futr_df: pd.DataFrame | None = None,
         futr_exog_list: list[str] | None = None,
+        id_col: str | None = None,
+        time_col: str | None = None,
+        target_col: str | None = None,
     ) -> pd.DataFrame:
         return self._call_models(
             "cross_validation",
-            merge_on=["unique_id", "ds", "cutoff"],
             df=df,
             h=h,
             freq=freq,
@@ -179,6 +201,9 @@ class MultiModelForecasterMixin:
             X_df=X_df,
             futr_df=futr_df,
             futr_exog_list=futr_exog_list,
+            id_col=id_col,
+            time_col=time_col,
+            target_col=target_col,
         )
 
     def detect_anomalies(
@@ -188,14 +213,19 @@ class MultiModelForecasterMixin:
         freq: str | None = None,
         n_windows: int | None = None,
         level: int | float = 99,
+        id_col: str | None = None,
+        time_col: str | None = None,
+        target_col: str | None = None,
     ) -> pd.DataFrame:
         return self._call_models(
             "detect_anomalies",
-            merge_on=["unique_id", "ds", "cutoff"],
             df=df,
             h=h,
             freq=freq,
             level=level,  # type: ignore[arg-type]
             quantiles=None,
             n_windows=n_windows,
+            id_col=id_col,
+            time_col=time_col,
+            target_col=target_col,
         )
