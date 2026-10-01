@@ -4,6 +4,7 @@ Use generate_series for panel data; manual DataFrame only for controlled y
 patterns or edge-case lengths.
 """
 
+import numpy as np
 import pandas as pd
 from utilsforecast.data import generate_series as _generate_series
 from utilsforecast.processing import make_future_dataframe
@@ -16,6 +17,45 @@ def generate_series(n_series, freq, **kwargs):
     df = _generate_series(n_series, freq, **kwargs)
     df["unique_id"] = df["unique_id"].astype(str)
     return df
+
+
+def generate_panel_with_futr_exog(
+    n_series: int,
+    freq: str,
+    h: int,
+    *,
+    min_length: int = 32,
+    max_length: int = 32,
+    seed: int = 0,
+) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
+    """Panel with known-future dynamic exog columns and matching ``X_df``."""
+    df = generate_series(
+        n_series,
+        freq=freq,
+        min_length=min_length,
+        max_length=max_length,
+        equal_ends=True,
+        seed=seed,
+    )
+    rng = np.random.default_rng(seed)
+    df = df.copy()
+    df["x1"] = rng.normal(size=len(df))
+    df["x2"] = df.groupby("unique_id", observed=True).cumcount().astype(float)
+    futr_exog_list = ["x1", "x2"]
+
+    last_times = df.groupby("unique_id", observed=True)["ds"].max()
+    X_df = make_future_dataframe(
+        uids=last_times.index.tolist(),
+        last_times=last_times,
+        h=h,
+        freq=freq,
+    )
+    rng_hor = np.random.default_rng(seed + 1)
+    X_df["x1"] = rng_hor.normal(size=len(X_df))
+    X_df["x2"] = (
+        X_df.groupby("unique_id", observed=True).cumcount().astype(float) + 100.0
+    )
+    return df, X_df, futr_exog_list
 
 
 def generate_series_with_anomalies(

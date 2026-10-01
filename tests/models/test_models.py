@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from tests.helpers import generate_series
+from tests.helpers import generate_panel_with_futr_exog, generate_series
 from .conftest import models
 from foundationforecast.core.quantiles import quantile_column_name
 
@@ -115,6 +115,35 @@ def test_cross_validation(model, freq, n_windows):
             cv_df.sort_values(["unique_id", "ds"]).reset_index(drop=True)[exp_cols],
             fcst_df.sort_values(["unique_id", "ds"]).reset_index(drop=True)[exp_cols],
         )
+
+
+@pytest.mark.parametrize("model", models)
+def test_exog_forecast_with_X_df(model):
+    """Every hub model in conftest accepts df + X_df for known-future exog."""
+    h = 3
+    n_series = 2
+    df, X_df, futr_exog_list = generate_panel_with_futr_exog(
+        n_series,
+        freq="D",
+        h=h,
+        min_length=32,
+        max_length=32,
+    )
+    fcst_exog = model.forecast(
+        df=df,
+        h=h,
+        freq="D",
+        X_df=X_df,
+        futr_exog_list=futr_exog_list,
+    )
+    assert fcst_exog.shape[0] == n_series * h
+    assert model.alias in fcst_exog.columns
+    assert fcst_exog[model.alias].notna().all()
+    exp_cols = ["unique_id", "ds"]
+    pd.testing.assert_frame_equal(
+        fcst_exog[exp_cols].sort_values(exp_cols).reset_index(drop=True),
+        X_df[exp_cols].sort_values(exp_cols).reset_index(drop=True),
+    )
 
 
 @pytest.mark.parametrize("model", models)
