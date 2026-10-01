@@ -27,6 +27,14 @@ from utilsforecast.processing import (
 )
 
 from .exog.covariates import ExogStrategyConfig, normalize_exog_strategy
+from .panel_columns import (
+    CANONICAL_ID_COL,
+    CANONICAL_TARGET_COL,
+    CANONICAL_TIME_COL,
+    PanelColumns,
+    active_panel_columns,
+    resolve_panel_columns,
+)
 from .quantiles import (
     assert_unique_quantile_column_names,
     quantile_column_name,
@@ -51,11 +59,17 @@ def get_seasonality(
     )
 
 
-def maybe_infer_freq(df: pd.DataFrame, freq: str | None) -> str:
+def maybe_infer_freq(
+    df: pd.DataFrame,
+    freq: str | None,
+    *,
+    id_col: str = CANONICAL_ID_COL,
+    time_col: str = CANONICAL_TIME_COL,
+) -> str:
     if freq is not None:
         return freq
-    sizes = df["unique_id"].value_counts(sort=True)
-    times = df.loc[df["unique_id"] == sizes.index[0], "ds"].sort_values()
+    sizes = df[id_col].value_counts(sort=True)
+    times = df.loc[df[id_col] == sizes.index[0], time_col].sort_values()
     if times.dt.tz is not None:
         times = times.dt.tz_convert("UTC").dt.tz_localize(None)
     inferred_freq = pd.infer_freq(times.values)
@@ -84,6 +98,9 @@ class Forecaster:
         *,
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        id_col: str = CANONICAL_ID_COL,
+        time_col: str = CANONICAL_TIME_COL,
+        target_col: str = CANONICAL_TARGET_COL,
     ) -> None:
         """Initialize forecaster options.
 
@@ -97,9 +114,15 @@ class Forecaster:
                 uses native model support when available, otherwise ``XReg()``.
                 ``"native"`` requires native support. Pass ``XReg(...)`` to
                 force FM + regressor decomposition.
+            id_col: Series identifier column name (default ``unique_id``).
+            time_col: Timestamp column name (default ``ds``).
+            target_col: Target column name (default ``y``).
         """
         self.reuse_loaded_model = reuse_loaded_model
         self.exog_strategy = normalize_exog_strategy(exog_strategy)
+        self.id_col = id_col
+        self.time_col = time_col
+        self.target_col = target_col
 
     def _model_cache_prefix(self) -> str | None:
         repo_id = getattr(self, "repo_id", None)
@@ -134,27 +157,45 @@ class Forecaster:
     def validate_input(
         df: pd.DataFrame,
         h: int | None,
+        cols: PanelColumns | None = None,
     ) -> None:
         """Validate that the input DataFrame and horizon are suitable for forecasting.
 
         Args:
             df: DataFrame containing the time series. Must include the columns
-                `unique_id`, `ds`, and `y`.
+                given by ``cols`` (default ``unique_id``, ``ds``, ``y``).
             h: Forecast horizon. If provided, must be a positive integer.
+            cols: Panel column names for validation.
         """
         if not isinstance(df, pd.DataFrame):
             raise ValueError("df must be a pandas DataFrame.")
-        required_cols = ["unique_id", "ds", "y"]
-        missing = [c for c in required_cols if c not in df.columns]
-        if missing:
-            raise ValueError(
-                f"Input df is missing required columns: {missing}. "
-                "Expected columns are: 'unique_id', 'ds', 'y'."
-            )
+        panel_cols = cols or PanelColumns()
+        panel_cols.validate_present(df)
         if h is not None and (not isinstance(h, int | np.integer) or h <= 0):
             raise ValueError("h must be a positive integer.")
         if len(df) == 0:
             raise ValueError("df must contain at least one row.")
+
+    def _resolve_panel_columns(
+        self,
+        id_col: str | None = None,
+        time_col: str | None = None,
+        target_col: str | None = None,
+    ) -> PanelColumns:
+        return resolve_panel_columns(self, id_col, time_col, target_col)
+
+    def _prepare_panel_df(
+        self,
+        df: pd.DataFrame,
+        cols: PanelColumns,
+        *,
+        panel: PanelData | None,
+    ) -> tuple[pd.DataFrame, PanelData | None]:
+        if panel is not None and not cols.is_canonical():
+            raise ValueError(
+                "When using custom id_col, time_col, or target_col, pass panel=None."
+            )
+        return cols.to_canonical(df), panel
 
     @staticmethod
     def plot(
@@ -220,12 +261,18 @@ class Forecaster:
             ax=ax,
         )
 
-    @staticmethod
     def _maybe_infer_freq(
+        self,
         df: pd.DataFrame,
         freq: str | None,
+        cols: PanelColumns | None = None,
     ) -> str:
-        return maybe_infer_freq(df, freq)
+        return maybe_infer_freq(
+            df,
+            freq,
+            id_col=CANONICAL_ID_COL,
+            time_col=CANONICAL_TIME_COL,
+        )
 
     def _maybe_get_seasonality(self, freq: str) -> int:
         if hasattr(self, "season_length"):
@@ -353,67 +400,82 @@ class Forecaster:
         *,
         futr_df: pd.DataFrame | None = None,
         futr_exog_list: list[str] | None = None,
+        id_col: str | None = None,
+        time_col: str | None = None,
+        target_col: str | None = None,
     ) -> pd.DataFrame:
-        self.validate_input(df, h)
-        freq = self._maybe_infer_freq(df, freq)
-        df = maybe_convert_col_to_datetime(df, "ds")
+        cols = self._resolve_panel_columns(id_col, time_col, target_col)
+        self.validate_input(df, h, cols)
+        df = cols.to_canonical(df)
+        X_df = cols.to_canonical(X_df)
+        futr_df = cols.to_canonical(futr_df)
+        freq = self._maybe_infer_freq(df, freq, cols)
+        df = maybe_convert_col_to_datetime(df, CANONICAL_TIME_COL)
         results = []
-        sort_idxs = maybe_compute_sort_indices(df, "unique_id", "ds")
+        sort_idxs = maybe_compute_sort_indices(df, CANONICAL_ID_COL, CANONICAL_TIME_COL)
         if sort_idxs is not None:
             df = take_rows(df, sort_idxs)
         splits = backtest_splits(
             df,
             n_windows=n_windows,
             h=h,
-            id_col="unique_id",
-            time_col="ds",
+            id_col=CANONICAL_ID_COL,
+            time_col=CANONICAL_TIME_COL,
             freq=pd.tseries.frequencies.to_offset(freq),
             step_size=h if step_size is None else step_size,
         )
         from .exog.covariates import resolve_horizon_exog_df
 
         horizon_df = resolve_horizon_exog_df(X_df, futr_df)
-        for _, (cutoffs, train, valid) in tqdm(enumerate(splits)):
-            window_X: pd.DataFrame | None = None
-            if horizon_df is not None:
-                valid_keys = valid[["unique_id", "ds"]]
-                window_X = horizon_df.merge(
-                    valid_keys,
-                    on=["unique_id", "ds"],
-                    how="inner",
-                )
-                if window_X.shape[0] < valid.shape[0]:
-                    raise ValueError(
-                        "X_df does not cover all cross-validation horizon timestamps."
+        merge_on = [CANONICAL_ID_COL, CANONICAL_TIME_COL]
+        with active_panel_columns(self, cols):
+            for _, (cutoffs, train, valid) in tqdm(enumerate(splits)):
+                window_X: pd.DataFrame | None = None
+                if horizon_df is not None:
+                    valid_keys = valid[merge_on]
+                    window_X = horizon_df.merge(
+                        valid_keys,
+                        on=merge_on,
+                        how="inner",
                     )
-            y_pred = self.forecast(
-                df=train,
-                h=h,
-                freq=freq,
-                level=level,
-                quantiles=quantiles,
-                X_df=window_X,
-                futr_exog_list=futr_exog_list,
-            )
-            y_pred = join(y_pred, cutoffs, on="unique_id", how="left")
-            result = join(
-                valid[["unique_id", "ds", "y"]],
-                y_pred,
-                on=["unique_id", "ds"],
-            )
-            if result.shape[0] < valid.shape[0]:
-                raise ValueError(
-                    "Cross validation result produced less results than expected. "
-                    "Please verify that the frequency parameter (freq) "
-                    "matches your series' "
-                    "and that there aren't any missing periods."
+                    if window_X.shape[0] < valid.shape[0]:
+                        raise ValueError(
+                            "X_df does not cover all cross-validation horizon "
+                            "timestamps."
+                        )
+                y_pred = self.forecast(
+                    df=train,
+                    h=h,
+                    freq=freq,
+                    level=level,
+                    quantiles=quantiles,
+                    X_df=window_X,
+                    futr_exog_list=futr_exog_list,
                 )
-            results.append(result)
+                y_pred = join(y_pred, cutoffs, on=CANONICAL_ID_COL, how="left")
+                result = join(
+                    valid[[*merge_on, CANONICAL_TARGET_COL]],
+                    y_pred,
+                    on=merge_on,
+                )
+                if result.shape[0] < valid.shape[0]:
+                    raise ValueError(
+                        "Cross validation result produced less results than expected. "
+                        "Please verify that the frequency parameter (freq) "
+                        "matches your series' "
+                        "and that there aren't any missing periods."
+                    )
+                results.append(result)
         out = vertical_concat(results)
         out = drop_index_if_pandas(out)
-        first_out_cols = ["unique_id", "ds", "cutoff", "y"]
+        first_out_cols = [
+            CANONICAL_ID_COL,
+            CANONICAL_TIME_COL,
+            "cutoff",
+            CANONICAL_TARGET_COL,
+        ]
         remaining_cols = [c for c in out.columns if c not in first_out_cols]
-        return out[first_out_cols + remaining_cols]
+        return cols.from_canonical(out[first_out_cols + remaining_cols])
 
     def _anomaly_min_series_length(self, h: int) -> int:
         return h + 1
@@ -425,14 +487,20 @@ class Forecaster:
         freq: str | None = None,
         n_windows: int | None = None,
         level: int | float = 99,
+        id_col: str | None = None,
+        time_col: str | None = None,
+        target_col: str | None = None,
     ) -> pd.DataFrame:
         from scipy import stats
 
-        freq = self._maybe_infer_freq(df, freq)
-        df = maybe_convert_col_to_datetime(df, "ds")
+        cols = self._resolve_panel_columns(id_col, time_col, target_col)
+        self.validate_input(df, h if h is not None else 1, cols)
+        df_canon = cols.to_canonical(df)
+        freq = self._maybe_infer_freq(df_canon, freq, cols)
+        df_canon = maybe_convert_col_to_datetime(df_canon, CANONICAL_TIME_COL)
         if h is None:
             h = self._maybe_get_seasonality(freq)
-        min_series_length = counts_by_id(df, "unique_id")["counts"].min()
+        min_series_length = counts_by_id(df_canon, CANONICAL_ID_COL)["counts"].min()
         min_required = self._anomaly_min_series_length(h)
         reserved = min_required - h
         max_possible_windows = (min_series_length - reserved) // h
@@ -452,14 +520,17 @@ class Forecaster:
             freq=freq,
             n_windows=_n_windows,
             step_size=h,
+            id_col=cols.id_col,
+            time_col=cols.time_col,
+            target_col=cols.target_col,
         )
-        cv_results["residuals"] = cv_results["y"] - cv_results[self.alias]
+        cv_results["residuals"] = cv_results[cols.target_col] - cv_results[self.alias]
         residual_stats = grouped_std_by_id(
             cv_results,
-            "unique_id",
+            cols.id_col,
             "residuals",
         )
-        cv_results = join(cv_results, residual_stats, on="unique_id", how="left")
+        cv_results = join(cv_results, residual_stats, on=cols.id_col, how="left")
         cv_results["z_score"] = cv_results["residuals"] / cv_results["residual_std"]
         alpha = 1 - level / 100
         critical_z = stats.norm.ppf(1 - alpha / 2)
@@ -471,10 +542,10 @@ class Forecaster:
         cv_results[lo_col] = cv_results[self.alias] - margin
         cv_results[hi_col] = cv_results[self.alias] + margin
         output_cols = [
-            "unique_id",
-            "ds",
+            cols.id_col,
+            cols.time_col,
             "cutoff",
-            "y",
+            cols.target_col,
             self.alias,
             lo_col,
             hi_col,
@@ -499,27 +570,60 @@ class ExogCapableForecaster(Forecaster):
         *,
         futr_df: pd.DataFrame | None = None,
         futr_exog_list: list[str] | None = None,
+        id_col: str | None = None,
+        time_col: str | None = None,
+        target_col: str | None = None,
     ) -> pd.DataFrame:
-        self.validate_input(df, h)
-        return self._forecast_with_exog(
-            df,
-            h,
-            freq,
-            level,
-            quantiles,
-            panel,
-            X_df,
-            futr_df,
-            futr_exog_list,
-            lambda: self._forecast_univariate(
+        cols = self._resolve_panel_columns(id_col, time_col, target_col)
+        internal_cols = getattr(self, "_active_panel_columns", None)
+        if internal_cols is not None:
+            work = PanelColumns()
+            self.validate_input(df, h, work)
+            result = self._forecast_with_exog(
                 df,
                 h,
                 freq,
                 level,
                 quantiles,
                 panel,
-            ),
-        )
+                X_df,
+                futr_df,
+                futr_exog_list,
+                lambda: self._forecast_univariate(
+                    df,
+                    h,
+                    freq,
+                    level,
+                    quantiles,
+                    panel,
+                ),
+            )
+            return result
+        self.validate_input(df, h, cols)
+        df, panel = self._prepare_panel_df(df, cols, panel=panel)
+        X_df = cols.to_canonical(X_df)
+        futr_df = cols.to_canonical(futr_df)
+        with active_panel_columns(self, cols):
+            result = self._forecast_with_exog(
+                df,
+                h,
+                freq,
+                level,
+                quantiles,
+                panel,
+                X_df,
+                futr_df,
+                futr_exog_list,
+                lambda: self._forecast_univariate(
+                    df,
+                    h,
+                    freq,
+                    level,
+                    quantiles,
+                    panel,
+                ),
+            )
+        return cols.from_canonical(result)
 
     def _forecast_univariate(
         self,
