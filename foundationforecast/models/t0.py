@@ -13,6 +13,7 @@ from huggingface_hub.constants import CONFIG_NAME
 from t0 import T0Forecaster
 from tqdm import tqdm
 
+from ..core.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import (
     T0_ALPHA_QUANTILE_RANGE,
@@ -44,6 +45,7 @@ class T0(ExogCapableForecaster):
         batch_size: int = 16,
         alias: str = "t0-alpha",
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         # ruff: noqa: E501
         """
@@ -94,7 +96,10 @@ class T0(ExogCapableForecaster):
               `predict` API; this integration currently exposes the univariate
               path only.
         """
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.context_length = context_length
         self.batch_size = batch_size

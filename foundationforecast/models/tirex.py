@@ -15,6 +15,7 @@ from tirex import load_model
 from tirex.base import PretrainedModel
 from tqdm import tqdm
 
+from ..core.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
@@ -42,6 +43,7 @@ class TiRex(ExogCapableForecaster):
         batch_size: int = 16,
         alias: str = "TiRex",
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         """
         Args:
@@ -81,7 +83,10 @@ class TiRex(ExogCapableForecaster):
             - TiRex 2.0 natively supports CPU, CUDA, and MPS devices.
             - The model is only available for Python >= 3.11.
         """
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.batch_size = batch_size
         self.alias = alias

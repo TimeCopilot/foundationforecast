@@ -7,6 +7,7 @@ from tafsut import TafsutModel
 from tafsut import forecast as tafsut_forecast
 from tqdm import tqdm
 
+from ..core.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
@@ -29,6 +30,7 @@ class Tafsut(ExogCapableForecaster, _DataProcessor):
         batch_size: int = 64,
         alias: str = "Tafsut",
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         """
         Initialize Tafsut time series foundation model.
@@ -66,7 +68,10 @@ class Tafsut(ExogCapableForecaster, _DataProcessor):
             - Missing values in the context are handled natively via NaN.
             - Univariate only; no covariates or cross-series structure.
         """
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.context_length = context_length
         self.batch_size = batch_size

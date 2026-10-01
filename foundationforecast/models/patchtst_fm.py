@@ -11,6 +11,7 @@ import torch
 from tqdm import tqdm
 from tsfm_public import PatchTSTFMForPrediction
 
+from ..core.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
 from ..core.quantiles import (
     PATCHTST_FM_QUANTILE_RANGE,
@@ -47,6 +48,7 @@ class PatchTSTFM(ExogCapableForecaster, _DataProcessor):
         batch_size: int = 2_048,
         alias: str = "PatchTST-FM",
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         """
         Initialize PatchTSTFM time series foundation model.
@@ -99,7 +101,10 @@ class PatchTSTFM(ExogCapableForecaster, _DataProcessor):
             - `ibm-granite/granite-timeseries-patchtst-fm-r1`
             - `ibm-granite/granite-timeseries-patchtst-fm-r2`
         """
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         # self.scale_factor = scale_factor
         self.context_length = context_length

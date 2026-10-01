@@ -24,6 +24,7 @@ from tabpfn_time_series.features.feature_generator_base import (
     FeatureGenerator,
 )
 
+from ..core.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData
@@ -51,6 +52,7 @@ class TabPFN(ExogCapableForecaster):
         alias: str = "TabPFN",
         reuse_loaded_model: bool = True,
         model_path: str = TABPFN_V2_MODEL,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         """
         Args:
@@ -108,7 +110,10 @@ class TabPFN(ExogCapableForecaster):
             - For LOCAL mode, a CUDA-capable GPU is recommended for best performance.
             - The model is only available for Python < 3.13.
         """
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         if features is None:
             features = [
                 RunningIndexFeature(),

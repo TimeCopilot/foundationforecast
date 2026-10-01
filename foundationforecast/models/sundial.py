@@ -11,6 +11,7 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM
 
+from ..core.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
 from ..core.utils import PanelData, TimeSeriesDataset
 
@@ -33,6 +34,7 @@ class Sundial(ExogCapableForecaster, _DataProcessor):
         batch_size: int = 1_024,
         alias: str = "Sundial",
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         """
         Args:
@@ -75,7 +77,10 @@ class Sundial(ExogCapableForecaster, _DataProcessor):
               efficiency on supported hardware.
             - The model is only available for Python < 3.13.
         """
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.num_samples = num_samples
         self.context_length = context_length

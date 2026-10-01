@@ -12,6 +12,7 @@ from toto.model.toto import Toto as TotoModel
 from toto2 import Toto2Model
 from tqdm import tqdm
 
+from ..core.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
@@ -40,6 +41,7 @@ class Toto(ExogCapableForecaster):
         decode_block_size: int | None = None,
         alias: str = "Toto",
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         # ruff: noqa: E501
         """
@@ -118,7 +120,10 @@ class Toto(ExogCapableForecaster):
               the point forecast and requested quantiles are obtained by linear
               interpolation across the knots.
         """
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.context_length = context_length
         self.batch_size = batch_size

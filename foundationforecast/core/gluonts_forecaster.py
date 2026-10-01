@@ -12,6 +12,7 @@ from gluonts.torch.model.predictor import PyTorchPredictor
 from huggingface_hub import hf_hub_download
 from utilsforecast.processing import make_future_dataframe
 
+from .covariates import ExogStrategyConfig
 from .forecaster import ExogCapableForecaster, QuantileConverter
 from .quantiles import assert_unique_quantile_column_names, quantile_column_name
 from .utils import PanelData, process_panel_from_df
@@ -41,8 +42,12 @@ class GluonTSForecaster(ExogCapableForecaster):
         num_samples: int = 100,
         *,
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.filename = filename
         self.alias = alias

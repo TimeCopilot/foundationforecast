@@ -12,6 +12,7 @@ from tqdm import tqdm
 from tsfm_public import FlowStateForPrediction
 from tsfm_public.models.flowstate.utils.utils import get_fixed_factor
 
+from ..core.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
@@ -54,6 +55,7 @@ class FlowState(ExogCapableForecaster, _DataProcessor):
         batch_size: int = 1_024,
         alias: str = "FlowState",
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         """
         Initialize FlowState time series foundation model.
@@ -108,7 +110,10 @@ class FlowState(ExogCapableForecaster, _DataProcessor):
             - `ibm-research/flowstate` (default)
             - `ibm-granite/granite-timeseries-flowstate-r1`.
         """
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.scale_factor = scale_factor
         self.context_length = context_length

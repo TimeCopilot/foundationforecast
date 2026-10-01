@@ -5,6 +5,7 @@ from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
 from uni2ts.model.moirai2 import Moirai2Forecast, Moirai2Module
 from uni2ts.model.moirai_moe import MoiraiMoEForecast, MoiraiMoEModule
 
+from ..core.covariates import ExogStrategyConfig
 from ..core.gluonts_forecaster import GluonTSForecaster
 
 
@@ -34,6 +35,7 @@ class Moirai(GluonTSForecaster):
         batch_size: int = 32,
         alias: str = "Moirai",
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         """
         Args:
@@ -92,6 +94,7 @@ class Moirai(GluonTSForecaster):
             alias=alias,
             num_samples=num_samples,
             reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
         )
         self.context_length = context_length
         self.patch_size = patch_size
