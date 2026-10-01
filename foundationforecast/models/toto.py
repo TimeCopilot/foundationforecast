@@ -12,7 +12,7 @@ from toto.model.toto import Toto as TotoModel
 from toto2 import Toto2Model
 from tqdm import tqdm
 
-from ..core.forecaster import Forecaster, QuantileConverter
+from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
 
@@ -21,7 +21,7 @@ from ..core.utils import PanelData, TimeSeriesDataset
 _TOTO2_CONFIG_KEY = "num_variate_layers_per_group"
 
 
-class Toto(Forecaster):
+class Toto(ExogCapableForecaster):
     """
     Toto is a family of foundation models for multivariate time series
     forecasting, optimized for observability and high-dimensional data. This
@@ -342,7 +342,7 @@ class Toto(Forecaster):
             fcsts_quantiles_np = None
         return fcsts_mean_np, fcsts_quantiles_np
 
-    def forecast(
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,

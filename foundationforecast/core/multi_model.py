@@ -133,6 +133,10 @@ class MultiModelForecasterMixin:
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
         panel: PanelData | None = None,
+        X_df: pd.DataFrame | None = None,
+        *,
+        futr_df: pd.DataFrame | None = None,
+        futr_exog_list: list[str] | None = None,
     ) -> pd.DataFrame:
         return self._call_models(
             "forecast",
@@ -143,6 +147,9 @@ class MultiModelForecasterMixin:
             level=level,
             quantiles=quantiles,
             panel=panel,
+            X_df=X_df,
+            futr_df=futr_df,
+            futr_exog_list=futr_exog_list,
         )
 
     def cross_validation(
@@ -154,6 +161,10 @@ class MultiModelForecasterMixin:
         step_size: int | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        X_df: pd.DataFrame | None = None,
+        *,
+        futr_df: pd.DataFrame | None = None,
+        futr_exog_list: list[str] | None = None,
     ) -> pd.DataFrame:
         return self._call_models(
             "cross_validation",
@@ -165,6 +176,9 @@ class MultiModelForecasterMixin:
             quantiles=quantiles,
             n_windows=n_windows,
             step_size=step_size,
+            X_df=X_df,
+            futr_df=futr_df,
+            futr_exog_list=futr_exog_list,
         )
 
     def detect_anomalies(

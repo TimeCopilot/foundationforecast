@@ -5,7 +5,8 @@ from typing import Literal
 import pandas as pd
 from nixtla import NixtlaClient
 
-from ..core.forecaster import Forecaster
+from ..core.covariates import ExogStrategyConfig
+from ..core.forecaster import ExogCapableForecaster
 from ..core.utils import PanelData
 
 
@@ -37,7 +38,7 @@ class TimeGPTFinetuningConfig:
     finetune_depth: Literal[1, 2, 3, 4, 5] = 1
 
 
-class TimeGPT(Forecaster):
+class TimeGPT(ExogCapableForecaster):
     """
     TimeGPT is a pre-trained foundation model for time series forecasting and anomaly
     detection, developed by Nixtla. It is based on a large encoder-decoder transformer
@@ -56,6 +57,7 @@ class TimeGPT(Forecaster):
         alias: str = "TimeGPT",
         finetuning_config: TimeGPTFinetuningConfig | None = None,
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         """
         Args:
@@ -99,13 +101,53 @@ class TimeGPT(Forecaster):
             - For more information, see the
               [TimeGPT documentation](https://www.nixtla.io/docs).
         """
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.api_key = api_key
         self.base_url = base_url
         self.max_retries = max_retries
         self.model = model
         self.alias = alias
         self.finetuning_config = finetuning_config
+
+    def supports_native_futr_exog(self) -> bool:
+        return True
+
+    def forecast_native_futr_exog(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None,
+        level: list[int | float] | None,
+        quantiles: list[float] | None,
+        panel: PanelData | None,
+        horizon_df: pd.DataFrame,
+        futr_exog_list: list[str],
+    ) -> pd.DataFrame | None:
+        del panel, futr_exog_list
+        freq = self._maybe_infer_freq(df, freq)
+        client = self._get_client()
+        finetune_kwargs: dict = {}
+        if self.finetuning_config is not None:
+            finetune_kwargs["finetune_steps"] = self.finetuning_config.finetune_steps
+            finetune_kwargs["finetune_loss"] = self.finetuning_config.finetune_loss
+            finetune_kwargs["finetune_depth"] = self.finetuning_config.finetune_depth
+        fcst_df = client.forecast(
+            df=df,
+            X_df=horizon_df,
+            h=h,
+            freq=freq,
+            model=self.model,
+            level=level,
+            quantiles=quantiles,
+            **finetune_kwargs,
+        )
+        fcst_df["ds"] = pd.to_datetime(fcst_df["ds"])
+        cols = [col.replace("TimeGPT", self.alias) for col in fcst_df.columns]
+        fcst_df.columns = cols
+        return fcst_df
 
     def _get_client(self) -> NixtlaClient:
         if self.api_key is None:  # noqa: SIM108
@@ -118,7 +160,7 @@ class TimeGPT(Forecaster):
             max_retries=self.max_retries,
         )
 
-    def forecast(
+    def _forecast_univariate(  # noqa: PLR0913
         self,
         df: pd.DataFrame,
         h: int,

@@ -11,7 +11,7 @@ import torch
 from tqdm import tqdm
 from tsfm_public import PatchTSTFMForPrediction
 
-from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
+from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
 from ..core.quantiles import (
     PATCHTST_FM_QUANTILE_RANGE,
     backend_quantile_levels,
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_QUANTILES = [0.5]
 
 
-class PatchTSTFM(Forecaster, _DataProcessor):
+class PatchTSTFM(ExogCapableForecaster, _DataProcessor):
     """
     PatchTST-FM is a Time Series Foundation Model (TSFM) from IBM Research based on a
     standard patch Transformer. This generic architecture achieves state-of-the-art
@@ -267,7 +267,7 @@ class PatchTSTFM(Forecaster, _DataProcessor):
             fcsts_quantiles_np = None
         return fcsts_mean_np, fcsts_quantiles_np
 
-    def forecast(
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,

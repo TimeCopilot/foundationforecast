@@ -13,7 +13,7 @@ from huggingface_hub.constants import CONFIG_NAME
 from t0 import T0Forecaster
 from tqdm import tqdm
 
-from ..core.forecaster import Forecaster, QuantileConverter
+from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import (
     T0_ALPHA_QUANTILE_RANGE,
     T0_BETA_QUANTILE_RANGE,
@@ -23,7 +23,7 @@ from ..core.quantiles import (
 from ..core.utils import PanelData
 
 
-class T0(Forecaster):
+class T0(ExogCapableForecaster):
     """
     T0 is an open-weights time series foundation model from
     [The Forecasting Company](https://theforecastingcompany.com/). It is a
@@ -137,7 +137,7 @@ class T0(Forecaster):
             context[idx, -len(ts) :] = ts.to(dtype=torch.float32)
         return context
 
-    def forecast(
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,

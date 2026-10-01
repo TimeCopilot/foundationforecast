@@ -14,7 +14,8 @@ from chronos import (
 )
 from tqdm import tqdm
 
-from ..core.forecaster import Forecaster, QuantileConverter
+from ..core.covariates import ExogStrategyConfig
+from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import (
     DEFAULT_NATIVE_QUANTILE_RANGE,
     backend_quantile_levels,
@@ -63,7 +64,7 @@ class ChronosFinetuningConfig:
     save_path: str | Path | None = None
 
 
-class Chronos(Forecaster):
+class Chronos(ExogCapableForecaster):
     """
     Chronos models are large pre-trained models for time series forecasting,
     supporting both probabilistic and point forecasts. See the
@@ -79,6 +80,7 @@ class Chronos(Forecaster):
         dtype: torch.dtype = torch.float32,
         finetuning_config: ChronosFinetuningConfig | None = None,
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         # ruff: noqa: E501
         """
@@ -160,8 +162,78 @@ class Chronos(Forecaster):
         self.batch_size = batch_size
         self.alias = alias
         self.dtype = dtype
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.finetuning_config = finetuning_config
+
+    def supports_native_futr_exog(self) -> bool:
+        return "chronos-2" in self.repo_id.lower()
+
+    def _to_chronos2_df(
+        self,
+        df: pd.DataFrame,
+        futr_exog_list: list[str],
+    ) -> pd.DataFrame:
+        out = df[["unique_id", "ds", "y", *futr_exog_list]].copy()
+        return out.rename(
+            columns={"unique_id": "item_id", "ds": "timestamp", "y": "target"},
+        )
+
+    def forecast_native_futr_exog(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None,
+        level: list[int | float] | None,
+        quantiles: list[float] | None,
+        panel: PanelData | None,
+        horizon_df: pd.DataFrame,
+        futr_exog_list: list[str],
+    ) -> pd.DataFrame | None:
+        if not self.supports_native_futr_exog():
+            return None
+        freq = self._maybe_infer_freq(df, freq)
+        qc = QuantileConverter(level=level, quantiles=quantiles)
+        context_df = self._to_chronos2_df(df, futr_exog_list)
+        future_df = horizon_df[["unique_id", "ds", *futr_exog_list]].rename(
+            columns={"unique_id": "item_id", "ds": "timestamp"},
+        )
+        quantile_levels = qc.quantiles if qc.quantiles is not None else [0.5]
+        with self._get_model() as model:
+            if not isinstance(model, Chronos2Pipeline):
+                return None
+            model = self._maybe_finetune(model, df, h, panel=panel)
+            pred = model.predict_df(
+                context_df,
+                future_df=future_df,
+                prediction_length=h,
+                quantile_levels=quantile_levels,
+                batch_size=self.batch_size,
+                freq=freq,
+            )
+        fcst_df = horizon_df[["unique_id", "ds"]].copy()
+        if "predictions" in pred.columns:
+            point = pred["predictions"].to_numpy()
+        elif "0.5" in pred.columns:
+            point = pred["0.5"].to_numpy()
+        else:
+            num_cols = [
+                c for c in pred.columns if c not in ("item_id", "timestamp", "target")
+            ]
+            point = pred[num_cols[0]].to_numpy()
+        fcst_df[self.alias] = point
+        if qc.quantiles is not None:
+            for q in qc.quantiles:
+                q_key = str(q)
+                if q_key in pred.columns:
+                    from ..core.quantiles import quantile_column_name
+
+                    fcst_df[quantile_column_name(self.alias, q)] = pred[
+                        q_key
+                    ].to_numpy()
+        return fcst_df
 
     def _model_cache_prefix(self) -> str | None:
         if self.finetuning_config is not None:
@@ -325,7 +397,7 @@ class Chronos(Forecaster):
             fcsts_quantiles_np = None
         return fcsts_mean_np, fcsts_quantiles_np
 
-    def forecast(
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,

@@ -11,11 +11,11 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM
 
-from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
+from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
 from ..core.utils import PanelData, TimeSeriesDataset
 
 
-class Sundial(Forecaster, _DataProcessor):
+class Sundial(ExogCapableForecaster, _DataProcessor):
     """
     Sundial is a family of generative time series foundation models,
     pre-trained on TimeBench (10^12 time points). It uses the TimeFlow Loss to
@@ -172,7 +172,7 @@ class Sundial(Forecaster, _DataProcessor):
             fcsts_quantiles_np = None
         return fcsts_mean_np, fcsts_quantiles_np
 
-    def forecast(
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,

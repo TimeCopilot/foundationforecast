@@ -12,7 +12,7 @@ from tqdm import tqdm
 from tsfm_public import FlowStateForPrediction
 from tsfm_public.models.flowstate.utils.utils import get_fixed_factor
 
-from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
+from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
 
@@ -34,7 +34,7 @@ def _normalize_freq_for_scale_factor(freq: str) -> str:
     return freq
 
 
-class FlowState(Forecaster, _DataProcessor):
+class FlowState(ExogCapableForecaster, _DataProcessor):
     """
     FlowState is the first time-scale adjustable Time Series Foundation Model (TSFM),
     open-sourced by IBM Research. Combining a State Space Model (SSM) Encoder with a
@@ -239,7 +239,7 @@ class FlowState(Forecaster, _DataProcessor):
         )
         return fcsts_mean_np, fcsts_quantiles_np
 
-    def forecast(
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,

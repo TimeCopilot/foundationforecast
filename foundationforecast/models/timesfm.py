@@ -13,8 +13,9 @@ from timesfm3 import ModelConfig, TimesFM3Evaluator
 from timesfm_v1.timesfm_base import DEFAULT_QUANTILES as DEFAULT_QUANTILES_TFM
 from tqdm import tqdm
 
+from ..core.covariates import ExogStrategyConfig
 from ..core.forecaster import (
-    Forecaster,
+    ExogCapableForecaster,
     QuantileConverter,
     maybe_convert_col_to_datetime,
 )
@@ -29,7 +30,7 @@ _GIFT_EVAL_LEGACY_REPOS = (
 )
 
 
-class _TimesFMV1(Forecaster):
+class _TimesFMV1(ExogCapableForecaster):
     def __init__(
         self,
         repo_id: str,
@@ -37,8 +38,12 @@ class _TimesFMV1(Forecaster):
         batch_size: int,
         alias: str,
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.context_length = context_length
         self.batch_size = batch_size
@@ -120,7 +125,7 @@ class _TimesFMV1(Forecaster):
         with self._cached_model(loader, cache_key=cache_key) as tfm:
             yield tfm
 
-    def forecast(
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,
@@ -174,7 +179,7 @@ class _TimesFMV1(Forecaster):
         return fcst_df
 
 
-class _TimesFMV2_p5(Forecaster):
+class _TimesFMV2_p5(ExogCapableForecaster):
     def __init__(
         self,
         repo_id: str,
@@ -182,9 +187,13 @@ class _TimesFMV2_p5(Forecaster):
         batch_size: int,
         alias: str,
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
         **kwargs: Any,
     ):
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.context_length = context_length
         self.batch_size = batch_size
@@ -253,7 +262,7 @@ class _TimesFMV2_p5(Forecaster):
         fcsts_quantiles_np = np.concatenate(fcsts_quantiles)
         return fcsts_mean_np, fcsts_quantiles_np
 
-    def forecast(
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,
@@ -298,7 +307,7 @@ class _TimesFMV2_p5(Forecaster):
         return fcst_df
 
 
-class _TimesFMV3(Forecaster):
+class _TimesFMV3(ExogCapableForecaster):
     def __init__(
         self,
         repo_id: str,
@@ -306,9 +315,13 @@ class _TimesFMV3(Forecaster):
         batch_size: int,
         alias: str,
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
         **kwargs: Any,
     ):
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.context_length = context_length
         self.batch_size = batch_size
@@ -381,7 +394,114 @@ class _TimesFMV3(Forecaster):
         fcsts_quantiles_np = np.stack(fcsts_quantiles)
         return fcsts_mean_np, fcsts_quantiles_np
 
-    def forecast(
+    def supports_native_futr_exog(self) -> bool:
+        return True
+
+    def _build_past_future_covariates(
+        self,
+        df: pd.DataFrame,
+        horizon_df: pd.DataFrame,
+        futr_exog_list: list[str],
+        uid: str,
+        context: np.ndarray,
+    ) -> np.ndarray:
+        hist = df.loc[df["unique_id"] == uid, futr_exog_list].to_numpy(dtype=np.float32)
+        futr = horizon_df.loc[horizon_df["unique_id"] == uid, futr_exog_list].to_numpy(
+            dtype=np.float32
+        )
+        if len(hist) > len(context):
+            hist = hist[-len(context) :]
+        full = np.concatenate([hist, futr], axis=0)
+        return full.T
+
+    def _predict_with_covariates(
+        self,
+        forecaster: TimesFM3Evaluator,
+        dataset: TimeSeriesDataset,
+        h: int,
+        df: pd.DataFrame,
+        horizon_df: pd.DataFrame,
+        futr_exog_list: list[str],
+    ) -> tuple[np.ndarray, np.ndarray]:
+        fcsts_mean: list[np.ndarray] = []
+        fcsts_quantiles: list[np.ndarray] = []
+        uid_list = list(dataset.uids)
+        batch_start = 0
+        for batch in tqdm(dataset):
+            contexts = [self._series_to_context(series) for series in batch]
+            pf_cov: list[np.ndarray] = []
+            for i, _ctx in enumerate(contexts):
+                uid = uid_list[batch_start + i]
+                pf_cov.append(
+                    self._build_past_future_covariates(
+                        df, horizon_df, futr_exog_list, uid, contexts[i]
+                    )
+                )
+            batch_start += len(batch)
+            outputs = list(
+                forecaster.predict_batch(
+                    contexts=contexts,
+                    horizon=h,
+                    past_future_covariates=pf_cov,
+                    return_quantiles=True,
+                    use_symmetric_averaging=True,
+                    make_positive=True,
+                    sort_quantiles=True,
+                )
+            )
+            fcsts_mean.extend(output.forecast for output in outputs)
+            fcsts_quantiles.extend(output.quantiles for output in outputs)
+        return np.stack(fcsts_mean), np.stack(fcsts_quantiles)
+
+    def forecast_native_futr_exog(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None,
+        level: list[int | float] | None,
+        quantiles: list[float] | None,
+        panel: PanelData | None,
+        horizon_df: pd.DataFrame,
+        futr_exog_list: list[str],
+    ) -> pd.DataFrame | None:
+        freq = self._maybe_infer_freq(df, freq)
+        qc = QuantileConverter(level=level, quantiles=quantiles)
+        dataset = self._make_timeseries_dataset(
+            df,
+            batch_size=self.batch_size,
+            dtype=torch.float32,
+            panel=panel,
+        )
+        fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
+        with self._get_predictor(prediction_length=h) as forecaster:
+            fcsts_mean_np, fcsts_quantiles_np = self._predict_with_covariates(
+                forecaster,
+                dataset,
+                h,
+                df,
+                horizon_df,
+                futr_exog_list,
+            )
+        fcst_df[self.alias] = fcsts_mean_np.reshape(-1, 1)
+        if qc.quantiles is not None:
+            resolved = resolve_quantile_values(
+                DEFAULT_QUANTILES_TFM,
+                fcsts_quantiles_np,
+                qc.quantiles,
+            )
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                resolved,
+            )
+            fcst_df = qc.maybe_convert_quantiles_to_level(
+                fcst_df,
+                models=[self.alias],
+            )
+        return fcst_df
+
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,
@@ -425,7 +545,7 @@ class _TimesFMV3(Forecaster):
         return fcst_df
 
 
-class TimesFM(Forecaster):
+class TimesFM(ExogCapableForecaster):
     """
     TimesFM is a large time series model for time series forecasting, supporting both
     probabilistic and point forecasts. See the [official repo](https://github.com/
@@ -439,6 +559,7 @@ class TimesFM(Forecaster):
         batch_size: int = 64,
         alias: str = "TimesFM",
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
         **kwargs: Any,
     ):
         if "pytorch" not in repo_id and repo_id not in _GIFT_EVAL_LEGACY_REPOS:
@@ -455,6 +576,7 @@ class TimesFM(Forecaster):
                 batch_size=batch_size,
                 alias=alias,
                 reuse_loaded_model=reuse_loaded_model,
+                exog_strategy=exog_strategy,
             )
         elif "2.5" in repo_id:
             return _TimesFMV2_p5(
@@ -463,6 +585,7 @@ class TimesFM(Forecaster):
                 batch_size=batch_size,
                 alias=alias,
                 reuse_loaded_model=reuse_loaded_model,
+                exog_strategy=exog_strategy,
                 **kwargs,
             )
         elif "3.0" in repo_id:
@@ -472,6 +595,7 @@ class TimesFM(Forecaster):
                 batch_size=batch_size,
                 alias=alias,
                 reuse_loaded_model=reuse_loaded_model,
+                exog_strategy=exog_strategy,
                 **kwargs,
             )
         else:

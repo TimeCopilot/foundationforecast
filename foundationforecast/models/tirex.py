@@ -15,7 +15,7 @@ from tirex import load_model
 from tirex.base import PretrainedModel
 from tqdm import tqdm
 
-from ..core.forecaster import Forecaster, QuantileConverter
+from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
 
@@ -26,7 +26,7 @@ DEFAULT_QUANTILES_TIREX = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 _MEDIAN_QUANTILE_IDX = DEFAULT_QUANTILES_TIREX.index(0.5)
 
 
-class TiRex(Forecaster):
+class TiRex(ExogCapableForecaster):
     """
     TiRex is a family of zero-shot time series forecasting models based on
     xLSTM, supporting both point and quantile predictions. This class
@@ -198,7 +198,7 @@ class TiRex(Forecaster):
         )
         return fcsts_mean_np, fcsts_quantiles_np
 
-    def forecast(
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,

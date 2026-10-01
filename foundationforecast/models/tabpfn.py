@@ -24,7 +24,7 @@ from tabpfn_time_series.features.feature_generator_base import (
     FeatureGenerator,
 )
 
-from ..core.forecaster import Forecaster, QuantileConverter
+from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData
 
@@ -32,7 +32,7 @@ TABPFN_V2_MODEL = "tabpfn-v2-regressor-2noar4o2.ckpt"
 TABPFN_V3_MODEL = "tabpfn-v3-regressor-v3_20260506_timeseries.ckpt"
 
 
-class TabPFN(Forecaster):
+class TabPFN(ExogCapableForecaster):
     """
     TabPFN is a zero-shot time series forecasting model that frames univariate
     forecasting as a tabular regression problem using TabPFN. It supports both
@@ -192,7 +192,7 @@ class TabPFN(Forecaster):
             )
         return pd.DataFrame(fcst_df)
 
-    def forecast(
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,
