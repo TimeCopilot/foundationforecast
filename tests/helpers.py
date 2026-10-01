@@ -8,7 +8,7 @@ import pandas as pd
 from utilsforecast.data import generate_series as _generate_series
 from utilsforecast.processing import make_future_dataframe
 
-from foundationforecast.core.forecaster import Forecaster, QuantileConverter
+from foundationforecast.core.forecaster import ExogCapableForecaster, QuantileConverter
 from foundationforecast.core.quantiles import quantile_column_name
 
 
@@ -45,12 +45,14 @@ def generate_series_with_anomalies(
     return df
 
 
-class DummyModel(Forecaster):
+class DummyModel(ExogCapableForecaster):
     def __init__(self, alias: str = "dummy", reuse_loaded_model: bool = True):
         super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.alias = alias
 
-    def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
+    def _forecast_univariate(
+        self, df, h, freq=None, level=None, quantiles=None, panel=None
+    ):
         _ = panel
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
@@ -70,7 +72,7 @@ class DummyModel(Forecaster):
         return fcst
 
 
-class SeasonalNaiveModel(Forecaster):
+class SeasonalNaiveModel(ExogCapableForecaster):
     alias = "SeasonalNaive"
 
     def __init__(
@@ -81,7 +83,9 @@ class SeasonalNaiveModel(Forecaster):
         super().__init__(reuse_loaded_model=reuse_loaded_model)
         self.season_length = season_length
 
-    def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
+    def _forecast_univariate(
+        self, df, h, freq=None, level=None, quantiles=None, panel=None
+    ):
         _ = panel
         freq = self._maybe_infer_freq(df, freq)
         season_length = self._maybe_get_seasonality(freq)

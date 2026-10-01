@@ -3,7 +3,7 @@ import pytest
 
 from tests.helpers import DummyModel, generate_series
 from foundationforecast import FoundationForecast
-from foundationforecast.core.forecaster import Forecaster
+from foundationforecast.core.forecaster import ExogCapableForecaster
 from foundationforecast.core.quantiles import quantile_column_name
 from foundationforecast.models.moirai import Moirai
 
@@ -99,17 +99,21 @@ def test_foundation_forecast_forecast_with_quantiles(models):
 
 
 def test_foundation_forecast_fallback_model():
-    class FailingModel(Forecaster):
+    class FailingModel(ExogCapableForecaster):
         alias = "FailingModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
-            _ = panel
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
+            _ = df, h, freq, level, quantiles, panel
             raise RuntimeError("Intentional failure")
 
-    class FallbackModel(Forecaster):
+    class FallbackModel(ExogCapableForecaster):
         alias = "FallbackModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
             _ = panel
             n = len(df["unique_id"].unique()) * h
             return pd.DataFrame(
@@ -132,16 +136,22 @@ def test_foundation_forecast_fallback_model():
 
 
 def test_foundation_forecast_fallback_with_legacy_forecaster():
-    class LegacyFailingModel(Forecaster):
+    class LegacyFailingModel(ExogCapableForecaster):
         alias = "LegacyFailingModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None):
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
+            _ = df, h, freq, level, quantiles, panel
             raise RuntimeError("Intentional failure")
 
-    class LegacyFallbackModel(Forecaster):
+    class LegacyFallbackModel(ExogCapableForecaster):
         alias = "LegacyFallbackModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None):
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
+            _ = panel
             n = len(df["unique_id"].unique()) * h
             return pd.DataFrame(
                 {
@@ -162,11 +172,13 @@ def test_foundation_forecast_fallback_with_legacy_forecaster():
 
 
 def test_foundation_forecast_no_fallback_raises():
-    class FailingModel(Forecaster):
+    class FailingModel(ExogCapableForecaster):
         alias = "FailingModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
-            _ = panel
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
+            _ = df, h, freq, level, quantiles, panel
             raise RuntimeError("Intentional failure")
 
     df = generate_series(n_series=1, freq="D", min_length=10)
