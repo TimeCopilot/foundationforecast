@@ -14,7 +14,7 @@ from chronos import (
 )
 from tqdm import tqdm
 
-from ..core.covariates import ExogStrategyConfig
+from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import (
     DEFAULT_NATIVE_QUANTILE_RANGE,

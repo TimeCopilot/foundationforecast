@@ -2,14 +2,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from foundationforecast.core.covariates import (
+from foundationforecast.core.exog import (
     XReg,
     infer_futr_exog_columns,
+    prepare_futr_exog_context,
     resolve_horizon_exog_df,
     validate_exog_strategy_for_timegpt,
     validate_futr_exog_inputs,
 )
-from foundationforecast.core.xreg import adjust_point_forecast_with_xreg
+from foundationforecast.core.exog.xreg import adjust_point_forecast_with_xreg
 from foundationforecast.models.tafsut import Tafsut
 
 
@@ -56,8 +57,6 @@ def test_resolve_horizon_exog_df_alias():
 
 
 def test_futr_exog_list_without_x_df_raises():
-    from foundationforecast.core.futr_exog import prepare_futr_exog_context
-
     model = Tafsut()
     df = pd.DataFrame(
         {

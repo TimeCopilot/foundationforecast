@@ -13,7 +13,7 @@ from timesfm3 import ModelConfig, TimesFM3Evaluator
 from timesfm_v1.timesfm_base import DEFAULT_QUANTILES as DEFAULT_QUANTILES_TFM
 from tqdm import tqdm
 
-from ..core.covariates import ExogStrategyConfig
+from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import (
     ExogCapableForecaster,
     QuantileConverter,

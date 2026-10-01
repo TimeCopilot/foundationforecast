@@ -11,7 +11,7 @@ import torch
 from tqdm import tqdm
 from tsfm_public import PatchTSTFMForPrediction
 
-from ..core.covariates import ExogStrategyConfig
+from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
 from ..core.quantiles import (
     PATCHTST_FM_QUANTILE_RANGE,

@@ -24,7 +24,7 @@ from tabpfn_time_series.features.feature_generator_base import (
     FeatureGenerator,
 )
 
-from ..core.covariates import ExogStrategyConfig
+from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData

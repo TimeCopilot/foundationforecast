@@ -18,7 +18,7 @@ from .covariates import (
 from .xreg import merge_xreg_into_forecast_df
 
 if TYPE_CHECKING:
-    from .forecaster import Forecaster
+    from ..forecaster import Forecaster
 
 
 @dataclass(frozen=True)

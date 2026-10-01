@@ -7,7 +7,7 @@ from tafsut import TafsutModel
 from tafsut import forecast as tafsut_forecast
 from tqdm import tqdm
 
-from ..core.covariates import ExogStrategyConfig
+from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset

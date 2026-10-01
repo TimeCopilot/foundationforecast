@@ -1,4 +1,4 @@
-from .covariates import XReg
+from .exog import XReg
 from .forecaster import (
     ExogCapableForecaster,
     Forecaster,

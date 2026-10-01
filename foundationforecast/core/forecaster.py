@@ -26,7 +26,7 @@ from utilsforecast.processing import (
     vertical_concat,
 )
 
-from .covariates import ExogStrategyConfig, normalize_exog_strategy
+from .exog.covariates import ExogStrategyConfig, normalize_exog_strategy
 from .quantiles import (
     assert_unique_quantile_column_names,
     quantile_column_name,
@@ -313,7 +313,10 @@ class Forecaster:
         futr_exog_list: list[str] | None,
         univariate_forecast,
     ) -> pd.DataFrame:
-        from .futr_exog import dispatch_futr_exog_forecast, prepare_futr_exog_context
+        from .exog.futr_exog import (
+            dispatch_futr_exog_forecast,
+            prepare_futr_exog_context,
+        )
 
         ctx = prepare_futr_exog_context(
             self,
@@ -367,7 +370,7 @@ class Forecaster:
             freq=pd.tseries.frequencies.to_offset(freq),
             step_size=h if step_size is None else step_size,
         )
-        from .covariates import resolve_horizon_exog_df
+        from .exog.covariates import resolve_horizon_exog_df
 
         horizon_df = resolve_horizon_exog_df(X_df, futr_df)
         for _, (cutoffs, train, valid) in tqdm(enumerate(splits)):

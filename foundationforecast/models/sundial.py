@@ -11,7 +11,7 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM
 
-from ..core.covariates import ExogStrategyConfig
+from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
 from ..core.utils import PanelData, TimeSeriesDataset
 

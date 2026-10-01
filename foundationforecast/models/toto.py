@@ -12,7 +12,7 @@ from toto.model.toto import Toto as TotoModel
 from toto2 import Toto2Model
 from tqdm import tqdm
 
-from ..core.covariates import ExogStrategyConfig
+from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset

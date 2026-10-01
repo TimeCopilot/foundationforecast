@@ -12,7 +12,7 @@ from gluonts.torch.model.predictor import PyTorchPredictor
 from huggingface_hub import hf_hub_download
 from utilsforecast.processing import make_future_dataframe
 
-from .covariates import ExogStrategyConfig
+from .exog.covariates import ExogStrategyConfig
 from .forecaster import ExogCapableForecaster, QuantileConverter
 from .quantiles import assert_unique_quantile_column_names, quantile_column_name
 from .utils import PanelData, process_panel_from_df

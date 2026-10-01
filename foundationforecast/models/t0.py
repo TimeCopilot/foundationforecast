@@ -13,7 +13,7 @@ from huggingface_hub.constants import CONFIG_NAME
 from t0 import T0Forecaster
 from tqdm import tqdm
 
-from ..core.covariates import ExogStrategyConfig
+from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import (
     T0_ALPHA_QUANTILE_RANGE,

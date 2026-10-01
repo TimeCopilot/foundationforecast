@@ -5,7 +5,7 @@ from typing import Literal
 import pandas as pd
 from nixtla import NixtlaClient
 
-from ..core.covariates import ExogStrategyConfig
+from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster
 from ..core.utils import PanelData
 
