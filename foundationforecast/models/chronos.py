@@ -200,7 +200,10 @@ class Chronos(ExogCapableForecaster):
         future_df = horizon_df[["unique_id", "ds", *futr_exog_list]].rename(
             columns={"unique_id": "item_id", "ds": "timestamp"},
         )
-        quantile_levels = qc.quantiles if qc.quantiles is not None else [0.5]
+        if qc.quantiles is not None:
+            quantile_levels = sorted(set([*qc.quantiles, 0.5]))
+        else:
+            quantile_levels = [0.5]
         with self._get_model() as model:
             if not isinstance(model, Chronos2Pipeline):
                 return None
