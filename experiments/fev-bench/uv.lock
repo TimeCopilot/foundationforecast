@@ -940,7 +940,7 @@ wheels = [
 
 [[package]]
 dependencies = [
-  {marker = "python_full_version >= '3.12'", name = "wrapt"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "wrapt"},
 ]
 name = "deprecated"
 resolution-markers = [
@@ -1002,6 +1002,15 @@ source = {registry = "https://pypi.org/simple"}
 version = "1.0"
 wheels = [
   {hash = "sha256:42da4c2dea3a27f87ee45a7cee5072a636b97cb184bb07bf5d6412ba0ff7b965", size = 21392, upload-time = "2022-12-19T17:09:32.904Z", url = "https://files.pythonhosted.org/packages/71/bb/34cc02f13b438d550e4709216ee1df9da8e55e15b0cc87a2cb5dee19a729/einshape-1.0-py3-none-any.whl"},
+]
+
+[[package]]
+name = "execnet"
+sdist = {hash = "sha256:63d83bfdd9a23e35b9c6a3261412324f964c2ec8dcd8d3c6916ee9373e0befcd", size = 166622, upload-time = "2025-11-12T09:56:37.75Z", url = "https://files.pythonhosted.org/packages/bf/89/780e11f9588d9e7128a3f87788354c7946a9cbb1401ad38a48c4db9a4f07/execnet-2.1.2.tar.gz"}
+source = {registry = "https://pypi.org/simple"}
+version = "2.1.2"
+wheels = [
+  {hash = "sha256:67fba928dd5a544b783f6056f449e5e3931a5c378b128bc18501f7ea79e296ec", size = 40708, upload-time = "2025-11-12T09:56:36.333Z", url = "https://files.pythonhosted.org/packages/ab/84/02fc1827e8cdded4aa65baef11296a9bbe595c474f0d6d758af082d849fd/execnet-2.1.2-py3-none-any.whl"},
 ]
 
 [[package]]
@@ -1227,6 +1236,7 @@ version = "0.1.0"
 [package.dev-dependencies]
 dev = [
   {name = "pytest"},
+  {name = "pytest-xdist"},
 ]
 
 [package.metadata]
@@ -1241,7 +1251,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{name = "pytest", specifier = ">=8.0"}]
+dev = [
+  {name = "pytest", specifier = ">=8.0"},
+  {name = "pytest-xdist", specifier = ">=3.8.0"},
+]
 
 [[package]]
 name = "frozenlist"
@@ -1435,18 +1448,18 @@ wheels = [
 
 [[package]]
 dependencies = [
-  {extra = ["torch"], name = "transformers"},
+  {extra = ["torch"], marker = "python_full_version < '3.14'", name = "transformers"},
   {marker = "python_full_version < '3.12'", name = "deprecated", source = {registry = "https://pypi.org/simple"}, version = "1.3.1"},
   {marker = "python_full_version < '3.12'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.4.6"},
-  {marker = "python_full_version >= '3.12'", name = "deprecated", source = {registry = "https://pypi.org/simple"}, version = "3.0.0"},
-  {marker = "python_full_version >= '3.12'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
-  {name = "datasets"},
-  {name = "einops"},
-  {name = "filelock"},
-  {name = "pandas"},
-  {name = "scikit-learn"},
-  {name = "torch"},
-  {name = "urllib3"},
+  {marker = "python_full_version < '3.14'", name = "datasets"},
+  {marker = "python_full_version < '3.14'", name = "einops"},
+  {marker = "python_full_version < '3.14'", name = "filelock"},
+  {marker = "python_full_version < '3.14'", name = "pandas"},
+  {marker = "python_full_version < '3.14'", name = "scikit-learn"},
+  {marker = "python_full_version < '3.14'", name = "torch"},
+  {marker = "python_full_version < '3.14'", name = "urllib3"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "deprecated", source = {registry = "https://pypi.org/simple"}, version = "3.0.0"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
 ]
 name = "granite-tsfm"
 sdist = {hash = "sha256:2c86947f7b19bc42f1ed512782f840f6f0fb9530e239864e7f360f3d4b227892", size = 26287698, upload-time = "2026-10-02T11:52:45.895Z", url = "https://files.pythonhosted.org/packages/e8/22/16d623c7d847569b72617db567dca76a1fcf920673b1b7f2a819a806eaf9/granite_tsfm-0.3.10.tar.gz"}
@@ -1458,7 +1471,7 @@ wheels = [
 
 [[package]]
 dependencies = [
-  {name = "typing-extensions"},
+  {marker = "python_full_version < '3.14'", name = "typing-extensions"},
 ]
 name = "grpcio"
 sdist = {hash = "sha256:19aaf172fc2edbefccce3f6e92c5150975dbe56c45744e9e87cf72ebdf85bfbe", size = 13493876, upload-time = "2026-09-14T06:59:33.291Z", url = "https://files.pythonhosted.org/packages/3f/4f/4435c0aae54657258d9cfcba78598f3d9e5fe4c82ff18d78558567b90faf/grpcio-1.84.0.tar.gz"}
@@ -1642,9 +1655,9 @@ wheels = [
 [[package]]
 dependencies = [
   {marker = "python_full_version < '3.13'", name = "omegaconf", source = {registry = "https://pypi.org/simple"}, version = "2.3.0"},
-  {marker = "python_full_version >= '3.13'", name = "omegaconf", source = {registry = "https://pypi.org/simple"}, version = "2.3.1"},
-  {name = "antlr4-python3-runtime"},
-  {name = "packaging"},
+  {marker = "python_full_version < '3.14'", name = "antlr4-python3-runtime"},
+  {marker = "python_full_version < '3.14'", name = "packaging"},
+  {marker = "python_full_version == '3.13.*'", name = "omegaconf", source = {registry = "https://pypi.org/simple"}, version = "2.3.1"},
 ]
 name = "hydra-core"
 sdist = {hash = "sha256:d4ff629c7e23b64a9db5fe5b027cf7c55b633b737f03be51ef41b77ed016f75e", size = 3278662, upload-time = "2026-09-14T18:02:55.528Z", url = "https://files.pythonhosted.org/packages/5c/a9/fe2c936f36881e3197a8800f5bfba078d7846d54eb5d009b445eda1ee281/hydra_core-1.3.7.tar.gz"}
@@ -1754,11 +1767,11 @@ wheels = [
 
 [[package]]
 dependencies = [
-  {marker = "python_full_version >= '3.12'", name = "jaxlib", source = {registry = "https://pypi.org/simple"}, version = "0.11.2"},
-  {marker = "python_full_version >= '3.12'", name = "ml-dtypes"},
-  {marker = "python_full_version >= '3.12'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
-  {marker = "python_full_version >= '3.12'", name = "opt-einsum"},
-  {marker = "python_full_version >= '3.12'", name = "scipy", source = {registry = "https://pypi.org/simple"}, version = "1.18.1"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "jaxlib", source = {registry = "https://pypi.org/simple"}, version = "0.11.2"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "ml-dtypes"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "opt-einsum"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "scipy", source = {registry = "https://pypi.org/simple"}, version = "1.18.1"},
 ]
 name = "jax"
 resolution-markers = [
@@ -1811,9 +1824,9 @@ wheels = [
 
 [[package]]
 dependencies = [
-  {marker = "python_full_version >= '3.12'", name = "ml-dtypes"},
-  {marker = "python_full_version >= '3.12'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
-  {marker = "python_full_version >= '3.12'", name = "scipy", source = {registry = "https://pypi.org/simple"}, version = "1.18.1"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "ml-dtypes"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "scipy", source = {registry = "https://pypi.org/simple"}, version = "1.18.1"},
 ]
 name = "jaxlib"
 resolution-markers = [
@@ -2372,7 +2385,7 @@ wheels = [
 [[package]]
 dependencies = [
   {marker = "python_full_version < '3.12'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.4.6"},
-  {marker = "python_full_version >= '3.12'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
 ]
 name = "ml-dtypes"
 sdist = {hash = "sha256:5e60251d32ced5598972e4d5e06a2f044341f9291402551a3f6f0ec44f9299b0", size = 3032327, upload-time = "2026-08-13T14:14:40.215Z", url = "https://files.pythonhosted.org/packages/12/72/307d7c4bd0600601c7133fba5cb78af7db968152951c1cd473abb1cda782/ml_dtypes-0.6.0.tar.gz"}
@@ -3174,8 +3187,8 @@ wheels = [
 
 [[package]]
 dependencies = [
-  {marker = "python_full_version >= '3.13'", name = "antlr4-python3-runtime"},
-  {marker = "python_full_version >= '3.13'", name = "pyyaml"},
+  {marker = "python_full_version == '3.13.*'", name = "antlr4-python3-runtime"},
+  {marker = "python_full_version == '3.13.*'", name = "pyyaml"},
 ]
 name = "omegaconf"
 resolution-markers = [
@@ -4136,6 +4149,19 @@ wheels = [
 
 [[package]]
 dependencies = [
+  {name = "execnet"},
+  {name = "pytest"},
+]
+name = "pytest-xdist"
+sdist = {hash = "sha256:7e578125ec9bc6050861aa93f2d59f1d8d085595d6551c2c90b6f4fad8d3a9f1", size = 88069, upload-time = "2025-07-01T13:30:59.346Z", url = "https://files.pythonhosted.org/packages/78/b4/439b179d1ff526791eb921115fca8e44e596a13efeda518b9d845a619450/pytest_xdist-3.8.0.tar.gz"}
+source = {registry = "https://pypi.org/simple"}
+version = "3.8.0"
+wheels = [
+  {hash = "sha256:202ca578cfeb7370784a8c33d6d05bc6e13b4f25b5053c30a152269fd10f0b88", size = 46396, upload-time = "2025-07-01T13:30:56.632Z", url = "https://files.pythonhosted.org/packages/ca/31/d4e37e9e550c2b92a9cbc2e4d0b7420a27224968580b5a447f420847c975/pytest_xdist-3.8.0-py3-none-any.whl"},
+]
+
+[[package]]
+dependencies = [
   {name = "six"},
 ]
 name = "python-dateutil"
@@ -4987,16 +5013,16 @@ wheels = [
 [[package]]
 dependencies = [
   {marker = "python_full_version < '3.12'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.4.6"},
-  {marker = "python_full_version >= '3.12'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
-  {name = "absl-py"},
-  {name = "grpcio"},
-  {name = "markdown"},
-  {name = "packaging"},
-  {name = "pillow"},
-  {name = "protobuf"},
-  {name = "setuptools"},
-  {name = "tensorboard-data-server"},
-  {name = "werkzeug"},
+  {marker = "python_full_version < '3.14'", name = "absl-py"},
+  {marker = "python_full_version < '3.14'", name = "grpcio"},
+  {marker = "python_full_version < '3.14'", name = "markdown"},
+  {marker = "python_full_version < '3.14'", name = "packaging"},
+  {marker = "python_full_version < '3.14'", name = "pillow"},
+  {marker = "python_full_version < '3.14'", name = "protobuf"},
+  {marker = "python_full_version < '3.14'", name = "setuptools"},
+  {marker = "python_full_version < '3.14'", name = "tensorboard-data-server"},
+  {marker = "python_full_version < '3.14'", name = "werkzeug"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
 ]
 name = "tensorboard"
 source = {registry = "https://pypi.org/simple"}
@@ -5018,13 +5044,13 @@ wheels = [
 [[package]]
 dependencies = [
   {marker = "python_full_version < '3.12'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.4.6"},
-  {marker = "python_full_version >= '3.12'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
-  {name = "einops"},
-  {name = "huggingface-hub"},
-  {name = "jaxtyping"},
-  {name = "rotary-embedding-torch"},
-  {name = "safetensors"},
-  {name = "torch"},
+  {marker = "python_full_version < '3.14'", name = "einops"},
+  {marker = "python_full_version < '3.14'", name = "huggingface-hub"},
+  {marker = "python_full_version < '3.14'", name = "jaxtyping"},
+  {marker = "python_full_version < '3.14'", name = "rotary-embedding-torch"},
+  {marker = "python_full_version < '3.14'", name = "safetensors"},
+  {marker = "python_full_version < '3.14'", name = "torch"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
 ]
 name = "tfc-t0"
 sdist = {hash = "sha256:603e43a16da6210ca11fc26f957b1b43a7f2a60caa59e34643a015ec85335da7", size = 523589, upload-time = "2026-09-17T14:21:35.373Z", url = "https://files.pythonhosted.org/packages/cd/50/72f469a14395b80efa72c5a94a6a595673cf5fa73e2f92c5dbba082c6c63/tfc_t0-0.5.0.tar.gz"}
@@ -5195,22 +5221,22 @@ dependencies = [
   {marker = "python_full_version < '3.12'", name = "jax", source = {registry = "https://pypi.org/simple"}, version = "0.10.2"},
   {marker = "python_full_version < '3.12'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.4.6"},
   {marker = "python_full_version < '3.12'", name = "scipy", source = {registry = "https://pypi.org/simple"}, version = "1.17.1"},
-  {marker = "python_full_version >= '3.12'", name = "jax", source = {registry = "https://pypi.org/simple"}, version = "0.11.2"},
-  {marker = "python_full_version >= '3.12'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
-  {marker = "python_full_version >= '3.12'", name = "scipy", source = {registry = "https://pypi.org/simple"}, version = "1.18.1"},
-  {name = "datasets"},
-  {name = "einops"},
-  {name = "gluonts"},
-  {name = "huggingface-hub"},
-  {name = "hydra-core"},
-  {name = "jaxtyping"},
-  {name = "lightning"},
-  {name = "multiprocess"},
-  {name = "orjson"},
-  {name = "python-dotenv"},
-  {name = "safetensors"},
-  {name = "tensorboard"},
-  {name = "torch"},
+  {marker = "python_full_version < '3.14'", name = "datasets"},
+  {marker = "python_full_version < '3.14'", name = "einops"},
+  {marker = "python_full_version < '3.14'", name = "gluonts"},
+  {marker = "python_full_version < '3.14'", name = "huggingface-hub"},
+  {marker = "python_full_version < '3.14'", name = "hydra-core"},
+  {marker = "python_full_version < '3.14'", name = "jaxtyping"},
+  {marker = "python_full_version < '3.14'", name = "lightning"},
+  {marker = "python_full_version < '3.14'", name = "multiprocess"},
+  {marker = "python_full_version < '3.14'", name = "orjson"},
+  {marker = "python_full_version < '3.14'", name = "python-dotenv"},
+  {marker = "python_full_version < '3.14'", name = "safetensors"},
+  {marker = "python_full_version < '3.14'", name = "tensorboard"},
+  {marker = "python_full_version < '3.14'", name = "torch"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "jax", source = {registry = "https://pypi.org/simple"}, version = "0.11.2"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "numpy", source = {registry = "https://pypi.org/simple"}, version = "2.5.3"},
+  {marker = "python_full_version >= '3.12' and python_full_version < '3.14'", name = "scipy", source = {registry = "https://pypi.org/simple"}, version = "1.18.1"},
 ]
 name = "timecopilot-uni2ts"
 sdist = {hash = "sha256:352b08af9fcd001399f36a8c6c398c1f80ee84801c2b3d7bc36bf9634ecefffc", size = 102981, upload-time = "2026-08-10T17:59:11.628Z", url = "https://files.pythonhosted.org/packages/63/99/e2b3d93a82734103282a9f8f2460d881d6c34f764911de4f52047a59f5a5/timecopilot_uni2ts-0.1.3.tar.gz"}
@@ -5385,8 +5411,8 @@ wheels = [
 
 [package.optional-dependencies]
 torch = [
-  {name = "accelerate"},
-  {name = "torch"},
+  {marker = "python_full_version < '3.14'", name = "accelerate"},
+  {marker = "python_full_version < '3.14'", name = "torch"},
 ]
 
 [[package]]
@@ -5630,7 +5656,7 @@ wheels = [
 
 [[package]]
 dependencies = [
-  {name = "markupsafe"},
+  {marker = "python_full_version < '3.14'", name = "markupsafe"},
 ]
 name = "werkzeug"
 sdist = {hash = "sha256:55ca7c70a75689be937aa27f8ff4b018f06ff4838fc73045560bf0f5a1291060", size = 940188, upload-time = "2026-09-27T18:33:41.637Z", url = "https://files.pythonhosted.org/packages/a4/34/4dd12fc8bb7d61c91467ec3efe415ffa7d5456f799954b40c5bbaeae470e/werkzeug-3.1.9.tar.gz"}

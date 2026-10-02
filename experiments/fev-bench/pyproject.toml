@@ -4,6 +4,7 @@ requires = ["hatchling"]
 
 [dependency-groups]
 dev = [
+  "pytest-xdist>=3.8.0",
   "pytest>=8.0",
 ]
 

@@ -191,6 +191,6 @@ jobs:
         run: make sync-ci-results
 
       - name: Verify replication
-        run: uv run pytest tests/test_replication.py -n 0 -x
+        run: uv run --group dev pytest tests/test_replication.py -n 0 -x
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
