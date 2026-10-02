@@ -405,10 +405,10 @@ class _TimesFMV3(ExogCapableForecaster):
         uid: str,
         context: np.ndarray,
     ) -> np.ndarray:
-        hist = df.loc[df["unique_id"] == uid, futr_exog_list].to_numpy(dtype=np.float32)
-        futr = horizon_df.loc[horizon_df["unique_id"] == uid, futr_exog_list].to_numpy(
-            dtype=np.float32
-        )
+        hist_df = df.loc[df["unique_id"] == uid].sort_values("ds")
+        futr_df = horizon_df.loc[horizon_df["unique_id"] == uid].sort_values("ds")
+        hist = hist_df[futr_exog_list].to_numpy(dtype=np.float32)
+        futr = futr_df[futr_exog_list].to_numpy(dtype=np.float32)
         if len(hist) > len(context):
             hist = hist[-len(context) :]
         full = np.concatenate([hist, futr], axis=0)
