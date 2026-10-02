@@ -26,17 +26,20 @@ class PanelColumns:
             and self.target_col == CANONICAL_TARGET_COL
         )
 
-    def validate_present(self, df: pd.DataFrame) -> None:
-        missing = [
-            c
-            for c in (self.id_col, self.time_col, self.target_col)
-            if c not in df.columns
-        ]
+    def validate_id_time_present(self, df: pd.DataFrame) -> None:
+        missing = [c for c in (self.id_col, self.time_col) if c not in df.columns]
         if missing:
             raise ValueError(
                 f"Input df is missing required columns: {missing}. "
-                f"Expected id_col={self.id_col!r}, time_col={self.time_col!r}, "
-                f"target_col={self.target_col!r}."
+                f"Expected id_col={self.id_col!r}, time_col={self.time_col!r}."
+            )
+
+    def validate_present(self, df: pd.DataFrame) -> None:
+        self.validate_id_time_present(df)
+        if self.target_col not in df.columns:
+            raise ValueError(
+                f"Input df is missing required columns: [{self.target_col!r}]. "
+                f"Expected target_col={self.target_col!r}."
             )
 
     def _rename_map_to_canonical(self) -> dict[str, str]:
@@ -53,13 +56,31 @@ class PanelColumns:
     def _rename_map_from_canonical(self) -> dict[str, str]:
         return {v: k for k, v in self._rename_map_to_canonical().items()}
 
-    def to_canonical(self, df: pd.DataFrame | None) -> pd.DataFrame | None:
+    def to_canonical(
+        self,
+        df: pd.DataFrame | None,
+        *,
+        require_target: bool = True,
+    ) -> pd.DataFrame | None:
         if df is None:
             return None
         mapping = self._rename_map_to_canonical()
+        if not require_target:
+            mapping = {
+                k: v
+                for k, v in mapping.items()
+                if k in (self.id_col, self.time_col) and k in df.columns
+            }
         if not mapping:
+            if require_target:
+                self.validate_present(df)
+            else:
+                self.validate_id_time_present(df)
             return df
-        self.validate_present(df)
+        if require_target:
+            self.validate_present(df)
+        else:
+            self.validate_id_time_present(df)
         for canon in mapping.values():
             if canon in df.columns and canon not in mapping:
                 raise ValueError(
@@ -67,6 +88,9 @@ class PanelColumns:
                     f"{next(k for k, v in mapping.items() if v == canon)!r}."
                 )
         return df.rename(columns=mapping)
+
+    def to_canonical_horizon(self, df: pd.DataFrame | None) -> pd.DataFrame | None:
+        return self.to_canonical(df, require_target=False)
 
     def from_canonical(self, df: pd.DataFrame) -> pd.DataFrame:
         mapping = self._rename_map_from_canonical()
