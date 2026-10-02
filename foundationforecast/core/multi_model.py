@@ -32,6 +32,20 @@ def _with_panel_kwargs(
     return call_kwargs
 
 
+def _optional_exog_kwargs(kwargs: dict[str, object]) -> dict[str, object]:
+    """Omit exog keys unless the caller supplied horizon data or column names."""
+    exog_keys = ("X_df", "futr_df", "futr_exog_list")
+    if not any(kwargs.get(key) is not None for key in exog_keys):
+        return {k: v for k, v in kwargs.items() if k not in exog_keys}
+    filtered: dict[str, object] = {
+        k: v for k, v in kwargs.items() if k not in exog_keys
+    }
+    for key in exog_keys:
+        if kwargs.get(key) is not None:
+            filtered[key] = kwargs[key]
+    return filtered
+
+
 class MultiModelForecasterMixin:
     """Orchestrate multiple Forecaster instances through a single interface."""
 
@@ -94,15 +108,16 @@ class MultiModelForecasterMixin:
             if attr != "detect_anomalies":
                 known_kwargs["quantiles"] = quantiles
             fn = getattr(model, attr)
+            exog_kwargs = _optional_exog_kwargs(kwargs)
             call_kwargs = _with_panel_kwargs(fn, known_kwargs, panel)
             try:
-                res_df_model = fn(**call_kwargs, **kwargs)
+                res_df_model = fn(**call_kwargs, **exog_kwargs)
             except (ValueError, RuntimeError) as e:
                 if self.fallback_model is None:
                     raise e
                 fn = getattr(self.fallback_model, attr)
                 fallback_kwargs = _with_panel_kwargs(fn, known_kwargs, panel)
-                res_df_model = fn(**fallback_kwargs, **kwargs)
+                res_df_model = fn(**fallback_kwargs, **exog_kwargs)
                 res_df_model = res_df_model.rename(
                     columns={
                         col: (
