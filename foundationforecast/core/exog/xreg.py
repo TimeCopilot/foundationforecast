@@ -53,6 +53,16 @@ def adjust_point_forecast_with_xreg(
     return reg_hor + residual_baseline
 
 
+def _has_probabilistic_columns(fcst_df: pd.DataFrame, alias: str) -> bool:
+    meta = {"unique_id", "ds"}
+    for col in fcst_df.columns:
+        if col in meta or col == alias:
+            continue
+        if col.startswith(f"{alias}-"):
+            return True
+    return False
+
+
 def merge_xreg_into_forecast_df(
     fcst_df: pd.DataFrame,
     alias: str,
@@ -62,6 +72,11 @@ def merge_xreg_into_forecast_df(
     h: int,
     xreg: XReg,
 ) -> pd.DataFrame:
+    if _has_probabilistic_columns(fcst_df, alias):
+        raise ValueError(
+            "XReg linear fallback only supports point forecasts. "
+            "Use level=None and quantiles=None, or a model with native exog support."
+        )
     out = fcst_df.copy()
     baseline = out[alias].to_numpy(dtype=np.float64)
     adjusted_parts: list[np.ndarray] = []
