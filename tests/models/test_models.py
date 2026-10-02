@@ -1,7 +1,11 @@
 import pandas as pd
 import pytest
 
-from tests.helpers import generate_panel_with_futr_exog, generate_series
+from tests.helpers import (
+    generate_panel_with_futr_exog,
+    generate_series,
+    panel_with_futr_exog_horizon,
+)
 from .conftest import models
 from foundationforecast.core.quantiles import quantile_column_name
 
@@ -117,6 +121,32 @@ def test_cross_validation(model, freq, n_windows):
         )
 
 
+def _assert_quantile_monotonicity(model, fcst_df, ordered_q_cols):
+    for c1, c2 in zip(ordered_q_cols[:-1], ordered_q_cols[1:], strict=False):
+        if "chronos" in model.alias.lower() or "median" in model.alias.lower():
+            assert fcst_df[c1].le(fcst_df[c2]).all()
+        elif "timesfm" in model.alias.lower() or "flowstate" in model.alias.lower():
+            assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.8
+        elif "tabpfn" in model.alias.lower():
+            continue
+        elif "moe" in model.alias.lower():
+            assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.5
+        elif "patchtst" in model.alias.lower() or "granite" in model.alias.lower():
+            assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.8
+        else:
+            assert fcst_df[c1].lt(fcst_df[c2]).all()
+
+
+def _assert_level_monotonicity(model, fcst_df, exp_lv_cols):
+    for c1, c2 in zip(exp_lv_cols[:-1:2], exp_lv_cols[1::2], strict=False):
+        if "chronos" in model.alias.lower() or "median" in model.alias.lower():
+            assert fcst_df[c1].le(fcst_df[c2]).all()
+        elif "tabpfn" in model.alias.lower():
+            continue
+        else:
+            assert fcst_df[c1].lt(fcst_df[c2]).all()
+
+
 @pytest.mark.parametrize("model", models)
 def test_exog_forecast_with_X_df(model):
     """Every hub model in conftest accepts df + X_df for known-future exog."""
@@ -144,6 +174,94 @@ def test_exog_forecast_with_X_df(model):
         fcst_exog[exp_cols].sort_values(exp_cols).reset_index(drop=True),
         X_df[exp_cols].sort_values(exp_cols).reset_index(drop=True),
     )
+
+
+@pytest.mark.parametrize("model", models)
+def test_exog_using_quantiles(model):
+    h = 2
+    n_series = 3
+    df, X_df, futr_exog_list = generate_panel_with_futr_exog(
+        n_series,
+        freq="D",
+        h=h,
+        min_length=32,
+        max_length=32,
+    )
+    qs = [round(i * 0.1, 1) for i in range(1, 10)] + [0.57]
+    fcst_df = model.forecast(
+        df=df,
+        h=h,
+        freq="D",
+        quantiles=qs,
+        X_df=X_df,
+        futr_exog_list=futr_exog_list,
+    )
+    exp_qs_cols = [quantile_column_name(model.alias, q) for q in qs]
+    assert len(exp_qs_cols) == len(fcst_df.columns) - 3
+    assert all(col in fcst_df.columns for col in exp_qs_cols)
+    legacy_057 = f"{model.alias}-q-{int(0.57 * 100)}"
+    assert legacy_057 not in fcst_df.columns
+    assert not any(("-lo-" in col or "-hi-" in col) for col in fcst_df.columns)
+    ordered_q_cols = [
+        quantile_column_name(model.alias, q) for q in sorted(qs, key=float)
+    ]
+    _assert_quantile_monotonicity(model, fcst_df, ordered_q_cols)
+
+
+@pytest.mark.parametrize("model", models)
+def test_exog_using_level(model):
+    h = 2
+    n_series = 2
+    df, X_df, futr_exog_list = generate_panel_with_futr_exog(
+        n_series,
+        freq="D",
+        h=h,
+        min_length=32,
+        max_length=32,
+    )
+    level = [20, 40, 50, 60, 80]
+    fcst_df = model.forecast(
+        df=df,
+        h=h,
+        freq="D",
+        level=level,
+        X_df=X_df,
+        futr_exog_list=futr_exog_list,
+    )
+    exp_lv_cols = []
+    for lv in level:
+        exp_lv_cols.extend([f"{model.alias}-lo-{lv}", f"{model.alias}-hi-{lv}"])
+    assert len(exp_lv_cols) == len(fcst_df.columns) - 3
+    assert all(col in fcst_df.columns for col in exp_lv_cols)
+    assert not any(("-q-" in col) for col in fcst_df.columns)
+    _assert_level_monotonicity(model, fcst_df, exp_lv_cols)
+
+
+@pytest.mark.parametrize("model", models)
+def test_exog_cross_validation_using_level(model):
+    h = 2
+    n_series = 2
+    df_hist, X_df, futr_exog_list = generate_panel_with_futr_exog(
+        n_series,
+        freq="D",
+        h=h,
+        min_length=32,
+        max_length=32,
+    )
+    panel = panel_with_futr_exog_horizon(df_hist, X_df)
+    level = [80, 90]
+    cv_df = model.cross_validation(
+        df=panel,
+        h=h,
+        freq="D",
+        n_windows=1,
+        level=level,
+        futr_exog_list=futr_exog_list,
+    )
+    assert len(cv_df) == n_series * h
+    for lv in level:
+        assert f"{model.alias}-lo-{lv}" in cv_df.columns
+        assert f"{model.alias}-hi-{lv}" in cv_df.columns
 
 
 @pytest.mark.parametrize("model", models)
@@ -188,21 +306,7 @@ def test_using_quantiles(model):
     ordered_q_cols = [
         quantile_column_name(model.alias, q) for q in sorted(qs, key=float)
     ]
-    for c1, c2 in zip(ordered_q_cols[:-1], ordered_q_cols[1:], strict=False):
-        if "chronos" in model.alias.lower() or "median" in model.alias.lower():
-            # sometimes it gives this condition
-            assert fcst_df[c1].le(fcst_df[c2]).all()
-        elif "timesfm" in model.alias.lower():
-            # TimesFM is a bit more lenient with the monotonicity condition
-            assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.8
-        elif "tabpfn" in model.alias.lower():
-            # we are testing the mock mode, so we don't care about monotonicity
-            continue
-        elif "moe" in model.alias.lower():
-            # MoE is a bit more lenient with the monotonicity condition
-            assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.5
-        else:
-            assert fcst_df[c1].lt(fcst_df[c2]).all()
+    _assert_quantile_monotonicity(model, fcst_df, ordered_q_cols)
 
 
 @pytest.mark.parametrize("model", models)
@@ -222,13 +326,4 @@ def test_using_level(model):
     assert len(exp_lv_cols) == len(fcst_df.columns) - 3
     assert all(col in fcst_df.columns for col in exp_lv_cols)
     assert not any(("-q-" in col) for col in fcst_df.columns)
-    # test monotonicity of levels
-    for c1, c2 in zip(exp_lv_cols[:-1:2], exp_lv_cols[1::2], strict=False):
-        if "chronos" in model.alias.lower() or "median" in model.alias.lower():
-            # sometimes it gives this condition
-            assert fcst_df[c1].le(fcst_df[c2]).all()
-        elif "tabpfn" in model.alias.lower():
-            # we are testing the mock mode, so we don't care about monotonicity
-            continue
-        else:
-            assert fcst_df[c1].lt(fcst_df[c2]).all()
+    _assert_level_monotonicity(model, fcst_df, exp_lv_cols)

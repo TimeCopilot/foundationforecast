@@ -236,6 +236,8 @@ class Chronos(ExogCapableForecaster):
                     fcst_df[quantile_column_name(self.alias, q)] = pred[
                         q_key
                     ].to_numpy()
+        if qc.level_was_provided:
+            fcst_df = qc.maybe_convert_quantiles_to_level(fcst_df, models=[self.alias])
         return fcst_df
 
     def _model_cache_prefix(self) -> str | None:

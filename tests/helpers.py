@@ -58,6 +58,19 @@ def generate_panel_with_futr_exog(
     return df, X_df, futr_exog_list
 
 
+def panel_with_futr_exog_horizon(
+    df_hist: pd.DataFrame,
+    X_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """History plus horizon rows (exog + placeholder ``y``) for cross-validation."""
+    future = X_df.copy()
+    last_y = df_hist.groupby("unique_id", observed=True)["y"].last()
+    future["y"] = future["unique_id"].map(last_y)
+    return pd.concat([df_hist, future], ignore_index=True).sort_values(
+        ["unique_id", "ds"]
+    )
+
+
 def generate_series_with_anomalies(
     n_series: int = 2,
     freq: str = "D",

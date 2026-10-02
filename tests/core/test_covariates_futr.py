@@ -176,17 +176,16 @@ def test_tafsut_native_strategy_raises_with_x_df():
 
 
 def test_cross_validation_reads_horizon_exog_from_df():
-    from tests.helpers import generate_panel_with_futr_exog
+    from tests.helpers import (
+        generate_panel_with_futr_exog,
+        panel_with_futr_exog_horizon,
+    )
 
     h = 3
     df_hist, X_df, futr_exog_list = generate_panel_with_futr_exog(
         1, freq="D", h=h, min_length=32, max_length=32
     )
-    future = X_df.copy()
-    future["y"] = df_hist["y"].iloc[-1]
-    panel = pd.concat([df_hist, future], ignore_index=True).sort_values(
-        ["unique_id", "ds"]
-    )
+    panel = panel_with_futr_exog_horizon(df_hist, X_df)
     model = Tafsut()
     cv = model.cross_validation(
         df=panel, h=h, freq="D", n_windows=1, futr_exog_list=futr_exog_list
