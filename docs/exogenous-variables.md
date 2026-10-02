@@ -30,6 +30,32 @@ the point column and every `{alias}-lo-*`, `{alias}-hi-*`, or `{alias}-q-*` colu
 
 **TimeGPT:** use `"auto"` or `"native"` only (Nixtla API via `X_df`). `XReg(...)` is rejected.
 
+## Native vs XReg by checkpoint
+
+FoundationForecast decides native vs fallback from **`supports_native_futr_exog()`** on the
+forecaster instance (usually a function of **`repo_id`** or API model id). With
+`exog_strategy="auto"`, native runs when supported; otherwise **`XReg()`** (linear exog on
+top of the univariate FM forecast) is used.
+
+| Wrapper | `repo_id` / id pattern | Native futr exog | Notes |
+|---------|------------------------|------------------|-------|
+| **Chronos** | contains `chronos-2` (case-insensitive), e.g. `amazon/chronos-2` | Yes | T5 / Bolt / other Chronos checkpoints → **XReg** |
+| **TimesFM** | contains `3.0`, e.g. `google/timesfm-3.0-pytorch` | Yes | `1.0`, `2.0`, `2.5` PyTorch checkpoints → **XReg** |
+| **TimeGPT** | any Nixtla `model=` id (e.g. `timegpt-1`, `timegpt-2`) | Yes | Hosted API; **`XReg(...)` rejected** |
+| **T0** | `theforecastingcompany/t0-alpha`, `theforecastingcompany/t0-beta` | Yes | `future_covariates` in `tfc-t0` |
+| **Tafsut** | any | No | **XReg** only |
+| **Toto** | any | No | **XReg** only |
+| **TiRex** | any | No | **XReg** only |
+| **Moirai** | any | No | **XReg** only |
+| **FlowState** | any | No | **XReg** only |
+| **Sundial** | any | No | **XReg** only |
+| **PatchTST-FM** | any | No | **XReg** only |
+| **TabPFN** | any | No | **XReg** only |
+
+Local checkpoint paths follow the same rules as Hugging Face `repo_id` strings passed to the
+wrapper. For **`cross_validation()`**, pass exog in **`df`** through the holdout window; native
+vs XReg follows the same table per series checkpoint.
+
 ## Example
 
 ```python

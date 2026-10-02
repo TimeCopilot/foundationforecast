@@ -18,6 +18,7 @@ nav:
       - Quickstart: getting-started/quickstart.md
       - Installation: getting-started/installation.md
       - Model Hub: model-hub.md
+      - Exogenous variables: exogenous-variables.md
       - Forecasting Parameters: forecasting-parameters.md
       - Model Weight Cache: model-weight-cache.md
   - Examples:
