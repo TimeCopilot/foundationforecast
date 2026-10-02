@@ -1,4 +1,5 @@
 from .forecaster import (
+    ExogCapableForecaster,
     Forecaster,
     QuantileConverter,
     _DataProcessor,
@@ -22,6 +23,7 @@ from .utils import (
 )
 
 __all__ = [
+    "ExogCapableForecaster",
     "Forecaster",
     "FIXED_KNOT_QUANTILES_NOTE",
     "GluonTSForecaster",

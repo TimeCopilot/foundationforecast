@@ -15,7 +15,8 @@ from tirex import load_model
 from tirex.base import PretrainedModel
 from tqdm import tqdm
 
-from ..core.forecaster import Forecaster, QuantileConverter
+from ..core.exog.covariates import ExogStrategyConfig
+from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
 
@@ -26,7 +27,7 @@ DEFAULT_QUANTILES_TIREX = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 _MEDIAN_QUANTILE_IDX = DEFAULT_QUANTILES_TIREX.index(0.5)
 
 
-class TiRex(Forecaster):
+class TiRex(ExogCapableForecaster):
     """
     TiRex is a family of zero-shot time series forecasting models based on
     xLSTM, supporting both point and quantile predictions. This class
@@ -42,6 +43,7 @@ class TiRex(Forecaster):
         batch_size: int = 16,
         alias: str = "TiRex",
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         """
         Args:
@@ -81,7 +83,10 @@ class TiRex(Forecaster):
             - TiRex 2.0 natively supports CPU, CUDA, and MPS devices.
             - The model is only available for Python >= 3.11.
         """
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.batch_size = batch_size
         self.alias = alias
@@ -167,23 +172,78 @@ class TiRex(Forecaster):
 
         return fcsts_mean_np, fcsts_quantiles_np
 
+    def supports_native_futr_exog(self) -> bool:
+        return self._is_tirex2()
+
+    def _build_v2_timeseries(
+        self,
+        dataset: TimeSeriesDataset,
+        df: pd.DataFrame | None = None,
+        horizon_df: pd.DataFrame | None = None,
+        futr_exog_list: list[str] | None = None,
+        h: int | None = None,
+    ) -> list:
+        from tirex2 import TimeseriesType
+
+        timeseries: list[TimeseriesType] = []
+        for idx, ts in enumerate(dataset.data):
+            target = ts.float().unsqueeze(0)
+            past_covariates = None
+            future_covariates = None
+            if (
+                futr_exog_list
+                and df is not None
+                and horizon_df is not None
+                and h is not None
+            ):
+                uid = dataset.uids[idx]
+                context_len = int(ts.shape[0])
+                hist = df.loc[df["unique_id"] == uid, futr_exog_list].to_numpy(
+                    dtype=np.float32
+                )
+                if hist.shape[0] > context_len:
+                    hist = hist[-context_len:]
+                if hist.shape[0] != context_len:
+                    raise ValueError(
+                        f"History length mismatch for unique_id={uid!r}: "
+                        f"expected {context_len}, got {hist.shape[0]}."
+                    )
+                hor = horizon_df.loc[
+                    horizon_df["unique_id"] == uid, futr_exog_list
+                ].to_numpy(dtype=np.float32)
+                if hor.shape[0] != h:
+                    raise ValueError(
+                        f"Horizon exog length mismatch for unique_id={uid!r}: "
+                        f"expected h={h}, got {hor.shape[0]}."
+                    )
+                future_cov = np.stack(
+                    [
+                        np.concatenate([hist[:, j], hor[:, j]], axis=0)
+                        for j in range(len(futr_exog_list))
+                    ],
+                    axis=0,
+                )
+                future_covariates = torch.from_numpy(future_cov)
+            timeseries.append(
+                TimeseriesType(
+                    target=target,
+                    past_covariates=past_covariates,
+                    future_covariates=future_covariates,
+                )
+            )
+        return timeseries
+
     def _forecast_v2(
         self,
         model: ForecastModel,
         dataset: TimeSeriesDataset,
         h: int,
         quantiles: list[float] | None,
+        *,
+        timeseries: list | None = None,
     ) -> tuple[np.ndarray, np.ndarray | None]:
-        from tirex2 import TimeseriesType
-
-        timeseries = [
-            TimeseriesType(
-                target=ts.float().unsqueeze(0),
-                past_covariates=None,
-                future_covariates=None,
-            )
-            for ts in dataset.data
-        ]
+        if timeseries is None:
+            timeseries = self._build_v2_timeseries(dataset)
         forecasts = model.forecast(
             timeseries=timeseries,
             prediction_length=h,
@@ -198,7 +258,62 @@ class TiRex(Forecaster):
         )
         return fcsts_mean_np, fcsts_quantiles_np
 
-    def forecast(
+    def _forecast_native_futr_exog(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None,
+        level: list[int | float] | None,
+        quantiles: list[float] | None,
+        panel: PanelData | None,
+        horizon_df: pd.DataFrame,
+        futr_exog_list: list[str],
+    ) -> pd.DataFrame | None:
+        if not self._is_tirex2():
+            return None
+        freq = self._maybe_infer_freq(df, freq)
+        qc = QuantileConverter(level=level, quantiles=quantiles)
+        dataset = self._make_timeseries_dataset(
+            df,
+            batch_size=self.batch_size,
+            panel=panel,
+        )
+        fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
+        timeseries = self._build_v2_timeseries(
+            dataset,
+            df=df,
+            horizon_df=horizon_df,
+            futr_exog_list=futr_exog_list,
+            h=h,
+        )
+        with self._get_model_v2() as model:
+            fcsts_mean_np, fcsts_quantiles_np = self._forecast_v2(
+                model,
+                dataset,
+                h,
+                quantiles=DEFAULT_QUANTILES_TIREX if qc.quantiles is not None else None,
+                timeseries=timeseries,
+            )
+        fcst_df[self.alias] = fcsts_mean_np.reshape(-1, 1)
+        if qc.quantiles is not None and fcsts_quantiles_np is not None:
+            fcsts_quantiles_np = resolve_quantile_values(
+                DEFAULT_QUANTILES_TIREX,
+                fcsts_quantiles_np,
+                qc.quantiles,
+            )
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                fcsts_quantiles_np,
+            )
+            fcst_df = qc.maybe_convert_quantiles_to_level(
+                fcst_df,
+                models=[self.alias],
+            )
+        return fcst_df
+
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,
@@ -267,14 +382,22 @@ class TiRex(Forecaster):
         )
 
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
-        forecast_fn = self._forecast_v2 if self._is_tirex2() else self._forecast_v1
+        quantiles_arg = DEFAULT_QUANTILES_TIREX if qc.quantiles is not None else None
         with self._get_model() as model:
-            fcsts_mean_np, fcsts_quantiles_np = forecast_fn(
-                model,
-                dataset,
-                h,
-                quantiles=DEFAULT_QUANTILES_TIREX if qc.quantiles is not None else None,
-            )
+            if self._is_tirex2():
+                fcsts_mean_np, fcsts_quantiles_np = self._forecast_v2(
+                    model,
+                    dataset,
+                    h,
+                    quantiles=quantiles_arg,
+                )
+            else:
+                fcsts_mean_np, fcsts_quantiles_np = self._forecast_v1(
+                    model,
+                    dataset,
+                    h,
+                    quantiles=quantiles_arg,
+                )
         fcst_df[self.alias] = fcsts_mean_np.reshape(-1, 1)
         if qc.quantiles is not None and fcsts_quantiles_np is not None:
             fcsts_quantiles_np = resolve_quantile_values(

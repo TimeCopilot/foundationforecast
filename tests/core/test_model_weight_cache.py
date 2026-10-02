@@ -237,12 +237,15 @@ def test_foundation_forecast_clean_cache_calls_clear_model_cache(mocker):
 def test_foundation_forecast_clean_cache_includes_fallback(mocker):
     from tests.helpers import generate_series
     from foundationforecast import FoundationForecast
-    from foundationforecast.core.forecaster import Forecaster
+    from foundationforecast.core.forecaster import ExogCapableForecaster
 
-    class FailingModel(Forecaster):
+    class FailingModel(ExogCapableForecaster):
         alias = "FailingModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None):
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
+            _ = df, h, freq, level, quantiles, panel
             raise RuntimeError("Intentional failure")
 
     fallback = Chronos(repo_id="amazon/chronos-t5-tiny", alias="Fallback")

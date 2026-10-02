@@ -26,6 +26,11 @@ from utilsforecast.processing import (
     vertical_concat,
 )
 
+from .exog.covariates import (
+    ExogStrategyConfig,
+    normalize_exog_strategy,
+    sort_exog_panel,
+)
 from .quantiles import (
     assert_unique_quantile_column_names,
     quantile_column_name,
@@ -78,7 +83,12 @@ class Forecaster:
     alias: str
     reuse_loaded_model: bool = True
 
-    def __init__(self, *, reuse_loaded_model: bool = True) -> None:
+    def __init__(
+        self,
+        *,
+        reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
+    ) -> None:
         """Initialize forecaster options.
 
         Args:
@@ -86,8 +96,15 @@ class Forecaster:
                 weights in the process-wide LRU cache across ``forecast()``
                 calls. Set to ``False`` to load and release weights on every
                 call. See the model weight cache docs for details.
+            exog_strategy: How to use known-future exogenous variables (exog /
+                covariates) when ``X_df`` is passed to ``forecast()``. ``"auto"``
+                (default) uses native exog when the checkpoint supports it; raises
+                if ``X_df`` is provided and native exog is unavailable. ``False``
+                ignores ``X_df`` / ``futr_exog_list`` and runs a univariate
+                forecast (including in cross-validation).
         """
         self.reuse_loaded_model = reuse_loaded_model
+        self.exog_strategy = normalize_exog_strategy(exog_strategy)
 
     def _model_cache_prefix(self) -> str | None:
         repo_id = getattr(self, "repo_id", None)
@@ -263,8 +280,71 @@ class Forecaster:
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
         panel: PanelData | None = None,
+        X_df: pd.DataFrame | None = None,
+        *,
+        futr_df: pd.DataFrame | None = None,
+        futr_exog_list: list[str] | None = None,
     ) -> pd.DataFrame:
         raise NotImplementedError("This method must be implemented in a subclass.")
+
+    def supports_native_futr_exog(self) -> bool:
+        """Whether this forecaster can use native known-future exog APIs."""
+        return False
+
+    def _forecast_native_futr_exog(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None,
+        level: list[int | float] | None,
+        quantiles: list[float] | None,
+        panel: PanelData | None,
+        horizon_df: pd.DataFrame,
+        futr_exog_list: list[str],
+    ) -> pd.DataFrame | None:
+        """Native exog forecast; override in subclasses that support it."""
+        return None
+
+    def _forecast_with_exog(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None,
+        level: list[int | float] | None,
+        quantiles: list[float] | None,
+        panel: PanelData | None,
+        X_df: pd.DataFrame | None,
+        futr_df: pd.DataFrame | None,
+        futr_exog_list: list[str] | None,
+        univariate_forecast,
+    ) -> pd.DataFrame:
+        from .exog.futr_exog import (
+            dispatch_futr_exog_forecast,
+            prepare_futr_exog_context,
+        )
+
+        ctx = prepare_futr_exog_context(
+            self,
+            df,
+            h,
+            X_df=X_df,
+            futr_df=futr_df,
+            futr_exog_list=futr_exog_list,
+        )
+        if ctx is None:
+            return univariate_forecast()
+        df = sort_exog_panel(df)
+        return dispatch_futr_exog_forecast(
+            self,
+            ctx,
+            df,
+            h,
+            freq,
+            level,
+            quantiles,
+            panel,
+            univariate_forecast,
+        )
 
     def cross_validation(
         self,
@@ -275,6 +355,8 @@ class Forecaster:
         step_size: int | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
+        *,
+        futr_exog_list: list[str] | None = None,
     ) -> pd.DataFrame:
         self.validate_input(df, h)
         freq = self._maybe_infer_freq(df, freq)
@@ -292,18 +374,26 @@ class Forecaster:
             freq=pd.tseries.frequencies.to_offset(freq),
             step_size=h if step_size is None else step_size,
         )
+        from .exog.covariates import (
+            exog_strategy_disabled,
+            resolve_exog_columns_from_df,
+        )
+
+        exog_cols: list[str] = []
+        if not exog_strategy_disabled(self.exog_strategy):
+            exog_cols = resolve_exog_columns_from_df(df, futr_exog_list)
         for _, (cutoffs, train, valid) in tqdm(enumerate(splits)):
-            if len(valid.columns) > 3:
-                raise NotImplementedError(
-                    "Cross validation with exogenous variables is not yet supported."
-                )
-            y_pred = self.forecast(
-                df=train,
-                h=h,
-                freq=freq,
-                level=level,
-                quantiles=quantiles,
-            )
+            forecast_kwargs: dict = {
+                "df": train,
+                "h": h,
+                "freq": freq,
+                "level": level,
+                "quantiles": quantiles,
+            }
+            if exog_cols:
+                forecast_kwargs["X_df"] = valid[["unique_id", "ds", *exog_cols]]
+                forecast_kwargs["futr_exog_list"] = exog_cols
+            y_pred = self.forecast(**forecast_kwargs)
             y_pred = join(y_pred, cutoffs, on="unique_id", how="left")
             result = join(
                 valid[["unique_id", "ds", "y"]],
@@ -391,6 +481,55 @@ class Forecaster:
         ]
         result = cv_results[output_cols].copy()
         return drop_index_if_pandas(result)
+
+
+class ExogCapableForecaster(Forecaster):
+    """Forecaster with optional known-future exogenous variables via ``X_df``."""
+
+    def forecast(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None = None,
+        level: list[int | float] | None = None,
+        quantiles: list[float] | None = None,
+        panel: PanelData | None = None,
+        X_df: pd.DataFrame | None = None,
+        *,
+        futr_df: pd.DataFrame | None = None,
+        futr_exog_list: list[str] | None = None,
+    ) -> pd.DataFrame:
+        self.validate_input(df, h)
+        return self._forecast_with_exog(
+            df,
+            h,
+            freq,
+            level,
+            quantiles,
+            panel,
+            X_df,
+            futr_df,
+            futr_exog_list,
+            lambda: self._forecast_univariate(
+                df,
+                h,
+                freq,
+                level,
+                quantiles,
+                panel,
+            ),
+        )
+
+    def _forecast_univariate(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None,
+        level: list[int | float] | None,
+        quantiles: list[float] | None,
+        panel: PanelData | None,
+    ) -> pd.DataFrame:
+        raise NotImplementedError
 
 
 class QuantileConverter:
