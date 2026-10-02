@@ -1,7 +1,10 @@
 import pandas as pd
 import pytest
 
-from foundationforecast.core.panel_columns import PanelColumns
+from foundationforecast.core.panel_columns import (
+    PanelColumns,
+    canonicalize_horizon_exog_frames,
+)
 from foundationforecast.models.tafsut import Tafsut
 
 
@@ -45,6 +48,41 @@ def test_validate_missing_columns():
             time_col="timestamp",
             target_col="target",
         )
+
+
+def test_horizon_frame_without_target_column():
+    cols = PanelColumns(id_col="series_id", time_col="timestamp", target_col="target")
+    X_df = pd.DataFrame(
+        {
+            "series_id": ["A"],
+            "timestamp": [pd.Timestamp("2024-01-05")],
+            "x1": [1.0],
+        }
+    )
+    out = cols.to_canonical_horizon(X_df)
+    assert out is not None
+    assert list(out.columns) == ["unique_id", "ds", "x1"]
+
+
+def test_x_df_futr_df_alias_same_object():
+    cols = PanelColumns(id_col="series_id", time_col="timestamp", target_col="target")
+    frame = pd.DataFrame(
+        {
+            "series_id": ["A"],
+            "timestamp": [pd.Timestamp("2024-01-05")],
+            "x1": [1.0],
+        }
+    )
+    x, f = canonicalize_horizon_exog_frames(cols, frame, frame)
+    assert x is f
+
+
+def test_tafsut_constructor_panel_column_defaults():
+    model = Tafsut(id_col="series_id", time_col="timestamp", target_col="target")
+    assert model.id_col == "series_id"
+    df = _custom_panel()
+    fcst = model.forecast(df=df, h=2, freq="D")
+    assert "series_id" in fcst.columns
 
 
 def test_panel_columns_rename_collision():
