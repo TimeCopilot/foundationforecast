@@ -5,12 +5,16 @@ import pytest
 from foundationforecast.core.exog import (
     XReg,
     infer_futr_exog_columns,
+    normalize_exog_strategy,
     prepare_futr_exog_context,
     resolve_horizon_exog_df,
     validate_exog_strategy_for_timegpt,
     validate_futr_exog_inputs,
 )
-from foundationforecast.core.exog.xreg import adjust_point_forecast_with_xreg
+from foundationforecast.core.exog.xreg import (
+    adjust_point_forecast_with_xreg,
+    merge_xreg_into_forecast_df,
+)
 from foundationforecast.models.tafsut import Tafsut
 
 
@@ -75,6 +79,40 @@ def test_futr_exog_list_without_x_df_raises():
 def test_validate_futr_exog_inputs():
     df, X_df = _panel()
     validate_futr_exog_inputs(df, 3, X_df, ["x1"])
+
+
+def test_normalize_exog_strategy_rejects_typos():
+    with pytest.raises(ValueError, match="Invalid exog_strategy"):
+        normalize_exog_strategy("natvie")  # type: ignore[arg-type]
+
+
+def test_validate_missing_series_in_x_df():
+    df, X_df = _panel()
+    X_df = X_df.copy()
+    X_df["unique_id"] = "B"
+    with pytest.raises(ValueError, match="not present in df"):
+        validate_futr_exog_inputs(df, 3, X_df, ["x1"])
+
+
+def test_validate_duplicate_horizon_keys():
+    df, X_df = _panel()
+    X_df = pd.concat([X_df, X_df.iloc[[0]]], ignore_index=True)
+    with pytest.raises(ValueError, match="duplicate"):
+        validate_futr_exog_inputs(df, 3, X_df, ["x1"])
+
+
+def test_xreg_rejects_probabilistic_output():
+    df, X_df = _panel()
+    fcst = pd.DataFrame(
+        {
+            "unique_id": X_df["unique_id"],
+            "ds": X_df["ds"],
+            "Tafsut": [1.0, 2.0, 3.0],
+            "Tafsut-lo-80": [0.5, 1.5, 2.5],
+        }
+    )
+    with pytest.raises(ValueError, match="point forecasts"):
+        merge_xreg_into_forecast_df(fcst, "Tafsut", df, X_df, ["x1"], h=3, xreg=XReg())
 
 
 def test_validate_wrong_h_per_series():
