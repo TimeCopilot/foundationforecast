@@ -1,4 +1,5 @@
 # model_key = repo_id with "/" -> "--"
+# Native futr exog + fev-bench leaderboard CSV for replication.
 models:
   amazon--chronos-2:
     class: foundationforecast.models.chronos.Chronos
@@ -13,3 +14,20 @@ models:
     kwargs:
       repo_id: google/timesfm-3.0-pytorch
       alias: TimesFM-3
+      batch_size: 64
+
+  theforecastingcompany--t0-beta:
+    class: foundationforecast.models.t0.T0
+    reference_csv: t0-beta.csv
+    kwargs:
+      repo_id: theforecastingcompany/t0-beta
+      alias: t0-beta
+      batch_size: 16
+
+  NX-AI--TiRex-2:
+    class: foundationforecast.models.tirex.TiRex
+    reference_csv: tirex-2.csv
+    kwargs:
+      repo_id: NX-AI/TiRex-2
+      alias: TiRex-2
+      batch_size: 64

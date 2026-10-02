@@ -37,7 +37,14 @@ uv run pytest tests/test_replication.py -n 0 -x
 
 ## Models and leaderboard replication
 
-`configs/models.yaml` includes **Chronos-2** and **TimesFM-3** (`google/timesfm-3.0-pytorch`), matching fev-bench results `chronos-2.csv` and `timesfm-3.csv`. CI runs **Chronos-2 only** on `epf_de` and `entsoe_1H` to limit Modal cost; add TimesFM jobs to `ci_subset.yaml` when you want the same checks for TimesFM-3.
+`configs/models.yaml` lists every **native futr exog** wrapper that has a fev-bench results CSV: **Chronos-2**, **TimesFM-3**, **T0-beta**, **TiRex-2** (not TimeGPT — no official fev-bench row file).
+
+Modal CI runs **each** of those models on two known-only tasks:
+
+- **`epf_pjm`** — 1 series, h=24  
+- **`entsoe_1H`** — 6 series, h=168  
+
+Replication compares `test_error` to the matching row in each model’s leaderboard CSV.
 
 ## Full covariate grid (13 tasks × models in `configs/models.yaml`)
 
