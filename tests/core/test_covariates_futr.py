@@ -86,6 +86,23 @@ def test_normalize_exog_strategy_rejects_typos():
         normalize_exog_strategy("natvie")  # type: ignore[arg-type]
 
 
+def test_normalize_exog_strategy_rejects_invalid_types():
+    with pytest.raises(ValueError, match="Invalid exog_strategy type"):
+        normalize_exog_strategy(object())  # type: ignore[arg-type]
+
+
+def test_forecast_with_reversed_x_df_row_order():
+    df, X_df = _panel()
+    X_df_rev = X_df.iloc[::-1].reset_index(drop=True)
+    model = Tafsut()
+    expected = model.forecast(df=df, h=3, freq="D", X_df=X_df)
+    actual = model.forecast(df=df, h=3, freq="D", X_df=X_df_rev)
+    pd.testing.assert_frame_equal(
+        expected.sort_values(["unique_id", "ds"]).reset_index(drop=True),
+        actual.sort_values(["unique_id", "ds"]).reset_index(drop=True),
+    )
+
+
 def test_validate_missing_series_in_x_df():
     df, X_df = _panel()
     X_df = X_df.copy()

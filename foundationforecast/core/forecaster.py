@@ -26,7 +26,11 @@ from utilsforecast.processing import (
     vertical_concat,
 )
 
-from .exog.covariates import ExogStrategyConfig, normalize_exog_strategy
+from .exog.covariates import (
+    ExogStrategyConfig,
+    normalize_exog_strategy,
+    sort_exog_panel,
+)
 from .quantiles import (
     assert_unique_quantile_column_names,
     quantile_column_name,
@@ -328,6 +332,7 @@ class Forecaster:
         )
         if ctx is None:
             return univariate_forecast()
+        df = sort_exog_panel(df)
         return dispatch_futr_exog_forecast(
             self,
             ctx,
@@ -372,18 +377,17 @@ class Forecaster:
 
         exog_cols = resolve_exog_columns_from_df(df, futr_exog_list)
         for _, (cutoffs, train, valid) in tqdm(enumerate(splits)):
-            window_X: pd.DataFrame | None = None
+            forecast_kwargs: dict = {
+                "df": train,
+                "h": h,
+                "freq": freq,
+                "level": level,
+                "quantiles": quantiles,
+            }
             if exog_cols:
-                window_X = valid[["unique_id", "ds", *exog_cols]]
-            y_pred = self.forecast(
-                df=train,
-                h=h,
-                freq=freq,
-                level=level,
-                quantiles=quantiles,
-                X_df=window_X,
-                futr_exog_list=exog_cols or None,
-            )
+                forecast_kwargs["X_df"] = valid[["unique_id", "ds", *exog_cols]]
+                forecast_kwargs["futr_exog_list"] = exog_cols
+            y_pred = self.forecast(**forecast_kwargs)
             y_pred = join(y_pred, cutoffs, on="unique_id", how="left")
             result = join(
                 valid[["unique_id", "ds", "y"]],

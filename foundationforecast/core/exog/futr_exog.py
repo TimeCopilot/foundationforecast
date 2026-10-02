@@ -12,6 +12,7 @@ from .covariates import (
     normalize_exog_strategy,
     resolve_futr_exog_list,
     resolve_horizon_exog_df,
+    sort_exog_panel,
     validate_exog_strategy_for_timegpt,
     validate_futr_exog_inputs,
 )
@@ -46,6 +47,7 @@ def prepare_futr_exog_context(
 
     cols = resolve_futr_exog_list(horizon_df, futr_exog_list)
     validate_futr_exog_inputs(df, h, horizon_df, cols)
+    horizon_df = sort_exog_panel(horizon_df)
 
     strategy = normalize_exog_strategy(getattr(forecaster, "exog_strategy", "auto"))
     if type(forecaster).__name__ == "TimeGPT":

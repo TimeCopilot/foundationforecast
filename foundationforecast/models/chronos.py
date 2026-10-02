@@ -196,6 +196,7 @@ class Chronos(ExogCapableForecaster):
             return None
         freq = self._maybe_infer_freq(df, freq)
         qc = QuantileConverter(level=level, quantiles=quantiles)
+        # ``df`` and ``horizon_df`` are sorted in ``prepare_futr_exog_context``.
         context_df = self._to_chronos2_df(df, futr_exog_list)
         future_df = horizon_df[["unique_id", "ds", *futr_exog_list]].rename(
             columns={"unique_id": "item_id", "ds": "timestamp"},

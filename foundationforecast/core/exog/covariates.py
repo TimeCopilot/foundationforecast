@@ -34,15 +34,26 @@ def normalize_exog_strategy(
 ) -> ExogStrategyName | XReg:
     if exog_strategy is None:
         return "auto"
-    if (
-        isinstance(exog_strategy, str)
-        and exog_strategy not in _VALID_EXOG_STRATEGY_NAMES
-    ):
+    if isinstance(exog_strategy, XReg):
+        return exog_strategy
+    if not isinstance(exog_strategy, str):
+        raise ValueError(
+            f"Invalid exog_strategy type {type(exog_strategy)!r}. "
+            f"Use one of {sorted(_VALID_EXOG_STRATEGY_NAMES)} or XReg(...)."
+        )
+    if exog_strategy not in _VALID_EXOG_STRATEGY_NAMES:
         raise ValueError(
             f"Invalid exog_strategy {exog_strategy!r}. "
             f"Use one of {sorted(_VALID_EXOG_STRATEGY_NAMES)} or XReg(...)."
         )
     return exog_strategy
+
+
+def sort_exog_panel(df: pd.DataFrame) -> pd.DataFrame:
+    """Sort panel rows once for exog paths (``unique_id``, then ``ds``)."""
+    if df.empty:
+        return df
+    return df.sort_values([ID_COL, TIME_COL], kind="mergesort").reset_index(drop=True)
 
 
 def resolve_horizon_exog_df(
