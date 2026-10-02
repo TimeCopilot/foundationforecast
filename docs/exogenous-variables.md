@@ -35,7 +35,8 @@ train = pd.read_parquet(
 test = pd.read_parquet(
     "https://timecopilot.s3.amazonaws.com/public/data/electricity_price/test.parquet"
 )
-exog = ["Ampirion Load Forecast", "PV+Wind Forecast"]
+# Panel of fev-bench EPF markets (BE, DE, FR, NP, PJM); covariates unified as ex_1, ex_2
+exog = ["ex_1", "ex_2"]
 X_df = test[["unique_id", "ds", *exog]]
 
 model = Tafsut(exog_strategy="auto")
@@ -43,3 +44,11 @@ fcst = model.forecast(df=train, h=24, freq="h", X_df=X_df)
 ```
 
 See `docs/examples/exogenous-variables.ipynb` for more models.
+
+To rebuild the S3 files from fev-bench (`epf_be`, `epf_de`, `epf_fr`, `epf_np`, `epf_pjm`):
+
+```bash
+python scripts/build_electricity_price_panel.py
+aws s3 cp data/electricity_price/train.parquet s3://timecopilot/public/data/electricity_price/train.parquet
+aws s3 cp data/electricity_price/test.parquet s3://timecopilot/public/data/electricity_price/test.parquet
+```

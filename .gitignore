@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Generated S3 upload artifacts (source: scripts/build_electricity_price_panel.py)
+data/electricity_price/*.parquet
