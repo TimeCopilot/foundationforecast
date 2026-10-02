@@ -26,12 +26,22 @@ class XReg:
 
 ExogStrategyConfig: TypeAlias = ExogStrategyName | XReg | None
 
+_VALID_EXOG_STRATEGY_NAMES = frozenset({"auto", "native"})
+
 
 def normalize_exog_strategy(
     exog_strategy: ExogStrategyConfig,
 ) -> ExogStrategyName | XReg:
     if exog_strategy is None:
         return "auto"
+    if (
+        isinstance(exog_strategy, str)
+        and exog_strategy not in _VALID_EXOG_STRATEGY_NAMES
+    ):
+        raise ValueError(
+            f"Invalid exog_strategy {exog_strategy!r}. "
+            f"Use one of {sorted(_VALID_EXOG_STRATEGY_NAMES)} or XReg(...)."
+        )
     return exog_strategy
 
 
