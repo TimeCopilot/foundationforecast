@@ -33,6 +33,7 @@ from .panel_columns import (
     CANONICAL_TIME_COL,
     PanelColumns,
     active_panel_columns,
+    canonicalize_horizon_exog_frames,
     resolve_panel_columns,
 )
 from .quantiles import (
@@ -407,8 +408,7 @@ class Forecaster:
         cols = self._resolve_panel_columns(id_col, time_col, target_col)
         self.validate_input(df, h, cols)
         df = cols.to_canonical(df)
-        X_df = cols.to_canonical(X_df)
-        futr_df = cols.to_canonical(futr_df)
+        X_df, futr_df = canonicalize_horizon_exog_frames(cols, X_df, futr_df)
         freq = self._maybe_infer_freq(df, freq, cols)
         df = maybe_convert_col_to_datetime(df, CANONICAL_TIME_COL)
         results = []
@@ -601,8 +601,7 @@ class ExogCapableForecaster(Forecaster):
             return result
         self.validate_input(df, h, cols)
         df, panel = self._prepare_panel_df(df, cols, panel=panel)
-        X_df = cols.to_canonical(X_df)
-        futr_df = cols.to_canonical(futr_df)
+        X_df, futr_df = canonicalize_horizon_exog_frames(cols, X_df, futr_df)
         with active_panel_columns(self, cols):
             result = self._forecast_with_exog(
                 df,
