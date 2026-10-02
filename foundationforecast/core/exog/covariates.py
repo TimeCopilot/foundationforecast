@@ -108,6 +108,11 @@ def validate_futr_exog_inputs(
             f"X_df is missing unique_id values present in df: {missing_ids}"
         )
 
+    if horizon_df.duplicated(subset=[ID_COL, TIME_COL]).any():
+        raise ValueError(
+            f"X_df must not contain duplicate ({ID_COL}, {TIME_COL}) rows."
+        )
+
     counts = horizon_df.groupby(ID_COL, observed=True).size()
     bad = counts[counts != h]
     if len(bad) > 0:
