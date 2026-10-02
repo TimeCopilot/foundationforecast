@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
 from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 
 import pandas as pd
@@ -126,17 +126,33 @@ def resolve_panel_columns(
     )
 
 
+_active_panel_columns_ctx: ContextVar[PanelColumns | None] = ContextVar(
+    "active_panel_columns", default=None
+)
+
+
+def get_active_panel_columns() -> PanelColumns | None:
+    return _active_panel_columns_ctx.get()
+
+
+def canonicalize_horizon_exog_frames(
+    cols: PanelColumns,
+    X_df: pd.DataFrame | None,
+    futr_df: pd.DataFrame | None,
+) -> tuple[pd.DataFrame | None, pd.DataFrame | None]:
+    if X_df is not None and futr_df is not None and X_df is futr_df:
+        canonical = cols.to_canonical_horizon(X_df)
+        return canonical, canonical
+    return cols.to_canonical_horizon(X_df), cols.to_canonical_horizon(futr_df)
+
+
 @contextmanager
 def active_panel_columns(
-    forecaster: object,
+    _forecaster: object,
     cols: PanelColumns,
-) -> Iterator[PanelColumns]:
-    token = getattr(forecaster, "_active_panel_columns", None)
-    forecaster._active_panel_columns = cols  # type: ignore[attr-defined]
+):
+    token = _active_panel_columns_ctx.set(cols)
     try:
         yield cols
     finally:
-        if token is None:
-            del forecaster._active_panel_columns  # type: ignore[attr-defined]
-        else:
-            forecaster._active_panel_columns = token  # type: ignore[attr-defined]
+        _active_panel_columns_ctx.reset(token)
