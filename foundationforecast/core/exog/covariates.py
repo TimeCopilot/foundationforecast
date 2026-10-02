@@ -102,6 +102,11 @@ def validate_futr_exog_inputs(
         raise ValueError(
             f"X_df contains unique_id values not present in df: {extra_ids}"
         )
+    missing_ids = sorted(hist_ids - hor_ids)
+    if missing_ids:
+        raise ValueError(
+            f"X_df is missing unique_id values present in df: {missing_ids}"
+        )
 
     counts = horizon_df.groupby(ID_COL, observed=True).size()
     bad = counts[counts != h]
