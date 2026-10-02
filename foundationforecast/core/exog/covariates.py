@@ -24,22 +24,30 @@ class XReg:
     regressor: Literal["linear"] = "linear"
 
 
-ExogStrategyConfig: TypeAlias = ExogStrategyName | XReg | None
+ExogStrategyConfig: TypeAlias = ExogStrategyName | XReg | None | Literal[False]
+
+NormalizedExogStrategy: TypeAlias = ExogStrategyName | XReg | Literal[False]
 
 _VALID_EXOG_STRATEGY_NAMES = frozenset({"auto", "native"})
 
 
+def exog_strategy_disabled(exog_strategy: NormalizedExogStrategy) -> bool:
+    return exog_strategy is False
+
+
 def normalize_exog_strategy(
     exog_strategy: ExogStrategyConfig,
-) -> ExogStrategyName | XReg:
+) -> NormalizedExogStrategy:
     if exog_strategy is None:
         return "auto"
+    if exog_strategy is False:
+        return False
     if isinstance(exog_strategy, XReg):
         return exog_strategy
     if not isinstance(exog_strategy, str):
         raise ValueError(
             f"Invalid exog_strategy type {type(exog_strategy)!r}. "
-            f"Use one of {sorted(_VALID_EXOG_STRATEGY_NAMES)} or XReg(...)."
+            f"Use one of {sorted(_VALID_EXOG_STRATEGY_NAMES)}, False, or XReg(...)."
         )
     if exog_strategy not in _VALID_EXOG_STRATEGY_NAMES:
         raise ValueError(

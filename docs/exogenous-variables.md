@@ -20,6 +20,7 @@ horizon. Iteration 1 supports **future-known dynamic** covariates only.
 |-------|--------------------------------|
 | `"auto"` (default) | Native exog if the model supports it; else `XReg()` linear fallback |
 | `"native"` | Native only; error if unsupported |
+| `False` | Ignore `X_df` / `futr_exog_list`; univariate forecast (also in CV) |
 | `XReg(fm_first=True, ...)` | Force FM + linear regressor path |
 
 `XReg.fm_first=True` matches TimesFM `"xreg + timesfm"`; `False` matches `"timesfm + xreg"`.

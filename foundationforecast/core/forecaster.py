@@ -100,7 +100,8 @@ class Forecaster:
                 covariates) when ``X_df`` is passed to ``forecast()``. ``"auto"``
                 uses native model support when available, otherwise ``XReg()``.
                 ``"native"`` requires native support. Pass ``XReg(...)`` to
-                force FM + regressor decomposition.
+                force FM + regressor decomposition. ``False`` ignores ``X_df``
+                and runs a univariate forecast.
         """
         self.reuse_loaded_model = reuse_loaded_model
         self.exog_strategy = normalize_exog_strategy(exog_strategy)
@@ -373,9 +374,14 @@ class Forecaster:
             freq=pd.tseries.frequencies.to_offset(freq),
             step_size=h if step_size is None else step_size,
         )
-        from .exog.covariates import resolve_exog_columns_from_df
+        from .exog.covariates import (
+            exog_strategy_disabled,
+            resolve_exog_columns_from_df,
+        )
 
-        exog_cols = resolve_exog_columns_from_df(df, futr_exog_list)
+        exog_cols: list[str] = []
+        if not exog_strategy_disabled(self.exog_strategy):
+            exog_cols = resolve_exog_columns_from_df(df, futr_exog_list)
         for _, (cutoffs, train, valid) in tqdm(enumerate(splits)):
             forecast_kwargs: dict = {
                 "df": train,

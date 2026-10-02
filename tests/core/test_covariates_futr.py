@@ -91,6 +91,18 @@ def test_normalize_exog_strategy_rejects_invalid_types():
         normalize_exog_strategy(object())  # type: ignore[arg-type]
 
 
+def test_normalize_exog_strategy_false():
+    assert normalize_exog_strategy(False) is False  # type: ignore[arg-type]
+
+
+def test_exog_strategy_false_ignores_x_df():
+    df, X_df = _panel()
+    model = Tafsut(exog_strategy=False)  # type: ignore[arg-type]
+    u = model.forecast(df=df, h=3, freq="D")
+    v = model.forecast(df=df, h=3, freq="D", X_df=X_df)
+    pd.testing.assert_frame_equal(u, v)
+
+
 def test_forecast_with_reversed_x_df_row_order():
     df, X_df = _panel()
     X_df_rev = X_df.iloc[::-1].reset_index(drop=True)

@@ -8,6 +8,7 @@ import pandas as pd
 
 from .covariates import (
     XReg,
+    exog_strategy_disabled,
     exog_strategy_requires_xreg,
     normalize_exog_strategy,
     resolve_futr_exog_list,
@@ -39,6 +40,10 @@ def prepare_futr_exog_context(
     futr_df: pd.DataFrame | None,
     futr_exog_list: list[str] | None,
 ) -> FutrExogContext | None:
+    strategy = normalize_exog_strategy(getattr(forecaster, "exog_strategy", "auto"))
+    if exog_strategy_disabled(strategy):
+        return None
+
     horizon_df = resolve_horizon_exog_df(X_df, futr_df)
     if horizon_df is None:
         if futr_exog_list is not None:
@@ -49,7 +54,6 @@ def prepare_futr_exog_context(
     validate_futr_exog_inputs(df, h, horizon_df, cols)
     horizon_df = sort_exog_panel(horizon_df)
 
-    strategy = normalize_exog_strategy(getattr(forecaster, "exog_strategy", "auto"))
     if type(forecaster).__name__ == "TimeGPT":
         validate_exog_strategy_for_timegpt(strategy)  # type: ignore[arg-type]
 
