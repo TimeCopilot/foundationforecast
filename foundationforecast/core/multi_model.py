@@ -86,15 +86,9 @@ class MultiModelForecasterMixin:
         Forecaster.validate_input(df, h, cols)
         df_work = cols.to_canonical(df)
         freq = maybe_infer_freq(df_work, freq)
-        if panel is None and attr == "forecast":
+        if panel is None and attr == "forecast" and cols.is_canonical():
             panel = process_panel_from_df(df_work)
         merge_on = cols.merge_keys() if attr == "forecast" else cols.cv_merge_keys()
-        if "X_df" in kwargs and kwargs["X_df"] is not None:
-            kwargs = dict(kwargs)
-            kwargs["X_df"] = cols.to_canonical(kwargs["X_df"])
-        if "futr_df" in kwargs and kwargs["futr_df"] is not None:
-            kwargs = dict(kwargs)
-            kwargs["futr_df"] = cols.to_canonical(kwargs["futr_df"])
         res_df: pd.DataFrame | None = None
         for model in self.models:
             known_kwargs = {
