@@ -21,6 +21,10 @@ horizon. Iteration 1 supports **future-known dynamic** covariates only.
 
 `XReg.fm_first=True` matches TimesFM `"xreg + timesfm"`; `False` matches `"timesfm + xreg"`.
 
+With `XReg`, pass `level` or `quantiles` as usual: the univariate FM forecast is
+computed with intervals first, then the same linear exog adjustment is applied to
+the point column and every `{alias}-lo-*`, `{alias}-hi-*`, or `{alias}-q-*` column.
+
 **TimeGPT:** use `"auto"` or `"native"` only (Nixtla API via `X_df`). `XReg(...)` is rejected.
 
 ## Example

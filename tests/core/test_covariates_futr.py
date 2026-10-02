@@ -101,18 +101,25 @@ def test_validate_duplicate_horizon_keys():
         validate_futr_exog_inputs(df, 3, X_df, ["x1"])
 
 
-def test_xreg_rejects_probabilistic_output():
+def test_xreg_adjusts_probabilistic_columns():
     df, X_df = _panel()
+    point = np.array([1.0, 2.0, 3.0])
     fcst = pd.DataFrame(
         {
             "unique_id": X_df["unique_id"],
             "ds": X_df["ds"],
-            "Tafsut": [1.0, 2.0, 3.0],
-            "Tafsut-lo-80": [0.5, 1.5, 2.5],
+            "Tafsut": point,
+            "Tafsut-lo-80": point - 0.5,
+            "Tafsut-hi-80": point + 0.5,
         }
     )
-    with pytest.raises(ValueError, match="point forecasts"):
-        merge_xreg_into_forecast_df(fcst, "Tafsut", df, X_df, ["x1"], h=3, xreg=XReg())
+    out = merge_xreg_into_forecast_df(
+        fcst, "Tafsut", df, X_df, ["x1"], h=3, xreg=XReg(fm_first=True)
+    )
+    delta = out["Tafsut"].to_numpy() - point
+    assert np.allclose(out["Tafsut-lo-80"].to_numpy(), fcst["Tafsut-lo-80"] + delta)
+    assert np.allclose(out["Tafsut-hi-80"].to_numpy(), fcst["Tafsut-hi-80"] + delta)
+    assert not np.allclose(delta, 0)
 
 
 def test_validate_wrong_h_per_series():

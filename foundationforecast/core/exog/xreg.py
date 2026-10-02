@@ -39,28 +39,54 @@ def adjust_point_forecast_with_xreg(
     if xreg.regressor != "linear":
         raise NotImplementedError(f"Unsupported XReg regressor: {xreg.regressor!r}")
 
+    return _adjust_uid_forecasts_with_xreg(
+        alias="__point__",
+        y_hist=y_hist,
+        exog_hist=exog_hist,
+        exog_horizon=exog_horizon,
+        baselines={"__point__": baseline_horizon},
+        xreg=xreg,
+    )["__point__"]
+
+
+def _forecast_value_columns(fcst_df: pd.DataFrame, alias: str) -> list[str]:
+    """Point and probabilistic forecast columns produced for ``alias``."""
+    cols = [alias]
+    prefix = f"{alias}-"
+    for col in fcst_df.columns:
+        if col.startswith(prefix):
+            cols.append(col)
+    return cols
+
+
+def _adjust_uid_forecasts_with_xreg(
+    *,
+    alias: str,
+    y_hist: np.ndarray,
+    exog_hist: np.ndarray,
+    exog_horizon: np.ndarray,
+    baselines: dict[str, np.ndarray],
+    xreg: XReg,
+) -> dict[str, np.ndarray]:
+    """Apply XReg to point and interval/quantile baselines for one series."""
+    if xreg.regressor != "linear":
+        raise NotImplementedError(f"Unsupported XReg regressor: {xreg.regressor!r}")
+
+    point_horizon = baselines[alias]
+
     if xreg.fm_first:
-        baseline_insample = np.full(len(y_hist), float(baseline_horizon[0]))
+        baseline_insample = np.full(len(y_hist), float(point_horizon[0]))
         coef = _fit_linear(y_hist - baseline_insample, exog_hist)
         adjustment = _predict_linear(coef, exog_horizon)
-        return baseline_horizon + adjustment
+        return {col: baseline + adjustment for col, baseline in baselines.items()}
 
     coef = _fit_linear(y_hist, exog_hist)
     reg_hist = _predict_linear(coef, exog_hist)
     reg_hor = _predict_linear(coef, exog_horizon)
-    residual_hist = y_hist - reg_hist
-    residual_baseline = baseline_horizon - float(np.mean(residual_hist))
-    return reg_hor + residual_baseline
-
-
-def _has_probabilistic_columns(fcst_df: pd.DataFrame, alias: str) -> bool:
-    meta = {"unique_id", "ds"}
-    for col in fcst_df.columns:
-        if col in meta or col == alias:
-            continue
-        if col.startswith(f"{alias}-"):
-            return True
-    return False
+    mean_resid = float(np.mean(y_hist - reg_hist))
+    return {
+        col: reg_hor + (baseline - mean_resid) for col, baseline in baselines.items()
+    }
 
 
 def merge_xreg_into_forecast_df(
@@ -72,17 +98,16 @@ def merge_xreg_into_forecast_df(
     h: int,
     xreg: XReg,
 ) -> pd.DataFrame:
-    if _has_probabilistic_columns(fcst_df, alias):
-        raise ValueError(
-            "XReg linear fallback only supports point forecasts. "
-            "Use level=None and quantiles=None, or a model with native exog support."
-        )
     out = fcst_df.copy()
-    baseline = out[alias].to_numpy(dtype=np.float64)
-    adjusted_parts: list[np.ndarray] = []
-    offset = 0
+    value_cols = _forecast_value_columns(out, alias)
+    if alias not in value_cols:
+        raise ValueError(f"Forecast frame missing point column {alias!r}.")
+
+    adjusted_by_col: dict[str, list[np.ndarray]] = {col: [] for col in value_cols}
+
     for uid in out["unique_id"].unique():
         n = h
+        uid_mask = out["unique_id"] == uid
         y_hist = df.loc[df["unique_id"] == uid, TARGET_COL].to_numpy(dtype=np.float64)
         exog_hist = df.loc[df["unique_id"] == uid, futr_exog_list].to_numpy(
             dtype=np.float64
@@ -90,19 +115,25 @@ def merge_xreg_into_forecast_df(
         exog_hor = horizon_df.loc[
             horizon_df["unique_id"] == uid, futr_exog_list
         ].to_numpy(dtype=np.float64)
-        base_hor = baseline[offset : offset + n]
         if len(y_hist) != len(exog_hist):
             raise ValueError("History length mismatch for exogenous columns.")
         if exog_hor.shape[0] != n:
             raise ValueError("Horizon exog length mismatch.")
-        adjusted = adjust_point_forecast_with_xreg(
+
+        baselines = {
+            col: out.loc[uid_mask, col].to_numpy(dtype=np.float64) for col in value_cols
+        }
+        adjusted = _adjust_uid_forecasts_with_xreg(
+            alias=alias,
             y_hist=y_hist,
             exog_hist=exog_hist,
             exog_horizon=exog_hor,
-            baseline_horizon=base_hor,
+            baselines=baselines,
             xreg=xreg,
         )
-        adjusted_parts.append(adjusted)
-        offset += n
-    out[alias] = np.concatenate(adjusted_parts)
+        for col in value_cols:
+            adjusted_by_col[col].append(adjusted[col])
+
+    for col in value_cols:
+        out[col] = np.concatenate(adjusted_by_col[col])
     return out
