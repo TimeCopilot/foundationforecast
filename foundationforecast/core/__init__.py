@@ -10,6 +10,7 @@ from .forecaster import (
 )
 from .gluonts_forecaster import GluonTSForecaster
 from .multi_model import MultiModelForecasterMixin
+from .panel_columns import PanelColumns
 from .quantiles import (
     FIXED_KNOT_QUANTILES_NOTE,
     interpolate_quantiles,
@@ -30,6 +31,7 @@ __all__ = [
     "FIXED_KNOT_QUANTILES_NOTE",
     "GluonTSForecaster",
     "MultiModelForecasterMixin",
+    "PanelColumns",
     "PanelData",
     "QuantileConverter",
     "interpolate_quantiles",

@@ -9,6 +9,11 @@ from tqdm import tqdm
 
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
+from ..core.panel_columns import (
+    CANONICAL_ID_COL,
+    CANONICAL_TARGET_COL,
+    CANONICAL_TIME_COL,
+)
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
 
@@ -31,6 +36,9 @@ class Tafsut(ExogCapableForecaster, _DataProcessor):
         alias: str = "Tafsut",
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        id_col: str = CANONICAL_ID_COL,
+        time_col: str = CANONICAL_TIME_COL,
+        target_col: str = CANONICAL_TARGET_COL,
     ):
         """
         Initialize Tafsut time series foundation model.
@@ -71,6 +79,9 @@ class Tafsut(ExogCapableForecaster, _DataProcessor):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            id_col=id_col,
+            time_col=time_col,
+            target_col=target_col,
         )
         self.repo_id = repo_id
         self.context_length = context_length
