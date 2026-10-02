@@ -25,6 +25,7 @@ nav:
       - Forecaster Quickstart: examples/forecaster-quickstart.ipynb
       - Anomaly Detection: examples/anomaly-detection-forecaster-quickstart.ipynb
       - Compare Foundation Models: examples/ts-foundation-models-comparison-quickstart.ipynb
+      - Exogenous variables: examples/exogenous-variables.ipynb
       - Family Guides:
           - Chronos: examples/chronos-family.ipynb
           - TimesFM: examples/timesfm-family.ipynb
