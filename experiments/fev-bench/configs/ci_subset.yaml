@@ -1,0 +1,5 @@
+jobs:
+  - model_key: amazon--chronos-2
+    task_name: epf_de
+  - model_key: amazon--chronos-2
+    task_name: entsoe_1H
