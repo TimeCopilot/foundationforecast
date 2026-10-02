@@ -173,3 +173,23 @@ def test_tafsut_native_strategy_raises_with_x_df():
     model.exog_strategy = "native"
     with pytest.raises(ValueError, match="native"):
         model.forecast(df=df, h=3, freq="D", X_df=X_df)
+
+
+def test_cross_validation_reads_horizon_exog_from_df():
+    from tests.helpers import generate_panel_with_futr_exog
+
+    h = 3
+    df_hist, X_df, futr_exog_list = generate_panel_with_futr_exog(
+        1, freq="D", h=h, min_length=32, max_length=32
+    )
+    future = X_df.copy()
+    future["y"] = df_hist["y"].iloc[-1]
+    panel = pd.concat([df_hist, future], ignore_index=True).sort_values(
+        ["unique_id", "ds"]
+    )
+    model = Tafsut()
+    cv = model.cross_validation(
+        df=panel, h=h, freq="D", n_windows=1, futr_exog_list=futr_exog_list
+    )
+    assert len(cv) == h
+    assert model.alias in cv.columns

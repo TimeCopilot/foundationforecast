@@ -349,9 +349,7 @@ class Forecaster:
         step_size: int | None = None,
         level: list[int | float] | None = None,
         quantiles: list[float] | None = None,
-        X_df: pd.DataFrame | None = None,
         *,
-        futr_df: pd.DataFrame | None = None,
         futr_exog_list: list[str] | None = None,
     ) -> pd.DataFrame:
         self.validate_input(df, h)
@@ -370,22 +368,13 @@ class Forecaster:
             freq=pd.tseries.frequencies.to_offset(freq),
             step_size=h if step_size is None else step_size,
         )
-        from .exog.covariates import resolve_horizon_exog_df
+        from .exog.covariates import resolve_exog_columns_from_df
 
-        horizon_df = resolve_horizon_exog_df(X_df, futr_df)
+        exog_cols = resolve_exog_columns_from_df(df, futr_exog_list)
         for _, (cutoffs, train, valid) in tqdm(enumerate(splits)):
             window_X: pd.DataFrame | None = None
-            if horizon_df is not None:
-                valid_keys = valid[["unique_id", "ds"]]
-                window_X = horizon_df.merge(
-                    valid_keys,
-                    on=["unique_id", "ds"],
-                    how="inner",
-                )
-                if window_X.shape[0] < valid.shape[0]:
-                    raise ValueError(
-                        "X_df does not cover all cross-validation horizon timestamps."
-                    )
+            if exog_cols:
+                window_X = valid[["unique_id", "ds", *exog_cols]]
             y_pred = self.forecast(
                 df=train,
                 h=h,
@@ -393,7 +382,7 @@ class Forecaster:
                 level=level,
                 quantiles=quantiles,
                 X_df=window_X,
-                futr_exog_list=futr_exog_list,
+                futr_exog_list=exog_cols or None,
             )
             y_pred = join(y_pred, cutoffs, on="unique_id", how="left")
             result = join(

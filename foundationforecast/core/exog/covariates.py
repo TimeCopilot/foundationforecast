@@ -60,6 +60,22 @@ def infer_futr_exog_columns(horizon_df: pd.DataFrame) -> list[str]:
     return [c for c in horizon_df.columns if c not in META_COLS]
 
 
+def resolve_exog_columns_from_df(
+    df: pd.DataFrame,
+    futr_exog_list: list[str] | None,
+) -> list[str]:
+    """Column names for known-future exog stored in ``df`` (history + horizon)."""
+    if futr_exog_list is not None:
+        missing = [c for c in futr_exog_list if c not in df.columns]
+        if missing:
+            raise ValueError(
+                f"Exogenous columns missing from df: {missing}. "
+                "Include them through the end of each cross-validation fold."
+            )
+        return list(futr_exog_list)
+    return [c for c in df.columns if c not in META_COLS]
+
+
 def resolve_futr_exog_list(
     horizon_df: pd.DataFrame,
     futr_exog_list: list[str] | None,

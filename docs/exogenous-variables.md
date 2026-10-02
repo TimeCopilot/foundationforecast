@@ -5,11 +5,14 @@ horizon. Iteration 1 supports **future-known dynamic** covariates only.
 
 ## Data API
 
-- **`df`**: `unique_id`, `ds`, `y`, plus exog columns for **history**.
-- **`X_df`**: `unique_id`, `ds`, exog columns for the **next `h` steps** (no `y`).
-- Alias: **`futr_df`** = same as **`X_df`**.
-- **`futr_exog_list`** (optional on `forecast()` / `cross_validation()`): column names.
-  If omitted, infer from `X_df` columns (excluding `unique_id`, `ds`, `y`).
+- **`df`**: `unique_id`, `ds`, `y`, plus exog columns. For **history**, exog must cover
+  the observed period. For **`cross_validation()`**, also include exog (and `y`) through
+  the end of each fold so horizon covariates are read from `df` (no separate horizon frame).
+- **`X_df`**: `unique_id`, `ds`, exog columns for the **next `h` steps** (no `y`). Used by
+  **`forecast()`** only.
+- Alias: **`futr_df`** = same as **`X_df`** on **`forecast()`**.
+- **`futr_exog_list`** (optional): column names. On **`forecast()`**, infer from `X_df` if
+  omitted. On **`cross_validation()`**, infer from non-target columns in `df` if omitted.
 
 ## Model constructor: `exog_strategy`
 
@@ -45,14 +48,15 @@ X_df = test[["unique_id", "ds", *exog]]
 
 model = Tafsut(exog_strategy="auto")
 fcst = model.forecast(df=train, h=24, freq="h", X_df=X_df)
+
+# Cross-validation: one df with exog through the holdout window (no X_df)
+panel = pd.concat([train, test], ignore_index=True).sort_values(["unique_id", "ds"])
+cv = model.cross_validation(
+    df=panel,
+    h=24,
+    freq="h",
+    futr_exog_list=exog,
+)
 ```
 
 See `docs/examples/exogenous-variables.ipynb` for more models.
-
-To rebuild the S3 files from fev-bench (`epf_be`, `epf_de`, `epf_fr`, `epf_np`, `epf_pjm`):
-
-```bash
-python scripts/build_electricity_price_panel.py
-aws s3 cp data/electricity_price/train.parquet s3://timecopilot/public/data/electricity_price/train.parquet
-aws s3 cp data/electricity_price/test.parquet s3://timecopilot/public/data/electricity_price/test.parquet
-```
