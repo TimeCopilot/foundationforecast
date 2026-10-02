@@ -42,7 +42,8 @@ FoundationForecast uses **`supports_native_futr_exog()`** on the forecaster inst
 | **T0** | `theforecastingcompany/t0-alpha`, `theforecastingcompany/t0-beta` | Yes | `future_covariates` in `tfc-t0` |
 | **Tafsut** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **Toto** | any | No | Use `exog_strategy=False` in multi-model runs |
-| **TiRex** | any | No | Use `exog_strategy=False` in multi-model runs |
+| **TiRex** | `NX-AI/TiRex` | No | TiRex 1.0; univariate only |
+| **TiRex** | `NX-AI/TiRex-2` (and `TiRex-2-*` checkpoints) | Yes | `future_covariates` in `tirex2` |
 | **Moirai** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **FlowState** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **Sundial** | any | No | Use `exog_strategy=False` in multi-model runs |
@@ -63,12 +64,11 @@ from foundationforecast import FoundationForecast
 train = pd.read_parquet(
     "https://timecopilot.s3.amazonaws.com/public/data/electricity_price/train.parquet"
 )
-test = pd.read_parquet(
-    "https://timecopilot.s3.amazonaws.com/public/data/electricity_price/test.parquet"
+X_df = pd.read_parquet(
+    "https://timecopilot.s3.amazonaws.com/public/data/electricity_price/futr_exog.parquet"
 )
 # Panel of fev-bench EPF markets (BE, DE, FR, NP, PJM); covariates unified as ex_1, ex_2
 exog = ["ex_1", "ex_2"]
-X_df = test[["unique_id", "ds", *exog]]
 
 model = Chronos(repo_id="amazon/chronos-2", alias="Chronos-2")
 fcst = model.forecast(df=train, h=24, freq="h", X_df=X_df)
@@ -82,9 +82,9 @@ ff = FoundationForecast(
 )
 fcst_panel = ff.forecast(df=train, h=24, freq="h", X_df=X_df)
 
-# Cross-validation: one df with exog through the holdout window (no X_df)
-panel = pd.concat([train, test], ignore_index=True).sort_values(["unique_id", "ds"])
+# Cross-validation: one `panel` df with exog and `y` through the holdout window (no X_df)
 cv = model.cross_validation(
+    df=panel,
     df=panel,
     h=24,
     freq="h",
