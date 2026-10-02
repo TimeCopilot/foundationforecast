@@ -60,7 +60,7 @@ Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results
 
 ## Supported models
 
-Every model supports **forecast**, **cross-validation**, and **anomaly detection** through the same API. **Intervals** means prediction intervals via `level` or quantile forecasts. **Exog/Covariates** means [known-future covariates](docs/exogenous-variables.md) via `X_df` on `forecast()` (and exog columns in `df` for `cross_validation()`). **Finetuning** marks models that can adapt to your data at inference time. **License** is the [weight/checkpoint license](https://huggingface.co/models) on the default Hugging Face repo (or provider terms for hosted APIs). See the note below for production use.
+Every model supports **forecast**, **cross-validation**, and **anomaly detection** through the same API. **Intervals** means prediction intervals via `level` or quantile forecasts. **Exog/Covariates** means [known-future covariates](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md) via `X_df` on `forecast()` (and exog columns in `df` for `cross_validation()`). **Finetuning** marks models that can adapt to your data at inference time. **License** is the [weight/checkpoint license](https://huggingface.co/models) on the default Hugging Face repo (or provider terms for hosted APIs). See the note below for production use.
 
 Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the underlying model class.
 
@@ -81,7 +81,7 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 
 Licenses verified against Hugging Face model cards. Check the model card for your `repo_id` when in doubt.
 
-¶ **Exog/Covariates:** known-future covariates via `X_df` / `futr_exog_list`. Native conditioning (weights use exog inside the model) vs linear **`XReg`** fallback depends on `repo_id`; see [Exogenous variables](docs/exogenous-variables.md#native-vs-xreg-by-checkpoint).
+¶ **Exog/Covariates:** known-future covariates via `X_df` / `futr_exog_list`. Native conditioning (weights use exog inside the model) vs linear **`XReg`** fallback depends on `repo_id`; see [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md#native-vs-xreg-by-checkpoint).
 
 <details><summary><strong>What this means for production</strong></summary>
 
