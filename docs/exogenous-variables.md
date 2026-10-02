@@ -61,17 +61,16 @@ import pandas as pd
 from foundationforecast.models import Chronos, Tafsut
 from foundationforecast import FoundationForecast
 
-train = pd.read_parquet(
+df = pd.read_parquet(
     "https://timecopilot.s3.amazonaws.com/public/data/electricity_price/train.parquet"
 )
 X_df = pd.read_parquet(
     "https://timecopilot.s3.amazonaws.com/public/data/electricity_price/futr_exog.parquet"
 )
 # Panel of fev-bench EPF markets (BE, DE, FR, NP, PJM); covariates unified as ex_1, ex_2
-exog = ["ex_1", "ex_2"]
 
 model = Chronos(repo_id="amazon/chronos-2", alias="Chronos-2")
-fcst = model.forecast(df=train, h=24, freq="h", X_df=X_df)
+fcst = model.forecast(df=df, h=24, X_df=X_df)
 
 # Mixed FoundationForecast: native model + univariate models ignoring X_df
 ff = FoundationForecast(
@@ -80,16 +79,10 @@ ff = FoundationForecast(
         Tafsut(alias="Tafsut", exog_strategy=False),
     ]
 )
-fcst_panel = ff.forecast(df=train, h=24, freq="h", X_df=X_df)
+fcst_panel = ff.forecast(df=df, h=24, X_df=X_df)
 
-# Cross-validation: one `panel` df with exog and `y` through the holdout window (no X_df)
-cv = model.cross_validation(
-    df=panel,
-    df=panel,
-    h=24,
-    freq="h",
-    futr_exog_list=exog,
-)
+# Cross-validation: exog columns in `df` through the holdout window (no X_df)
+cv = model.cross_validation(df=df, h=24)
 ```
 
 See `docs/examples/exogenous-variables.ipynb` for more models.
