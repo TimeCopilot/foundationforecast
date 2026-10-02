@@ -6,6 +6,13 @@ from collections.abc import Callable
 import pandas as pd
 import utilsforecast.processing as ufp
 
+from .exog.covariates import (
+    exog_strategy_disabled,
+    normalize_exog_strategy,
+    resolve_exog_columns_from_df,
+    resolve_horizon_exog_df,
+)
+from .exog.futr_exog import futr_exog_unsupported_message
 from .forecaster import Forecaster, maybe_infer_freq
 from .utils import PanelData, process_panel_from_df
 
@@ -44,6 +51,46 @@ def _optional_exog_kwargs(kwargs: dict[str, object]) -> dict[str, object]:
         if kwargs.get(key) is not None:
             filtered[key] = kwargs[key]
     return filtered
+
+
+def _model_uses_horizon_exog(
+    model: Forecaster,
+    *,
+    attr: str,
+    df: pd.DataFrame,
+    kwargs: dict[str, object],
+) -> bool:
+    strategy = normalize_exog_strategy(getattr(model, "exog_strategy", "auto"))
+    if exog_strategy_disabled(strategy):
+        return False
+    if attr == "forecast":
+        horizon_df = resolve_horizon_exog_df(
+            kwargs.get("X_df"),  # type: ignore[arg-type]
+            kwargs.get("futr_df"),  # type: ignore[arg-type]
+        )
+        return horizon_df is not None
+    if attr == "cross_validation":
+        futr_exog_list = kwargs.get("futr_exog_list")
+        cols = resolve_exog_columns_from_df(
+            df,
+            futr_exog_list if isinstance(futr_exog_list, list) else None,
+        )
+        return bool(cols)
+    return False
+
+
+def _validate_models_horizon_exog(
+    models: list[Forecaster],
+    *,
+    attr: str,
+    df: pd.DataFrame,
+    kwargs: dict[str, object],
+) -> None:
+    for model in models:
+        if not _model_uses_horizon_exog(model, attr=attr, df=df, kwargs=kwargs):
+            continue
+        if not model.supports_native_futr_exog():
+            raise ValueError(futr_exog_unsupported_message(model))
 
 
 class MultiModelForecasterMixin:
@@ -97,6 +144,12 @@ class MultiModelForecasterMixin:
         freq = maybe_infer_freq(df, freq)
         if panel is None and attr == "forecast":
             panel = process_panel_from_df(df)
+        _validate_models_horizon_exog(
+            self.models,
+            attr=attr,
+            df=df,
+            kwargs=kwargs,
+        )
         res_df: pd.DataFrame | None = None
         for model in self.models:
             known_kwargs = {

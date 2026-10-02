@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from utilsforecast.processing import make_future_dataframe
 
-from tests.helpers import DummyModel, generate_series
+from tests.helpers import DummyModel, generate_panel_with_futr_exog, generate_series
 from foundationforecast import FoundationForecast
 from foundationforecast.core.forecaster import ExogCapableForecaster, Forecaster
 from foundationforecast.core.quantiles import quantile_column_name
@@ -270,3 +270,41 @@ def test_foundation_forecast_validates_input():
     forecaster = FoundationForecast(models=[DummyModel()])
     with pytest.raises(ValueError, match="h must be a positive integer"):
         forecaster.forecast(df=df, h=0, freq="D")
+
+
+def test_foundation_forecast_validates_exog_before_fallback():
+    class NonNativeExogModel(ExogCapableForecaster):
+        alias = "NonNativeExogModel"
+
+        def supports_native_futr_exog(self) -> bool:
+            return False
+
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
+            _ = df, h, freq, level, quantiles, panel
+            raise RuntimeError("should not run")
+
+    class FallbackModel(ExogCapableForecaster):
+        alias = "FallbackModel"
+
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
+            _ = panel
+            n = len(df["unique_id"].unique()) * h
+            return pd.DataFrame(
+                {
+                    "unique_id": ["A"] * n,
+                    "ds": pd.date_range("2020-01-01", periods=n, freq="D"),
+                    "FallbackModel": range(n),
+                }
+            )
+
+    df, X_df, _ = generate_panel_with_futr_exog(n_series=1, freq="D", h=3)
+    forecaster = FoundationForecast(
+        models=[NonNativeExogModel()],
+        fallback_model=FallbackModel(),
+    )
+    with pytest.raises(ValueError, match="does not support known-future"):
+        forecaster.forecast(df=df, h=3, freq="D", X_df=X_df)

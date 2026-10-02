@@ -103,8 +103,9 @@ def test_normalize_exog_strategy_false():
     assert normalize_exog_strategy(False) is False  # type: ignore[arg-type]
 
 
-def test_normalize_exog_strategy_native_alias():
-    assert normalize_exog_strategy("native") == "auto"  # type: ignore[arg-type]
+def test_normalize_exog_strategy_rejects_native_string():
+    with pytest.raises(ValueError, match="Invalid exog_strategy"):
+        normalize_exog_strategy("native")  # type: ignore[arg-type]
 
 
 def test_exog_strategy_false_ignores_x_df():

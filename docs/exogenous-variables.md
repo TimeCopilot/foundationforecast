@@ -22,11 +22,11 @@ horizon. Iteration 1 supports **future-known dynamic** covariates only.
 | `"auto"` (default) | Use **native** exog when the checkpoint supports it; otherwise **raise** |
 | `False` | Ignore `X_df` / `futr_exog_list`; univariate forecast (also in CV) |
 
-The string `"native"` is accepted as a silent alias for `"auto"`.
-
-When a model does not support native exog and you pass `X_df`, FoundationForecast logs a
-warning and raises `ValueError`. For **`FoundationForecast`** with mixed models, set
-`exog_strategy=False` on models that do not support native exog so they ignore `X_df`.
+When a model does not support native exog and you pass `X_df`, the library logs a
+warning and raises `ValueError`. **`FoundationForecast`** checks every member model
+before calling `forecast()` or `cross_validation()` so a `fallback_model` is not used
+instead of that error. For mixed runs, set `exog_strategy=False` on models that do not
+support native exog so they ignore horizon exog.
 
 ## Native exog by checkpoint
 
@@ -37,18 +37,17 @@ FoundationForecast uses **`supports_native_futr_exog()`** on the forecaster inst
 | Wrapper | `repo_id` / id pattern | Native futr exog | Notes |
 |---------|------------------------|------------------|-------|
 | **Chronos** | contains `chronos-2` (case-insensitive), e.g. `amazon/chronos-2` | Yes | Other Chronos checkpoints → error with `X_df` |
-| **TimesFM** | contains `3.0`, e.g. `google/timesfm-3.0-pytorch` | Yes | `1.0`, `2.0`, `2.5` → error with `X_df` |
-| **TimeGPT** | any Nixtla `model=` id (e.g. `timegpt-1`, `timegpt-2`) | Yes | Hosted API via `X_df` |
+| **FlowState** | any | No | Use `exog_strategy=False` in multi-model runs |
+| **Moirai** | any | No | Use `exog_strategy=False` in multi-model runs |
+| **PatchTST-FM** | any | No | Use `exog_strategy=False` in multi-model runs |
+| **Sundial** | any | No | Use `exog_strategy=False` in multi-model runs |
+| **TabPFN** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **T0** | `theforecastingcompany/t0-alpha`, `theforecastingcompany/t0-beta` | Yes | `future_covariates` in `tfc-t0` |
 | **Tafsut** | any | No | Use `exog_strategy=False` in multi-model runs |
+| **TiRex** | checkpoint `TiRex-2` or `TiRex-2-*`, e.g. `NX-AI/TiRex-2` | Yes | TiRex 1.0 (e.g. `NX-AI/TiRex`) → error with `X_df` |
+| **TimeGPT** | any Nixtla `model=` id (e.g. `timegpt-1`, `timegpt-2`) | Yes | Hosted API via `X_df` |
+| **TimesFM** | contains `3.0`, e.g. `google/timesfm-3.0-pytorch` | Yes | `1.0`, `2.0`, `2.5` → error with `X_df` |
 | **Toto** | any | No | Use `exog_strategy=False` in multi-model runs |
-| **TiRex** | `NX-AI/TiRex` | No | TiRex 1.0; univariate only |
-| **TiRex** | `NX-AI/TiRex-2` (and `TiRex-2-*` checkpoints) | Yes | `future_covariates` in `tirex2` |
-| **Moirai** | any | No | Use `exog_strategy=False` in multi-model runs |
-| **FlowState** | any | No | Use `exog_strategy=False` in multi-model runs |
-| **Sundial** | any | No | Use `exog_strategy=False` in multi-model runs |
-| **PatchTST-FM** | any | No | Use `exog_strategy=False` in multi-model runs |
-| **TabPFN** | any | No | Use `exog_strategy=False` in multi-model runs |
 
 Local checkpoint paths follow the same rules as Hugging Face `repo_id` strings passed to the
 wrapper. For **`cross_validation()`**, pass exog in **`df`** through the holdout window; the

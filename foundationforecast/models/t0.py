@@ -93,7 +93,7 @@ class T0(ExogCapableForecaster):
               quantiles are interpolated; the median (0.5) is the point forecast.
             - NaN values in the context are treated as missing observations.
             - Known-future exogenous variables are passed via ``X_df`` at forecast
-              time (``exog_strategy="auto"`` or ``"native"``).
+              time (``exog_strategy="auto"``).
         """
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,

@@ -15,7 +15,7 @@ ExogStrategyConfig: TypeAlias = ExogStrategyName | None | Literal[False]
 
 NormalizedExogStrategy: TypeAlias = ExogStrategyName | Literal[False]
 
-_VALID_EXOG_STRATEGY_NAMES = frozenset({"auto", "native"})
+_VALID_EXOG_STRATEGY_NAMES = frozenset({"auto"})
 
 
 def exog_strategy_disabled(exog_strategy: NormalizedExogStrategy) -> bool:
@@ -39,8 +39,6 @@ def normalize_exog_strategy(
             f"Invalid exog_strategy {exog_strategy!r}. "
             f"Use one of {sorted(_VALID_EXOG_STRATEGY_NAMES)} or False."
         )
-    if exog_strategy == "native":
-        return "auto"
     return exog_strategy
 
 
