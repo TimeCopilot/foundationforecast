@@ -7,10 +7,10 @@ from .covariates import TARGET_COL, XReg
 
 
 def _fit_linear(y: np.ndarray, x: np.ndarray) -> np.ndarray:
-    """Return coefficients [intercept, beta...] for y ~ [1, x]."""
+    """Return coefficients beta for y ~ x (no intercept)."""
     if x.ndim == 1:
         x = x.reshape(-1, 1)
-    design = np.column_stack([np.ones(len(y)), x.astype(np.float64)])
+    design = x.astype(np.float64)
     coef, _, _, _ = np.linalg.lstsq(design, y.astype(np.float64), rcond=None)
     return coef
 
@@ -18,8 +18,7 @@ def _fit_linear(y: np.ndarray, x: np.ndarray) -> np.ndarray:
 def _predict_linear(coef: np.ndarray, x: np.ndarray) -> np.ndarray:
     if x.ndim == 1:
         x = x.reshape(-1, 1)
-    design = np.column_stack([np.ones(len(x)), x.astype(np.float64)])
-    return design @ coef
+    return x.astype(np.float64) @ coef
 
 
 def adjust_point_forecast_with_xreg(
