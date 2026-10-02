@@ -453,7 +453,7 @@ class _TimesFMV3(ExogCapableForecaster):
             fcsts_quantiles.extend(output.quantiles for output in outputs)
         return np.stack(fcsts_mean), np.stack(fcsts_quantiles)
 
-    def forecast_native_futr_exog(
+    def _forecast_native_futr_exog(
         self,
         df: pd.DataFrame,
         h: int,

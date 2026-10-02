@@ -115,7 +115,7 @@ class TimeGPT(ExogCapableForecaster):
     def supports_native_futr_exog(self) -> bool:
         return True
 
-    def forecast_native_futr_exog(
+    def _forecast_native_futr_exog(
         self,
         df: pd.DataFrame,
         h: int,
@@ -134,10 +134,10 @@ class TimeGPT(ExogCapableForecaster):
             finetune_kwargs["finetune_steps"] = self.finetuning_config.finetune_steps
             finetune_kwargs["finetune_loss"] = self.finetuning_config.finetune_loss
             finetune_kwargs["finetune_depth"] = self.finetuning_config.finetune_depth
-        x_df = horizon_df[["unique_id", "ds", *futr_exog_list]]
+        X_df = horizon_df[["unique_id", "ds", *futr_exog_list]]
         fcst_df = client.forecast(
             df=df,
-            X_df=x_df,
+            X_df=X_df,
             h=h,
             freq=freq,
             model=self.model,

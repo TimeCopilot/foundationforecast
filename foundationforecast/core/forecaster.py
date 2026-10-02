@@ -286,7 +286,7 @@ class Forecaster:
         """Whether this forecaster can use native known-future exog APIs."""
         return False
 
-    def forecast_native_futr_exog(
+    def _forecast_native_futr_exog(
         self,
         df: pd.DataFrame,
         h: int,

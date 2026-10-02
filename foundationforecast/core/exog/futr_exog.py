@@ -93,7 +93,7 @@ def dispatch_futr_exog_forecast(
             h,
             ctx.xreg,
         )
-    native = forecaster.forecast_native_futr_exog(
+    native = forecaster._forecast_native_futr_exog(
         df=df,
         h=h,
         freq=freq,

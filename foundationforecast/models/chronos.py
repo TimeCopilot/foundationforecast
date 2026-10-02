@@ -181,7 +181,7 @@ class Chronos(ExogCapableForecaster):
             columns={"unique_id": "item_id", "ds": "timestamp", "y": "target"},
         )
 
-    def forecast_native_futr_exog(
+    def _forecast_native_futr_exog(
         self,
         df: pd.DataFrame,
         h: int,
