@@ -5,19 +5,6 @@ import pandas as pd
 
 from .covariates import TARGET_COL, XReg
 
-_EXOG_STDDEV_EPS = 1e-8
-
-
-def _standardize_exog_for_regression(
-    exog_hist: np.ndarray,
-    exog_horizon: np.ndarray,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Z-score exog columns using in-sample mean and std (per column)."""
-    mean = np.mean(exog_hist, axis=0)
-    std = np.std(exog_hist, axis=0, ddof=0)
-    std = np.where(std < _EXOG_STDDEV_EPS, 1.0, std)
-    return (exog_hist - mean) / std, (exog_horizon - mean) / std
-
 
 def _fit_linear(y: np.ndarray, x: np.ndarray) -> np.ndarray:
     """Return coefficients beta for y ~ x (no intercept)."""
@@ -84,7 +71,6 @@ def _adjust_uid_forecasts_with_xreg(
     if xreg.regressor != "linear":
         raise NotImplementedError(f"Unsupported XReg regressor: {xreg.regressor!r}")
 
-    exog_hist, exog_horizon = _standardize_exog_for_regression(exog_hist, exog_horizon)
     point_horizon = baselines[alias]
 
     if xreg.fm_first:
