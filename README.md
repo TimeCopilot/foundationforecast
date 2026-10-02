@@ -81,7 +81,7 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 
 Licenses verified against Hugging Face model cards. Check the model card for your `repo_id` when in doubt.
 
-¶ **Exog/Covariates:** known-future covariates via `X_df` / `futr_exog_list`. Native conditioning (weights use exog inside the model) vs linear **`XReg`** fallback depends on `repo_id`; see [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md#native-vs-xreg-by-checkpoint).
+¶ **Exog/Covariates:** known-future covariates via `X_df` / `futr_exog_list` on checkpoints with **native** exog support; set `exog_strategy=False` to ignore `X_df` in mixed `FoundationForecast` runs. See [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md#native-exog-by-checkpoint).
 
 <details><summary><strong>What this means for production</strong></summary>
 

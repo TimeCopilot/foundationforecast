@@ -98,10 +98,10 @@ class Forecaster:
                 call. See the model weight cache docs for details.
             exog_strategy: How to use known-future exogenous variables (exog /
                 covariates) when ``X_df`` is passed to ``forecast()``. ``"auto"``
-                uses native model support when available, otherwise ``XReg()``.
-                ``"native"`` requires native support. Pass ``XReg(...)`` to
-                force FM + regressor decomposition. ``False`` ignores ``X_df``
-                and runs a univariate forecast.
+                (default) uses native exog when the checkpoint supports it; raises
+                if ``X_df`` is provided and native exog is unavailable. ``False``
+                ignores ``X_df`` / ``futr_exog_list`` and runs a univariate
+                forecast (including in cross-validation).
         """
         self.reuse_loaded_model = reuse_loaded_model
         self.exog_strategy = normalize_exog_strategy(exog_strategy)

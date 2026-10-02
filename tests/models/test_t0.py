@@ -19,7 +19,7 @@ pytestmark = pytest.mark.models
 
 
 def test_t0_native_futr_exog_passes_future_covariates(mocker):
-    model = T0(context_length=64, batch_size=2, exog_strategy="native")
+    model = T0(context_length=64, batch_size=2, exog_strategy="auto")
     n = 32
     h = 3
     ds = pd.date_range("2020-01-01", periods=n, freq="D")

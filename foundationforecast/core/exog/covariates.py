@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Literal, TypeAlias
 
 import pandas as pd
@@ -10,23 +9,11 @@ TIME_COL = "ds"
 TARGET_COL = "y"
 META_COLS = frozenset({ID_COL, TIME_COL, TARGET_COL})
 
-ExogStrategyName: TypeAlias = Literal["auto", "native"]
+ExogStrategyName: TypeAlias = Literal["auto"]
 
+ExogStrategyConfig: TypeAlias = ExogStrategyName | None | Literal[False]
 
-@dataclass
-class XReg:
-    """TimesFM-style FM + regressor decomposition for known-future exogenous variables.
-
-    Exogenous variables (exog) are covariates known over the forecast horizon.
-    """
-
-    fm_first: bool = True
-    regressor: Literal["linear"] = "linear"
-
-
-ExogStrategyConfig: TypeAlias = ExogStrategyName | XReg | None | Literal[False]
-
-NormalizedExogStrategy: TypeAlias = ExogStrategyName | XReg | Literal[False]
+NormalizedExogStrategy: TypeAlias = ExogStrategyName | Literal[False]
 
 _VALID_EXOG_STRATEGY_NAMES = frozenset({"auto", "native"})
 
@@ -42,18 +29,18 @@ def normalize_exog_strategy(
         return "auto"
     if exog_strategy is False:
         return False
-    if isinstance(exog_strategy, XReg):
-        return exog_strategy
     if not isinstance(exog_strategy, str):
         raise ValueError(
             f"Invalid exog_strategy type {type(exog_strategy)!r}. "
-            f"Use one of {sorted(_VALID_EXOG_STRATEGY_NAMES)}, False, or XReg(...)."
+            f"Use one of {sorted(_VALID_EXOG_STRATEGY_NAMES)} or False."
         )
     if exog_strategy not in _VALID_EXOG_STRATEGY_NAMES:
         raise ValueError(
             f"Invalid exog_strategy {exog_strategy!r}. "
-            f"Use one of {sorted(_VALID_EXOG_STRATEGY_NAMES)} or XReg(...)."
+            f"Use one of {sorted(_VALID_EXOG_STRATEGY_NAMES)} or False."
         )
+    if exog_strategy == "native":
+        return "auto"
     return exog_strategy
 
 
@@ -174,23 +161,3 @@ def validate_futr_exog_inputs(
             f"X_df must have exactly h={h} rows per unique_id. "
             f"Offending counts: {bad.to_dict()}"
         )
-
-
-def validate_exog_strategy_for_timegpt(exog_strategy: ExogStrategyName | XReg) -> None:
-    if isinstance(exog_strategy, XReg):
-        raise ValueError(
-            "TimeGPT does not support exog_strategy=XReg(...). "
-            "Use exog_strategy='auto' or 'native' with X_df at forecast time."
-        )
-
-
-def exog_strategy_requires_xreg(
-    exog_strategy: ExogStrategyName | XReg,
-    *,
-    supports_native: bool,
-) -> bool:
-    if isinstance(exog_strategy, XReg):
-        return True
-    if exog_strategy == "native":
-        return False
-    return not supports_native

@@ -3,19 +3,14 @@ import pandas as pd
 import pytest
 
 from foundationforecast.core.exog import (
-    XReg,
     infer_futr_exog_columns,
     normalize_exog_strategy,
     prepare_futr_exog_context,
     resolve_futr_exog_list,
     resolve_horizon_exog_df,
-    validate_exog_strategy_for_timegpt,
     validate_futr_exog_inputs,
 )
-from foundationforecast.core.exog.xreg import (
-    adjust_point_forecast_with_xreg,
-    merge_xreg_into_forecast_df,
-)
+from foundationforecast.models.chronos import Chronos
 from foundationforecast.models.tafsut import Tafsut
 
 
@@ -108,6 +103,10 @@ def test_normalize_exog_strategy_false():
     assert normalize_exog_strategy(False) is False  # type: ignore[arg-type]
 
 
+def test_normalize_exog_strategy_native_alias():
+    assert normalize_exog_strategy("native") == "auto"  # type: ignore[arg-type]
+
+
 def test_exog_strategy_false_ignores_x_df():
     df, X_df = _panel()
     model = Tafsut(exog_strategy=False)  # type: ignore[arg-type]
@@ -116,16 +115,15 @@ def test_exog_strategy_false_ignores_x_df():
     pd.testing.assert_frame_equal(u, v)
 
 
-def test_forecast_with_reversed_x_df_row_order():
+def test_prepare_futr_exog_context_sorts_reversed_x_df():
     df, X_df = _panel()
     X_df_rev = X_df.iloc[::-1].reset_index(drop=True)
-    model = Tafsut()
-    expected = model.forecast(df=df, h=3, freq="D", X_df=X_df)
-    actual = model.forecast(df=df, h=3, freq="D", X_df=X_df_rev)
-    pd.testing.assert_frame_equal(
-        expected.sort_values(["unique_id", "ds"]).reset_index(drop=True),
-        actual.sort_values(["unique_id", "ds"]).reset_index(drop=True),
+    model = Chronos(repo_id="amazon/chronos-2", alias="Chronos-2")
+    ctx = prepare_futr_exog_context(
+        model, df, 3, X_df=X_df_rev, futr_df=None, futr_exog_list=None
     )
+    assert ctx is not None
+    assert ctx.horizon_df["ds"].is_monotonic_increasing
 
 
 def test_validate_missing_series_in_x_df():
@@ -143,27 +141,6 @@ def test_validate_duplicate_horizon_keys():
         validate_futr_exog_inputs(df, 3, X_df, ["x1"])
 
 
-def test_xreg_adjusts_probabilistic_columns():
-    df, X_df = _panel()
-    point = np.array([1.0, 2.0, 3.0])
-    fcst = pd.DataFrame(
-        {
-            "unique_id": X_df["unique_id"],
-            "ds": X_df["ds"],
-            "Tafsut": point,
-            "Tafsut-lo-80": point - 0.5,
-            "Tafsut-hi-80": point + 0.5,
-        }
-    )
-    out = merge_xreg_into_forecast_df(
-        fcst, "Tafsut", df, X_df, ["x1"], h=3, xreg=XReg(fm_first=True)
-    )
-    delta = out["Tafsut"].to_numpy() - point
-    assert np.allclose(out["Tafsut-lo-80"].to_numpy(), fcst["Tafsut-lo-80"] + delta)
-    assert np.allclose(out["Tafsut-hi-80"].to_numpy(), fcst["Tafsut-hi-80"] + delta)
-    assert not np.allclose(delta, 0)
-
-
 def test_validate_wrong_h_per_series():
     df, X_df = _panel()
     X_df = X_df.iloc[:2]
@@ -171,52 +148,14 @@ def test_validate_wrong_h_per_series():
         validate_futr_exog_inputs(df, 3, X_df, ["x1"])
 
 
-def test_timegpt_rejects_xreg_strategy():
-    with pytest.raises(ValueError, match="TimeGPT"):
-        validate_exog_strategy_for_timegpt(XReg())
-
-
-def test_xreg_adjustment_depends_on_exog():
-    rng = np.random.default_rng(1)
-    n = 30
-    x_hist = rng.normal(size=(n, 1))
-    x_hor = rng.normal(size=(5, 1))
-    y = (x_hist @ np.array([[2.0]]) + rng.normal(scale=0.01, size=(n, 1))).ravel()
-    base = np.linspace(0, 1, 5)
-    out1 = adjust_point_forecast_with_xreg(
-        y_hist=y,
-        exog_hist=x_hist,
-        exog_horizon=x_hor,
-        baseline_horizon=base,
-        xreg=XReg(fm_first=True),
-    )
-    out2 = adjust_point_forecast_with_xreg(
-        y_hist=y,
-        exog_hist=x_hist,
-        exog_horizon=x_hor + 1.0,
-        baseline_horizon=base,
-        xreg=XReg(fm_first=True),
-    )
-    assert not np.allclose(out1, out2)
-
-
-@pytest.mark.slow
-def test_tafsut_xreg_forecast_changes_with_x_df():
+def test_non_native_auto_raises_with_x_df():
     df, X_df = _panel()
     model = Tafsut()
-    u = model.forecast(df=df, h=3, freq="D")
-    v = model.forecast(df=df, h=3, freq="D", X_df=X_df)
-    assert not np.allclose(u["Tafsut"].to_numpy(), v["Tafsut"].to_numpy())
-
-
-def test_tafsut_native_strategy_raises_with_x_df():
-    df, X_df = _panel()
-    model = Tafsut()
-    model.exog_strategy = "native"
-    with pytest.raises(ValueError, match="native"):
+    with pytest.raises(ValueError, match="does not support known-future"):
         model.forecast(df=df, h=3, freq="D", X_df=X_df)
 
 
+@pytest.mark.slow
 def test_cross_validation_reads_horizon_exog_from_df():
     from tests.helpers import (
         generate_panel_with_futr_exog,
@@ -228,7 +167,7 @@ def test_cross_validation_reads_horizon_exog_from_df():
         1, freq="D", h=h, min_length=32, max_length=32
     )
     panel = panel_with_futr_exog_horizon(df_hist, X_df)
-    model = Tafsut()
+    model = Chronos(repo_id="amazon/chronos-2", alias="Chronos-2")
     cv = model.cross_validation(
         df=panel, h=h, freq="D", n_windows=1, futr_exog_list=futr_exog_list
     )

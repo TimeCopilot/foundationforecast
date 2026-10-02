@@ -1,4 +1,3 @@
-from .exog import XReg
 from .forecaster import (
     ExogCapableForecaster,
     Forecaster,
@@ -26,7 +25,6 @@ from .utils import (
 __all__ = [
     "ExogCapableForecaster",
     "Forecaster",
-    "XReg",
     "FIXED_KNOT_QUANTILES_NOTE",
     "GluonTSForecaster",
     "MultiModelForecasterMixin",

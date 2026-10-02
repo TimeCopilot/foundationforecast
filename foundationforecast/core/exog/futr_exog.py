@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -7,28 +8,38 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from .covariates import (
-    XReg,
     exog_strategy_disabled,
-    exog_strategy_requires_xreg,
     normalize_exog_strategy,
     resolve_futr_exog_list,
     resolve_horizon_exog_df,
     sort_exog_panel,
-    validate_exog_strategy_for_timegpt,
     validate_futr_exog_inputs,
 )
-from .xreg import merge_xreg_into_forecast_df
 
 if TYPE_CHECKING:
     from ..forecaster import Forecaster
+
+logger = logging.getLogger(__name__)
+
+_FUTR_EXOG_DOC = "docs/exogenous-variables.md"
+
+
+def futr_exog_unsupported_message(forecaster: Forecaster) -> str:
+    name = type(forecaster).__name__
+    repo_id = getattr(forecaster, "repo_id", None)
+    if repo_id is not None:
+        name = f"{name} (repo_id={repo_id!r})"
+    return (
+        f"{name} does not support known-future exogenous variables for this "
+        f"checkpoint. See {_FUTR_EXOG_DOC} for native checkpoints, or set "
+        "exog_strategy=False to ignore X_df when using FoundationForecast."
+    )
 
 
 @dataclass(frozen=True)
 class FutrExogContext:
     horizon_df: pd.DataFrame
     futr_exog_list: list[str]
-    use_xreg: bool
-    xreg: XReg
 
 
 def prepare_futr_exog_context(
@@ -54,26 +65,14 @@ def prepare_futr_exog_context(
     validate_futr_exog_inputs(df, h, horizon_df, cols)
     horizon_df = sort_exog_panel(horizon_df)
 
-    if type(forecaster).__name__ == "TimeGPT":
-        validate_exog_strategy_for_timegpt(strategy)  # type: ignore[arg-type]
+    if not forecaster.supports_native_futr_exog():
+        msg = futr_exog_unsupported_message(forecaster)
+        logger.warning(msg)
+        raise ValueError(msg)
 
-    supports_native = forecaster.supports_native_futr_exog()
-    if strategy == "native" and not supports_native:
-        raise ValueError(
-            f"{type(forecaster).__name__} does not support native future-known "
-            "exogenous variables. Use exog_strategy='auto' or XReg(...)."
-        )
-
-    use_xreg = exog_strategy_requires_xreg(
-        strategy,  # type: ignore[arg-type]
-        supports_native=supports_native,
-    )
-    xreg = strategy if isinstance(strategy, XReg) else XReg()
     return FutrExogContext(
         horizon_df=horizon_df,
         futr_exog_list=cols,
-        use_xreg=use_xreg,
-        xreg=xreg,
     )
 
 
@@ -88,17 +87,7 @@ def dispatch_futr_exog_forecast(
     panel,
     univariate_forecast: Callable[[], pd.DataFrame],
 ) -> pd.DataFrame:
-    if ctx.use_xreg:
-        fcst = univariate_forecast()
-        return merge_xreg_into_forecast_df(
-            fcst,
-            forecaster.alias,
-            df,
-            ctx.horizon_df,
-            ctx.futr_exog_list,
-            h,
-            ctx.xreg,
-        )
+    _ = univariate_forecast
     native = forecaster._forecast_native_futr_exog(
         df=df,
         h=h,

@@ -149,7 +149,9 @@ def _assert_level_monotonicity(model, fcst_df, exp_lv_cols):
 
 @pytest.mark.parametrize("model", models)
 def test_exog_forecast_with_X_df(model):
-    """Every hub model in conftest accepts df + X_df for known-future exog."""
+    """Hub models with native futr exog accept df + X_df."""
+    if not model.supports_native_futr_exog():
+        pytest.skip("known-future exog requires native checkpoint support")
     h = 3
     n_series = 2
     df, X_df, futr_exog_list = generate_panel_with_futr_exog(
@@ -178,6 +180,8 @@ def test_exog_forecast_with_X_df(model):
 
 @pytest.mark.parametrize("model", models)
 def test_exog_using_quantiles(model):
+    if not model.supports_native_futr_exog():
+        pytest.skip("known-future exog requires native checkpoint support")
     h = 2
     n_series = 3
     df, X_df, futr_exog_list = generate_panel_with_futr_exog(
@@ -210,6 +214,8 @@ def test_exog_using_quantiles(model):
 
 @pytest.mark.parametrize("model", models)
 def test_exog_using_level(model):
+    if not model.supports_native_futr_exog():
+        pytest.skip("known-future exog requires native checkpoint support")
     h = 2
     n_series = 2
     df, X_df, futr_exog_list = generate_panel_with_futr_exog(
@@ -239,6 +245,8 @@ def test_exog_using_level(model):
 
 @pytest.mark.parametrize("model", models)
 def test_exog_cross_validation_using_level(model):
+    if not model.supports_native_futr_exog():
+        pytest.skip("known-future exog requires native checkpoint support")
     h = 2
     n_series = 2
     df_hist, X_df, futr_exog_list = generate_panel_with_futr_exog(
