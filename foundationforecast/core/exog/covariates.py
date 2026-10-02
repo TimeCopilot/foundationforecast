@@ -79,19 +79,34 @@ def infer_futr_exog_columns(horizon_df: pd.DataFrame) -> list[str]:
     return [c for c in horizon_df.columns if c not in META_COLS]
 
 
+def _validate_futr_exog_column_names(cols: list[str]) -> list[str]:
+    if not cols:
+        raise ValueError("futr_exog_list must name at least one exogenous column.")
+    reserved = [c for c in cols if c in META_COLS]
+    if reserved:
+        raise ValueError(
+            f"futr_exog_list must not include metadata columns "
+            f"{sorted(META_COLS)}; got {reserved}."
+        )
+    if len(cols) != len(set(cols)):
+        raise ValueError("futr_exog_list must not contain duplicate names.")
+    return list(cols)
+
+
 def resolve_exog_columns_from_df(
     df: pd.DataFrame,
     futr_exog_list: list[str] | None,
 ) -> list[str]:
     """Column names for known-future exog stored in ``df`` (history + horizon)."""
     if futr_exog_list is not None:
-        missing = [c for c in futr_exog_list if c not in df.columns]
+        cols = _validate_futr_exog_column_names(futr_exog_list)
+        missing = [c for c in cols if c not in df.columns]
         if missing:
             raise ValueError(
                 f"Exogenous columns missing from df: {missing}. "
                 "Include them through the end of each cross-validation fold."
             )
-        return list(futr_exog_list)
+        return cols
     return [c for c in df.columns if c not in META_COLS]
 
 
@@ -100,7 +115,11 @@ def resolve_futr_exog_list(
     futr_exog_list: list[str] | None,
 ) -> list[str]:
     if futr_exog_list is not None:
-        return list(futr_exog_list)
+        cols = _validate_futr_exog_column_names(futr_exog_list)
+        missing = [c for c in cols if c not in horizon_df.columns]
+        if missing:
+            raise ValueError(f"Exogenous columns missing from X_df: {missing}.")
+        return cols
     cols = infer_futr_exog_columns(horizon_df)
     if not cols:
         raise ValueError(

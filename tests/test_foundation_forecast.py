@@ -1,9 +1,10 @@
 import pandas as pd
 import pytest
+from utilsforecast.processing import make_future_dataframe
 
 from tests.helpers import DummyModel, generate_series
 from foundationforecast import FoundationForecast
-from foundationforecast.core.forecaster import ExogCapableForecaster
+from foundationforecast.core.forecaster import ExogCapableForecaster, Forecaster
 from foundationforecast.core.quantiles import quantile_column_name
 from foundationforecast.models.moirai import Moirai
 
@@ -135,7 +136,34 @@ def test_foundation_forecast_fallback_model():
     assert len(fcst_df) == 2
 
 
-def test_foundation_forecast_fallback_with_legacy_forecaster():
+def test_foundation_forecast_omits_exog_kwargs_for_legacy_signature():
+    """Forecaster without X_df kwargs works through FoundationForecast."""
+
+    class LegacySignatureModel(Forecaster):
+        alias = "LegacySignatureModel"
+
+        def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
+            _ = level, quantiles, panel
+            freq = self._maybe_infer_freq(df, freq)
+            last_times = df.groupby("unique_id")["ds"].max()
+            fcst = make_future_dataframe(
+                uids=last_times.index.tolist(),
+                last_times=last_times,
+                h=h,
+                freq=freq,
+            )
+            fcst[self.alias] = 0.0
+            return fcst
+
+    df = generate_series(n_series=1, freq="D", min_length=10)
+    fcst_df = FoundationForecast(models=[LegacySignatureModel()]).forecast(
+        df=df, h=2, freq="D"
+    )
+    assert "LegacySignatureModel" in fcst_df.columns
+    assert len(fcst_df) == 2
+
+
+def test_foundation_forecast_fallback_with_exog_capable_forecaster():
     class LegacyFailingModel(ExogCapableForecaster):
         alias = "LegacyFailingModel"
 

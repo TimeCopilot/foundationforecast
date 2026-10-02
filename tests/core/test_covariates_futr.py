@@ -7,6 +7,7 @@ from foundationforecast.core.exog import (
     infer_futr_exog_columns,
     normalize_exog_strategy,
     prepare_futr_exog_context,
+    resolve_futr_exog_list,
     resolve_horizon_exog_df,
     validate_exog_strategy_for_timegpt,
     validate_futr_exog_inputs,
@@ -79,6 +80,18 @@ def test_futr_exog_list_without_x_df_raises():
 def test_validate_futr_exog_inputs():
     df, X_df = _panel()
     validate_futr_exog_inputs(df, 3, X_df, ["x1"])
+
+
+def test_futr_exog_list_rejects_metadata_columns():
+    df, X_df = _panel()
+    with pytest.raises(ValueError, match="metadata columns"):
+        resolve_futr_exog_list(X_df, ["y"])
+
+
+def test_futr_exog_list_rejects_empty():
+    df, X_df = _panel()
+    with pytest.raises(ValueError, match="at least one"):
+        resolve_futr_exog_list(X_df, [])
 
 
 def test_normalize_exog_strategy_rejects_typos():

@@ -11,8 +11,9 @@ horizon. Iteration 1 supports **future-known dynamic** covariates only.
 - **`X_df`**: `unique_id`, `ds`, exog columns for the **next `h` steps** (no `y`). Used by
   **`forecast()`** only.
 - Alias: **`futr_df`** = same as **`X_df`** on **`forecast()`**.
-- **`futr_exog_list`** (optional): column names. On **`forecast()`**, infer from `X_df` if
-  omitted. On **`cross_validation()`**, infer from non-target columns in `df` if omitted.
+- **`futr_exog_list`** (optional): exog column names only (not `unique_id`, `ds`, or `y`).
+  On **`forecast()`**, infer from `X_df` if omitted. On **`cross_validation()`**, infer
+  from non-target columns in `df` if omitted.
 
 ## Model constructor: `exog_strategy`
 
