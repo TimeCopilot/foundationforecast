@@ -1,0 +1,15 @@
+# Must match is_known_dynamic_only() on fev-bench tasks.yaml (n=13).
+task_names:
+  - entsoe_15T
+  - entsoe_30T
+  - entsoe_1H
+  - epf_be
+  - epf_de
+  - epf_fr
+  - epf_np
+  - epf_pjm
+  - proenfo_gfc12
+  - proenfo_gfc14
+  - proenfo_gfc17
+  - uci_air_quality_1D
+  - uci_air_quality_1H

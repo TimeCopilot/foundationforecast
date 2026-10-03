@@ -1,0 +1,21 @@
+# Each native-exog model: one univariate task (epf_pjm) + one panel (entsoe_1H).
+jobs:
+  - model_key: amazon--chronos-2
+    task_name: epf_pjm
+  - model_key: amazon--chronos-2
+    task_name: entsoe_1H
+
+  - model_key: google--timesfm-3.0-pytorch
+    task_name: epf_pjm
+  - model_key: google--timesfm-3.0-pytorch
+    task_name: entsoe_1H
+
+  - model_key: theforecastingcompany--t0-beta
+    task_name: epf_pjm
+  - model_key: theforecastingcompany--t0-beta
+    task_name: entsoe_1H
+
+  - model_key: NX-AI--TiRex-2
+    task_name: epf_pjm
+  - model_key: NX-AI--TiRex-2
+    task_name: entsoe_1H

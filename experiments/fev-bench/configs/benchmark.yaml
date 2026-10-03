@@ -1,0 +1,2 @@
+tasks_url: https://raw.githubusercontent.com/autogluon/fev/main/benchmarks/fev_bench/tasks.yaml
+covariate_subset: known_dynamic_only
