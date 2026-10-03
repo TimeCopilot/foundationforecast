@@ -14,6 +14,7 @@ models:
     kwargs:
       repo_id: google/timesfm-3.0-pytorch
       alias: TimesFM-3
+      context_length: 15360
       batch_size: 64
 
   theforecastingcompany--t0-beta:
