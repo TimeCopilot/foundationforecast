@@ -56,7 +56,7 @@ ff.plot(df=df, forecasts_df=fcst_df)
 ```
 
 <p align="center">
-  <img src="https://timecopilot.s3.amazonaws.com/public/data/entsoe_4markets_quick_example.png" alt="Example ff.plot output: four ENTSO-E markets with Chronos and Toto forecasts" width="900">
+  <img src="https://timecopilot.s3.amazonaws.com/public/data/images/entsoe_4markets_quick_example.png" alt="Example ff.plot output: four ENTSO-E markets with Chronos and Toto forecasts" width="900">
 </p>
 
 Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results, ensure `ds` is a proper datetime dtype (e.g., pass `parse_dates=["ds"]` when reading) or an ISO-8601 string so sorting is correct; cross-validation/anomaly detection will also convert `ds` to datetime internally where needed. If you omit `freq`, it is inferred from regular timestamps in `ds` (pass `freq=` when intervals are irregular).
@@ -170,6 +170,34 @@ Optional plotting support:
 uv add "foundationforecast[plot]"
 # or: pip install "foundationforecast[plot]"
 ```
+
+---
+
+## Exogenous variables
+
+```python
+import pandas as pd
+from foundationforecast import FoundationForecast
+from foundationforecast.models import Chronos, TimesFM
+
+DATA = "https://timecopilot.s3.amazonaws.com/public/data/electricity_price"
+df = pd.read_parquet(f"{DATA}/train.parquet")
+X_df = pd.read_parquet(f"{DATA}/futr_exog.parquet")
+
+ff = FoundationForecast(
+    models=[
+        Chronos(repo_id="amazon/chronos-2", alias="Chronos-2"),
+        TimesFM(repo_id="google/timesfm-3.0-pytorch", alias="TimesFM-3"),
+    ]
+)
+
+fcst_df = ff.forecast(df=df, h=24, X_df=X_df, level=[90])
+ff.plot(df=df, forecasts_df=fcst_df)
+```
+
+<p align="center">
+  <img src="https://timecopilot.s3.amazonaws.com/public/data/images/electricity_price_quick_example.png" alt="Example ff.plot with X_df: EPF markets, Chronos-2 and TimesFM-3 forecasts" width="900">
+</p>
 
 ---
 
