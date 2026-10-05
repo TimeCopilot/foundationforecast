@@ -31,8 +31,6 @@ Developed with 💙 by the [TimeCopilot](https://timecopilot.dev/) crew.
 
 ## Quick example
 
-Four hourly electricity series (**DE**, **BE**, **NL**, **AT**) from a subset of the fev-bench [`entsoe_1H`](https://arxiv.org/abs/2509.26468) task (`autogluon/fev_datasets`):
-
 ```python
 import pandas as pd
 from foundationforecast import FoundationForecast
