@@ -10,7 +10,7 @@ src/
 ├── verify/     HF reference loading and replication checks
 └── runners/    CLI and Modal entrypoints
 tests/          pytest replication checks (imports src.verify)
-configs/        models.yaml (full matrix) and ci_subset.yaml (CI)
+configs/        models.yaml (full matrix), ci_subset.yaml (CI), replication/ (notebook-aligned)
 ```
 
 ## Setup
@@ -68,6 +68,38 @@ already have outputs.
 uv run modal run -m src.runners.run_modal::run_ci
 make sync-ci-results   # download results for local verify / pytest
 uv run pytest tests/test_replication.py -n 0 -x
+```
+
+## Replication run (notebook-aligned, one model per family)
+
+[`configs/replication/`](configs/replication/) holds **9 families** with params traced to
+[official gift-eval notebooks](https://github.com/SalesforceAIResearch/gift-eval/tree/main/notebooks).
+Results go to **`s3://foundationforecast-gift-eval/results/replication/<run_id>/`**
+(not `results/` or `results/ci/`).
+
+1. Pick a run id, e.g. `2026-04-05-nb-v1`.
+2. **Pilot** (9 jobs: `m4_weekly` / `short`):
+
+```bash
+uv run modal run -m src.runners.run_modal::run_replication_pilot --run-id 2026-04-05-nb-v1
+make sync-replication RUN_ID=2026-04-05-nb-v1
+make verify-replication-pilot RUN_ID=2026-04-05-nb-v1
+```
+
+3. After pilot verify passes, **full grid** (9 × 97 jobs):
+
+```bash
+uv run modal run -m src.runners.run_modal::run_replication_full --run-id 2026-04-05-nb-v1
+make verify-replication-full RUN_ID=2026-04-05-nb-v1
+```
+
+Local single job with replication registry:
+
+```bash
+uv run python -m src.runners.run_model --replication \
+  --model-key google--timesfm-3.0-pytorch \
+  --dataset-name m4_weekly --term short \
+  --output-root ./results/replication/local-test
 ```
 
 ## Full benchmark grid (Modal)

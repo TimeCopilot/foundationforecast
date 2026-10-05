@@ -79,6 +79,10 @@ S3_RESULTS_PREFIX = "results"
 S3_CI_RESULTS_PREFIX = "results/ci"
 
 
+def replication_s3_prefix(run_id: str) -> str:
+    return f"results/replication/{run_id}"
+
+
 @app.function(
     image=image,
     volumes=volume,
@@ -94,6 +98,7 @@ def run_gift_eval_modal(
     storage_path: str = "/s3-bucket/data/gift-eval",
     output_root: str = "/s3-bucket/results",
     force: bool = False,
+    registry: str = "default",
 ) -> None:
     import logging
     from pathlib import Path
@@ -114,6 +119,7 @@ def run_gift_eval_modal(
         storage_path=storage_path,
         output_root=Path(output_root),
         overwrite_results=force,
+        registry=registry,  # type: ignore[arg-type]
     )
 
 
@@ -127,13 +133,14 @@ def _dispatch_jobs(
     storage_path: str,
     output_root: str,
     force: bool,
+    registry: str = "default",
 ) -> None:
     logging.basicConfig(level=logging.INFO)
     if not jobs:
         logging.info("No jobs to run")
         return
     args = [
-        (*job_tuple, storage_path, output_root, force)
+        (*job_tuple, storage_path, output_root, force, registry)
         for job_tuple in _job_tuples(jobs)
     ]
     results = list(
@@ -254,4 +261,56 @@ def run_missing_timing() -> None:
         storage_path="/s3-bucket/data/gift-eval",
         output_root=f"/s3-bucket/{S3_RESULTS_PREFIX}",
         force=True,
+    )
+
+
+@app.local_entrypoint()
+def run_replication_pilot(run_id: str, force: bool = True) -> None:
+    from src.eval.jobs import load_replication_pilot_jobs
+
+    prefix = replication_s3_prefix(run_id)
+    jobs = load_replication_pilot_jobs()
+    logging.info(
+        "Replication pilot: %s jobs → s3://%s/%s",
+        len(jobs),
+        S3_BUCKET,
+        prefix,
+    )
+    _dispatch_jobs(
+        jobs,
+        storage_path="/s3-bucket/data/gift-eval",
+        output_root=f"/s3-bucket/{prefix}",
+        force=force,
+        registry="replication",
+    )
+
+
+@app.local_entrypoint()
+def run_replication_full(run_id: str, force: bool = False) -> None:
+    from src.eval.jobs import load_replication_matrix
+
+    prefix = replication_s3_prefix(run_id)
+    jobs = load_replication_matrix()
+    if force:
+        selected = jobs
+    else:
+        selected = _jobs_from_s3(
+            jobs,
+            bucket=S3_BUCKET,
+            prefix=prefix,
+            mode="missing",
+        )
+    logging.info(
+        "Replication full grid: %s jobs (force=%s) → s3://%s/%s",
+        len(selected),
+        force,
+        S3_BUCKET,
+        prefix,
+    )
+    _dispatch_jobs(
+        selected,
+        storage_path="/s3-bucket/data/gift-eval",
+        output_root=f"/s3-bucket/{prefix}",
+        force=force,
+        registry="replication",
     )

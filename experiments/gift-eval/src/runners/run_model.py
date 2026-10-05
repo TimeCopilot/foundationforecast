@@ -26,9 +26,21 @@ def main(
         Path,
         typer.Option(help="Path to downloaded GIFT-Eval dataset"),
     ] = Path("data/gift-eval"),
+    replication: Annotated[
+        bool,
+        typer.Option(
+            help="Use configs/replication/models.yaml (notebook-aligned params)"
+        ),
+    ] = False,
 ) -> None:
     job = Job(model_key=model_key, dataset_name=dataset_name, term=term)
-    run_gift_eval(job, storage_path=storage_path, output_root=output_root)
+    registry = "replication" if replication else "default"
+    run_gift_eval(
+        job,
+        storage_path=storage_path,
+        output_root=output_root,
+        registry=registry,  # type: ignore[arg-type]
+    )
 
 
 if __name__ == "__main__":

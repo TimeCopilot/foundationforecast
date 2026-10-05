@@ -8,7 +8,10 @@ import yaml
 from timecopilot_gift_eval.utils import DATASETS_WITH_TERMS
 
 CONFIGS_DIR = Path(__file__).resolve().parents[2] / "configs"
+REPLICATION_CONFIGS_DIR = CONFIGS_DIR / "replication"
 DEFAULT_RESULTS_ROOT = Path("results")
+REPLICATION_PILOT_DATASET = "m4_weekly"
+REPLICATION_PILOT_TERM = "short"
 
 
 @dataclass(frozen=True)
@@ -26,6 +29,48 @@ def _load_yaml(path: Path) -> dict:
 @lru_cache
 def load_models_config() -> dict:
     return _load_yaml(CONFIGS_DIR / "models.yaml")["models"]
+
+
+@lru_cache
+def load_replication_models_config() -> dict:
+    return _load_yaml(REPLICATION_CONFIGS_DIR / "models.yaml")["models"]
+
+
+def load_models_config_for_registry(registry: str) -> dict:
+    if registry == "default":
+        return load_models_config()
+    if registry == "replication":
+        return load_replication_models_config()
+    raise ValueError(f"Unknown registry {registry!r}")
+
+
+@lru_cache
+def load_replication_families() -> tuple[str, ...]:
+    raw = _load_yaml(REPLICATION_CONFIGS_DIR / "families.yaml")["model_keys"]
+    return tuple(raw)
+
+
+def load_replication_pilot_jobs() -> list[Job]:
+    return [
+        Job(
+            model_key=model_key,
+            dataset_name=REPLICATION_PILOT_DATASET,
+            term=REPLICATION_PILOT_TERM,
+        )
+        for model_key in load_replication_families()
+    ]
+
+
+def load_replication_matrix() -> list[Job]:
+    return [
+        Job(model_key=model_key, dataset_name=dataset_name, term=term)
+        for model_key in load_replication_families()
+        for dataset_name, term in DATASETS_WITH_TERMS
+    ]
+
+
+def replication_output_root(run_id: str) -> Path:
+    return DEFAULT_RESULTS_ROOT / "replication" / run_id
 
 
 def load_ci_subset() -> list[Job]:

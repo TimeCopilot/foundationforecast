@@ -1,0 +1,30 @@
+# Official GIFT-Eval replication notebooks (SalesforceAIResearch/gift-eval).
+# HF results: https://huggingface.co/spaces/Salesforce/GIFT-Eval/tree/main/results/{reference_slug}
+sources:
+  amazon--chronos-2:
+    notebook: notebooks/chronos-2.ipynb
+    reference_slug: Chronos-2
+  google--timesfm-3.0-pytorch:
+    notebook: notebooks/timesfm3.ipynb
+    reference_slug: TimesFM-3
+  Salesforce--moirai-2.0-R-small:
+    notebook: notebooks/moirai2.ipynb
+    reference_slug: Moirai2
+  Datadog--Toto-2.0-313m:
+    notebook: notebooks/toto_2_0.ipynb
+    reference_slug: Toto-2.0-313m
+  NX-AI--TiRex-2-gifteval-zs:
+    notebook: notebooks/tirex-2.ipynb
+    reference_slug: TiRex-2-Zeroshot
+  ibm-granite--granite-timeseries-flowstate-r1:
+    notebook: notebooks/flowstate.ipynb
+    reference_slug: Granite-FlowState-r1.1
+  ibm-granite--granite-timeseries-patchtst-fm-r2:
+    notebook: notebooks/patchtst_fm_r2.ipynb
+    reference_slug: Granite-PatchTST-FM-r2
+  theforecastingcompany--t0-beta:
+    notebook: notebooks/t0-beta.ipynb
+    reference_slug: t0-beta
+  tafsut-univariate-base:
+    notebook: notebooks/tafsut.ipynb
+    reference_slug: tafsut

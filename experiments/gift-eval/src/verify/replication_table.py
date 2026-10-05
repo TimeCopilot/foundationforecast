@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.eval.models import reference_slug
+from src.eval.models import Registry, reference_slug
 from src.verify.reference import CRPS_COL, MASE_COL, load_reference_results
 
 logger = logging.getLogger(__name__)
@@ -48,12 +48,14 @@ def load_timing_map(model_key: str, output_root: Path) -> dict[str, float]:
 def build_replication_table(
     model_keys: list[str],
     output_root: Path,
+    *,
+    registry: Registry = "default",
 ) -> pd.DataFrame:
     from src.verify.verify import load_actual_results
 
     rows: list[dict] = []
     for model_key in model_keys:
-        slug = reference_slug(model_key)
+        slug = reference_slug(model_key, registry=registry)
         if slug is None:
             logger.warning("Skipping %s: no reference_slug", model_key)
             continue
@@ -105,8 +107,10 @@ def write_replication_table(
     model_keys: list[str],
     output_root: Path,
     table_path: Path,
+    *,
+    registry: Registry = "default",
 ) -> pd.DataFrame:
-    table = build_replication_table(model_keys, output_root)
+    table = build_replication_table(model_keys, output_root, registry=registry)
     table_path.parent.mkdir(parents=True, exist_ok=True)
     table.to_csv(table_path, index=False)
     logger.info("Wrote replication table (%s rows) to %s", len(table), table_path)
