@@ -21,9 +21,9 @@ Forecasting and time series have entered their foundation era. But, just like in
 
 The world already uses different LLMs for different use cases. We're seeing the same thing in forecasting: there is no single model that dominates everywhere. Results change with the data distribution and forecasting horizon, as we've seen in [Impermanent](https://github.com/TimeCopilot/impermanent) and other benchmarks such as [GIFT-Eval](https://huggingface.co/spaces/Salesforce/GIFT-Eval) and [FEV](https://arxiv.org/abs/2509.26468).
 
-At the same time, every lab also ships its own API, dependencies, data conventions, and learning curve. That fragmentation makes foundation models hard to compare fairly, and even harder to use together in production.
+At the same time, every lab also ships its own API, dependencies, data conventions, and learning curve. That fragmentation makes foundation models hard to compare fairly, and even harder to use together in production—especially when you need **exogenous variables** (covariates): holidays, prices, weather, or other features known over the forecast horizon, each with its own input format.
 
-**FoundationForecast** removes that friction: one `FoundationForecast` class, one data format, and the same methods: `forecast`, `cross_validation`, and `detect_anomalies`, across time series foundation models. ✨
+**FoundationForecast** removes that friction: one `FoundationForecast` class, one data format, and the same methods: `forecast`, `cross_validation`, and `detect_anomalies`, across time series foundation models—including **`X_df`** for known-future covariates on supported checkpoints. ✨
 
 Developed with 💙 by the [TimeCopilot](https://timecopilot.dev/) crew.
 
@@ -42,18 +42,19 @@ df = pd.read_csv(
 
 ff = FoundationForecast(models=[Chronos(), Toto(context_length=256)])
 
-fcst_df = ff.forecast(df, h=12, freq="MS", level=[90])
-cv_df = ff.cross_validation(df, h=12, freq="MS", level=[90])
-anomalies_df = ff.detect_anomalies(df, freq="MS", level=99)
+fcst_df = ff.forecast(df, h=12, level=[90])
+cv_df = ff.cross_validation(df, h=12, level=[90])
+anomalies_df = ff.detect_anomalies(df, level=99)
 ```
 
-Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results, ensure `ds` is a proper datetime dtype (e.g., pass `parse_dates=["ds"]` when reading) or an ISO-8601 string so sorting is correct; cross-validation/anomaly detection will also convert `ds` to datetime internally where needed.
+Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results, ensure `ds` is a proper datetime dtype (e.g., pass `parse_dates=["ds"]` when reading) or an ISO-8601 string so sorting is correct; cross-validation/anomaly detection will also convert `ds` to datetime internally where needed. If you omit `freq`, it is inferred from regular timestamps in `ds` (pass `freq=` when intervals are irregular).
 
 ---
 
 ## Highlights
 
-- 🎯 **Reproducible by design.** FoundationForecast implementations are regression-tested against [official GIFT-Eval submissions](https://huggingface.co/spaces/Salesforce/GIFT-Eval) to ensure they continue to reproduce their benchmark behavior. [CI](https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml) automatically re-runs [`experiments/gift-eval`](experiments/gift-eval) on Modal GPU and verifies MASE and CRPS against Hugging Face reference CSVs for every change.
+- 📈 **Exogenous variables (covariates).** Pass known-future features with **`X_df`** on `forecast()` (and exog columns in `df` for `cross_validation()`). Native support on Chronos-2, TimesFM-3, TimeGPT, T0, and TiRex-2; see [Exogenous variables](docs/exogenous-variables.md) and the [example notebook](docs/examples/exogenous-variables.ipynb).
+- 🎯 **Benchmark replication in CI.** Wrappers are regression-tested against official leaderboard submissions: [`experiments/gift-eval`](experiments/gift-eval) (GIFT-Eval MASE/CRPS on Modal GPU) and [`experiments/fev-bench`](experiments/fev-bench) (fev-bench `test_error` on known-dynamic tasks). [CI](https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml) re-runs these checks on every change.
 - 🚀 **GPU-native**. Automatically runs on GPU when available, without model-specific device configuration.
 
 ---
