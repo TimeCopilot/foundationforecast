@@ -54,6 +54,9 @@ ff = FoundationForecast(
 fcst_df = ff.forecast(df, h=24, level=[90])
 
 plt.style.use("dark_background")
+plt.rcParams["axes.prop_cycle"] = plt.cycler(
+    color=["#64748b", "#facc15", "#f472b6"]  # history, Chronos, Toto
+)
 ff.plot(
     df=df,
     forecasts_df=fcst_df,
@@ -61,7 +64,7 @@ ff.plot(
     plot_random=False,
     models=["Chronos", "Toto"],
     level=[90],
-    max_insample_length=24 * 14,
+    max_insample_length=24 * 4,
 )
 ```
 
