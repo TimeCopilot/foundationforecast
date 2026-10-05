@@ -173,7 +173,7 @@ uv add "foundationforecast[plot]"
 
 ---
 
-## Exogenous variables
+## Exogenous variables quick example
 
 ```python
 import pandas as pd
