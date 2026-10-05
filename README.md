@@ -31,21 +31,43 @@ Developed with 💙 by the [TimeCopilot](https://timecopilot.dev/) crew.
 
 ## Quick example
 
+Four hourly electricity series (**DE**, **BE**, **NL**, **AT**) from a subset of the fev-bench [`entsoe_1H`](https://arxiv.org/abs/2509.26468) task (`autogluon/fev_datasets`):
+
 ```python
+import matplotlib.pyplot as plt
 import pandas as pd
 from foundationforecast import FoundationForecast
 from foundationforecast.models import Chronos, Toto
 
 df = pd.read_csv(
-    "https://timecopilot.s3.amazonaws.com/public/data/air_passengers.csv",
+    "https://raw.githubusercontent.com/TimeCopilot/foundationforecast/main/docs/assets/data/entsoe_4markets_8w.csv",
+    parse_dates=["ds"],
 )
 
-ff = FoundationForecast(models=[Chronos(), Toto(context_length=256)])
+ff = FoundationForecast(
+    models=[
+        Chronos(repo_id="amazon/chronos-bolt-tiny", alias="Chronos"),
+        Toto(context_length=512, alias="Toto"),
+    ]
+)
 
-fcst_df = ff.forecast(df, h=12, level=[90])
-cv_df = ff.cross_validation(df, h=12, level=[90])
-anomalies_df = ff.detect_anomalies(df, level=99)
+fcst_df = ff.forecast(df, h=24, level=[90])
+
+plt.style.use("dark_background")
+ff.plot(
+    df=df,
+    forecasts_df=fcst_df,
+    ids=["DE", "BE", "NL", "AT"],
+    plot_random=False,
+    models=["Chronos", "Toto"],
+    level=[90],
+    max_insample_length=24 * 14,
+)
 ```
+
+<p align="center">
+  <img src="docs/assets/readme/quick-example-forecast.png" alt="FoundationForecast quick example: four ENTSO-E markets with Chronos and Toto forecasts" width="900">
+</p>
 
 Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results, ensure `ds` is a proper datetime dtype (e.g., pass `parse_dates=["ds"]` when reading) or an ISO-8601 string so sorting is correct; cross-validation/anomaly detection will also convert `ds` to datetime internally where needed. If you omit `freq`, it is inferred from regular timestamps in `ds` (pass `freq=` when intervals are irregular).
 
