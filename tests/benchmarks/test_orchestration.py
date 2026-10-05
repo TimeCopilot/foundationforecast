@@ -1,22 +1,24 @@
 import pytest
 
 from foundationforecast import FoundationForecast
-from foundationforecast.core.forecaster import Forecaster
+from foundationforecast.core.forecaster import ExogCapableForecaster, Forecaster
 from foundationforecast.core.utils import TimeSeriesDataset
 
 pytestmark = pytest.mark.benchmark
 
 
-class DatasetTouchingModel(Forecaster):
+class DatasetTouchingModel(ExogCapableForecaster):
     """Lightweight model that exercises dataset construction like real forecasters."""
 
     batch_size = 32
 
     def __init__(self, alias: str = "DatasetTouch"):
+        super().__init__()
         self.alias = alias
 
-    def forecast(self, df, h, freq=None, level=None, quantiles=None, **kwargs):
-        panel = kwargs.get("panel")
+    def _forecast_univariate(
+        self, df, h, freq=None, level=None, quantiles=None, panel=None
+    ):
         ds_kwargs = {"df": df, "batch_size": self.batch_size}
         if panel is not None:
             ds_kwargs["panel"] = panel

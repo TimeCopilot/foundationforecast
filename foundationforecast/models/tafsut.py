@@ -7,12 +7,13 @@ from tafsut import TafsutModel
 from tafsut import forecast as tafsut_forecast
 from tqdm import tqdm
 
-from ..core.forecaster import Forecaster, QuantileConverter, _DataProcessor
+from ..core.exog.covariates import ExogStrategyConfig
+from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
 
 
-class Tafsut(Forecaster, _DataProcessor):
+class Tafsut(ExogCapableForecaster, _DataProcessor):
     """
     Tafsut is a zero-shot probabilistic univariate time series foundation model.
     It uses a patch-based transformer encoder to produce nine forecast quantiles
@@ -29,6 +30,7 @@ class Tafsut(Forecaster, _DataProcessor):
         batch_size: int = 64,
         alias: str = "Tafsut",
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         """
         Initialize Tafsut time series foundation model.
@@ -66,7 +68,10 @@ class Tafsut(Forecaster, _DataProcessor):
             - Missing values in the context are handled natively via NaN.
             - Univariate only; no covariates or cross-series structure.
         """
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.context_length = context_length
         self.batch_size = batch_size
@@ -134,7 +139,7 @@ class Tafsut(Forecaster, _DataProcessor):
             fcsts_quantiles_np = None
         return fcsts_mean_np, fcsts_quantiles_np
 
-    def forecast(
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,

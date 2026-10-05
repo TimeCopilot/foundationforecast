@@ -1,9 +1,10 @@
 import pandas as pd
 import pytest
+from utilsforecast.processing import make_future_dataframe
 
-from tests.helpers import DummyModel, generate_series
+from tests.helpers import DummyModel, generate_panel_with_futr_exog, generate_series
 from foundationforecast import FoundationForecast
-from foundationforecast.core.forecaster import Forecaster
+from foundationforecast.core.forecaster import ExogCapableForecaster, Forecaster
 from foundationforecast.core.quantiles import quantile_column_name
 from foundationforecast.models.moirai import Moirai
 
@@ -99,17 +100,21 @@ def test_foundation_forecast_forecast_with_quantiles(models):
 
 
 def test_foundation_forecast_fallback_model():
-    class FailingModel(Forecaster):
+    class FailingModel(ExogCapableForecaster):
         alias = "FailingModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
-            _ = panel
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
+            _ = df, h, freq, level, quantiles, panel
             raise RuntimeError("Intentional failure")
 
-    class FallbackModel(Forecaster):
+    class FallbackModel(ExogCapableForecaster):
         alias = "FallbackModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
             _ = panel
             n = len(df["unique_id"].unique()) * h
             return pd.DataFrame(
@@ -131,17 +136,50 @@ def test_foundation_forecast_fallback_model():
     assert len(fcst_df) == 2
 
 
-def test_foundation_forecast_fallback_with_legacy_forecaster():
-    class LegacyFailingModel(Forecaster):
+def test_foundation_forecast_omits_exog_kwargs_for_legacy_signature():
+    """Forecaster without X_df kwargs works through FoundationForecast."""
+
+    class LegacySignatureModel(Forecaster):
+        alias = "LegacySignatureModel"
+
+        def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
+            _ = level, quantiles, panel
+            freq = self._maybe_infer_freq(df, freq)
+            last_times = df.groupby("unique_id")["ds"].max()
+            fcst = make_future_dataframe(
+                uids=last_times.index.tolist(),
+                last_times=last_times,
+                h=h,
+                freq=freq,
+            )
+            fcst[self.alias] = 0.0
+            return fcst
+
+    df = generate_series(n_series=1, freq="D", min_length=10)
+    fcst_df = FoundationForecast(models=[LegacySignatureModel()]).forecast(
+        df=df, h=2, freq="D"
+    )
+    assert "LegacySignatureModel" in fcst_df.columns
+    assert len(fcst_df) == 2
+
+
+def test_foundation_forecast_fallback_with_exog_capable_forecaster():
+    class LegacyFailingModel(ExogCapableForecaster):
         alias = "LegacyFailingModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None):
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
+            _ = df, h, freq, level, quantiles, panel
             raise RuntimeError("Intentional failure")
 
-    class LegacyFallbackModel(Forecaster):
+    class LegacyFallbackModel(ExogCapableForecaster):
         alias = "LegacyFallbackModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None):
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
+            _ = panel
             n = len(df["unique_id"].unique()) * h
             return pd.DataFrame(
                 {
@@ -162,11 +200,13 @@ def test_foundation_forecast_fallback_with_legacy_forecaster():
 
 
 def test_foundation_forecast_no_fallback_raises():
-    class FailingModel(Forecaster):
+    class FailingModel(ExogCapableForecaster):
         alias = "FailingModel"
 
-        def forecast(self, df, h, freq=None, level=None, quantiles=None, panel=None):
-            _ = panel
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
+            _ = df, h, freq, level, quantiles, panel
             raise RuntimeError("Intentional failure")
 
     df = generate_series(n_series=1, freq="D", min_length=10)
@@ -230,3 +270,41 @@ def test_foundation_forecast_validates_input():
     forecaster = FoundationForecast(models=[DummyModel()])
     with pytest.raises(ValueError, match="h must be a positive integer"):
         forecaster.forecast(df=df, h=0, freq="D")
+
+
+def test_foundation_forecast_validates_exog_before_fallback():
+    class NonNativeExogModel(ExogCapableForecaster):
+        alias = "NonNativeExogModel"
+
+        def supports_native_futr_exog(self) -> bool:
+            return False
+
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
+            _ = df, h, freq, level, quantiles, panel
+            raise RuntimeError("should not run")
+
+    class FallbackModel(ExogCapableForecaster):
+        alias = "FallbackModel"
+
+        def _forecast_univariate(
+            self, df, h, freq=None, level=None, quantiles=None, panel=None
+        ):
+            _ = panel
+            n = len(df["unique_id"].unique()) * h
+            return pd.DataFrame(
+                {
+                    "unique_id": ["A"] * n,
+                    "ds": pd.date_range("2020-01-01", periods=n, freq="D"),
+                    "FallbackModel": range(n),
+                }
+            )
+
+    df, X_df, _ = generate_panel_with_futr_exog(n_series=1, freq="D", h=3)
+    forecaster = FoundationForecast(
+        models=[NonNativeExogModel()],
+        fallback_model=FallbackModel(),
+    )
+    with pytest.raises(ValueError, match="does not support known-future"):
+        forecaster.forecast(df=df, h=3, freq="D", X_df=X_df)

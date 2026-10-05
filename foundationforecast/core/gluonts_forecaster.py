@@ -12,7 +12,8 @@ from gluonts.torch.model.predictor import PyTorchPredictor
 from huggingface_hub import hf_hub_download
 from utilsforecast.processing import make_future_dataframe
 
-from .forecaster import Forecaster, QuantileConverter
+from .exog.covariates import ExogStrategyConfig
+from .forecaster import ExogCapableForecaster, QuantileConverter
 from .quantiles import assert_unique_quantile_column_names, quantile_column_name
 from .utils import PanelData, process_panel_from_df
 
@@ -32,7 +33,7 @@ def maybe_convert_col_to_float32(df: pd.DataFrame, col_name: str) -> pd.DataFram
     return df
 
 
-class GluonTSForecaster(Forecaster):
+class GluonTSForecaster(ExogCapableForecaster):
     def __init__(
         self,
         repo_id: str,
@@ -41,8 +42,12 @@ class GluonTSForecaster(Forecaster):
         num_samples: int = 100,
         *,
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.filename = filename
         self.alias = alias
@@ -153,7 +158,7 @@ class GluonTSForecaster(Forecaster):
                 fcst_df = ufp.assign_columns(fcst_df, q_col, q_val)
         return fcst_df
 
-    def forecast(
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,

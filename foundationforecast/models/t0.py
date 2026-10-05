@@ -13,7 +13,8 @@ from huggingface_hub.constants import CONFIG_NAME
 from t0 import T0Forecaster
 from tqdm import tqdm
 
-from ..core.forecaster import Forecaster, QuantileConverter
+from ..core.exog.covariates import ExogStrategyConfig
+from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import (
     T0_ALPHA_QUANTILE_RANGE,
     T0_BETA_QUANTILE_RANGE,
@@ -23,7 +24,7 @@ from ..core.quantiles import (
 from ..core.utils import PanelData
 
 
-class T0(Forecaster):
+class T0(ExogCapableForecaster):
     """
     T0 is an open-weights time series foundation model from
     [The Forecasting Company](https://theforecastingcompany.com/). It is a
@@ -44,6 +45,7 @@ class T0(Forecaster):
         batch_size: int = 16,
         alias: str = "t0-alpha",
         reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
     ):
         # ruff: noqa: E501
         """
@@ -90,11 +92,13 @@ class T0(Forecaster):
               ``t0-beta`` predicts 21 native levels (0.01–0.99). Requested
               quantiles are interpolated; the median (0.5) is the point forecast.
             - NaN values in the context are treated as missing observations.
-            - T0 natively supports past and known-future covariates through its
-              `predict` API; this integration currently exposes the univariate
-              path only.
+            - Known-future exogenous variables are passed via ``X_df`` at forecast
+              time (``exog_strategy="auto"``).
         """
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.repo_id = repo_id
         self.context_length = context_length
         self.batch_size = batch_size
@@ -121,12 +125,12 @@ class T0(Forecaster):
             return T0_BETA_QUANTILE_RANGE
         return T0_ALPHA_QUANTILE_RANGE
 
+    def _batch_context_width(self, batch: list[torch.Tensor]) -> int:
+        return min(max(len(ts) for ts in batch), self.context_length)
+
     def _to_context(self, batch: list[torch.Tensor]) -> torch.Tensor:
         """Left-pad a ragged batch with NaN (treated as missing by T0)."""
-        max_len = min(
-            max(len(ts) for ts in batch),
-            self.context_length,
-        )
+        max_len = self._batch_context_width(batch)
         context = torch.full(
             (len(batch), max_len),
             float("nan"),
@@ -137,7 +141,116 @@ class T0(Forecaster):
             context[idx, -len(ts) :] = ts.to(dtype=torch.float32)
         return context
 
-    def forecast(
+    def _to_future_covariates(
+        self,
+        batch: list[torch.Tensor],
+        uids: list | np.ndarray,
+        df: pd.DataFrame,
+        horizon_df: pd.DataFrame,
+        futr_exog_list: list[str],
+        h: int,
+    ) -> np.ndarray:
+        """Build ``[B, F, T + h]`` arrays for T0 ``future_covariates``."""
+        max_len = self._batch_context_width(batch)
+        n_features = len(futr_exog_list)
+        covariates = np.full(
+            (len(batch), n_features, max_len + h),
+            np.nan,
+            dtype=np.float32,
+        )
+        for idx, uid in enumerate(uids):
+            hist = df.loc[df["unique_id"] == uid, futr_exog_list].to_numpy(
+                dtype=np.float32
+            )
+            if hist.shape[0] > max_len:
+                hist = hist[-max_len:]
+            hor = horizon_df.loc[
+                horizon_df["unique_id"] == uid, futr_exog_list
+            ].to_numpy(dtype=np.float32)
+            if hor.shape[0] != h:
+                raise ValueError("Horizon exog length mismatch.")
+            n_hist = hist.shape[0]
+            covariates[idx, :, max_len - n_hist : max_len] = hist.T
+            covariates[idx, :, max_len:] = hor.T
+        return covariates
+
+    def supports_native_futr_exog(self) -> bool:
+        return True
+
+    def _forecast_native_futr_exog(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None,
+        level: list[int | float] | None,
+        quantiles: list[float] | None,
+        panel: PanelData | None,
+        horizon_df: pd.DataFrame,
+        futr_exog_list: list[str],
+    ) -> pd.DataFrame | None:
+        freq = self._maybe_infer_freq(df, freq)
+        qc = QuantileConverter(level=level, quantiles=quantiles)
+        dataset = self._make_timeseries_dataset(
+            df, batch_size=self.batch_size, panel=panel
+        )
+        fcst_df = horizon_df[["unique_id", "ds"]].copy()
+        q_min, q_max = self._quantile_range()
+        if qc.quantiles is not None:
+            pred_quantiles = backend_quantile_levels(
+                qc.quantiles,
+                q_min=q_min,
+                q_max=q_max,
+                include_median=True,
+            )
+        else:
+            pred_quantiles = [0.5]
+        median_idx = pred_quantiles.index(float(np.clip(0.5, q_min, q_max)))
+        fcsts: list[np.ndarray] = []
+        uids = np.asarray(dataset.uids)
+        with self._get_model() as model:
+            for batch in tqdm(dataset):
+                batch_len = len(batch)
+                start = (dataset.current_batch - 1) * dataset.batch_size
+                batch_uids = uids[start : start + batch_len]
+                future_cov = self._to_future_covariates(
+                    batch,
+                    batch_uids,
+                    df,
+                    horizon_df,
+                    futr_exog_list,
+                    h,
+                )
+                out = model.predict(
+                    self._to_context(batch),
+                    horizon=h,
+                    quantile_levels=pred_quantiles,
+                    future_covariates=future_cov,
+                )
+                fcsts.append(out.quantiles.cpu().numpy())
+        fcsts_np = np.concatenate(fcsts, axis=0)
+        fcst_df[self.alias] = fcsts_np[..., median_idx].reshape(-1, 1)
+        if qc.quantiles is not None:
+            fcsts_quantiles_np = select_clipped_quantile_values(
+                pred_quantiles,
+                fcsts_np,
+                qc.quantiles,
+                q_min=q_min,
+                q_max=q_max,
+                axis=-1,
+            )
+            fcst_df = self._assign_quantile_forecasts(
+                fcst_df,
+                self.alias,
+                qc.quantiles,
+                fcsts_quantiles_np,
+            )
+            fcst_df = qc.maybe_convert_quantiles_to_level(
+                fcst_df,
+                models=[self.alias],
+            )
+        return fcst_df
+
+    def _forecast_univariate(
         self,
         df: pd.DataFrame,
         h: int,
