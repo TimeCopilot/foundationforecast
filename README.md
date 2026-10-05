@@ -73,28 +73,28 @@ Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results
 
 ## Supported models
 
-Every model supports **forecast**, **cross-validation**, and **anomaly detection** through the same API. **Intervals** means prediction intervals via `level` or quantile forecasts. **Exog** marks [native known-future exog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md) (`X_df` on `forecast()`, exog columns in `df` for `cross_validation()`) for that wrapper when using a supported checkpoint; see ¶. **Finetuning** marks models that can adapt to your data at inference time. **License** is the [weight/checkpoint license](https://huggingface.co/models) on the default Hugging Face repo (or provider terms for hosted APIs). See the note below for production use.
+Every model supports **forecast**, **cross-validation**, and **anomaly detection** through the same API. **Intervals** means prediction intervals via `level` or quantile forecasts. **Exogenous** marks [native known-future exog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md) (`X_df` on `forecast()`, exog columns in `df` for `cross_validation()`) for that wrapper when using a supported checkpoint; see ¶. **Finetuning** marks models that can adapt to your data at inference time. **License** is the [weight/checkpoint license](https://huggingface.co/models) on the default Hugging Face repo (or provider terms for hosted APIs). See the note below for production use.
 
 Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the underlying model class.
 
-| Model | Forecast | CV | Anomalies | Intervals | Exog | Finetuning | License |
-| --- | :-: | :-: | :-: | :-: | :-: | :-: | --- |
-| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/amazon.png" width="24" valign="middle"> [Chronos](https://arxiv.org/abs/2403.07815) | ✓ | ✓ | ✓ | ✓ | ✓¶ | ✓ | Apache-2.0 |
-| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/ibm.png" width="24" valign="middle"> [FlowState](https://arxiv.org/abs/2508.05287) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
-| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/salesforce.png" width="24" valign="middle"> [Moirai](https://arxiv.org/abs/2402.02592) | ✓ | ✓ | ✓ | ✓ | | | CC-BY-NC-4.0 |
-| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/ibm.png" width="24" valign="middle"> [PatchTST-FM](https://arxiv.org/abs/2602.06909) | ✓ | ✓ | ✓ | ✓ | | | CC-BY-NC-SA-4.0 |
-| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/thuml.png" width="24" valign="middle"> [Sundial](https://arxiv.org/abs/2502.00816) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
-| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/tfc.png" width="24" valign="middle"> [T0](https://huggingface.co/theforecastingcompany/t0-alpha) | ✓ | ✓ | ✓ | ✓ | ✓ | | Apache-2.0† |
-| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/priorlabs.png" width="24" valign="middle"> [TabPFN](https://arxiv.org/abs/2501.02945) | ✓ | ✓ | ✓ | ✓ | | | TabPFN NC‡ |
-| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/tafsut.png" width="24" valign="middle"> [Tafsut](https://github.com/Tafsut-FM/tafsut) | ✓ | ✓ | ✓ | ✓ | | | MIT |
-| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/nx-ai.png" width="24" valign="middle"> [TiRex](https://arxiv.org/abs/2505.23719) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Community / Apache-2.0 |
-| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/nixtla.png" width="24" valign="middle"> [TimeGPT](https://arxiv.org/abs/2310.03589) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Nixtla API§ |
-| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/google.png" width="24" valign="middle"> [TimesFM](https://arxiv.org/abs/2310.10688) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Apache-2.0 |
-| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/datadog.png" width="24" valign="middle"> [Toto](https://arxiv.org/abs/2505.14766) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
+| Provider | Model | Forecast | CV | Anomalies | Intervals | Exogenous | Finetuning | License |
+| :-: | --- | :-: | :-: | :-: | :-: | :-: | :-: | --- |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/amazon.png" width="28" alt="Amazon"> | [Chronos](https://arxiv.org/abs/2403.07815) | ✓ | ✓ | ✓ | ✓ | ✓¶ | ✓ | Apache-2.0 |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/ibm.png" width="28" alt="IBM"> | [FlowState](https://arxiv.org/abs/2508.05287) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/salesforce.png" width="28" alt="Salesforce"> | [Moirai](https://arxiv.org/abs/2402.02592) | ✓ | ✓ | ✓ | ✓ | | | CC-BY-NC-4.0 |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/ibm.png" width="28" alt="IBM"> | [PatchTST-FM](https://arxiv.org/abs/2602.06909) | ✓ | ✓ | ✓ | ✓ | | | CC-BY-NC-SA-4.0 |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/thuml.png" width="28" alt="THUML"> | [Sundial](https://arxiv.org/abs/2502.00816) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/tfc.png" width="28" alt="The Forecasting Company"> | [T0](https://huggingface.co/theforecastingcompany/t0-alpha) | ✓ | ✓ | ✓ | ✓ | ✓ | | Apache-2.0† |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/priorlabs.png" width="28" alt="Prior Labs"> | [TabPFN](https://arxiv.org/abs/2501.02945) | ✓ | ✓ | ✓ | ✓ | | | TabPFN NC‡ |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/tafsut.png" width="28" alt="Tafsut"> | [Tafsut](https://github.com/Tafsut-FM/tafsut) | ✓ | ✓ | ✓ | ✓ | | | MIT |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/nx-ai.png" width="28" alt="NX-AI"> | [TiRex](https://arxiv.org/abs/2505.23719) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Community / Apache-2.0 |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/nixtla.png" width="28" alt="Nixtla"> | [TimeGPT](https://arxiv.org/abs/2310.03589) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Nixtla API§ |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/google.png" width="28" alt="Google"> | [TimesFM](https://arxiv.org/abs/2310.10688) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Apache-2.0 |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/datadog.png" width="28" alt="Datadog"> | [Toto](https://arxiv.org/abs/2505.14766) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
 
 Licenses verified against Hugging Face model cards. Check the model card for your `repo_id` when in doubt.
 
-¶ **Exog (native):** **Chronos** with `repo_id` containing `chronos-2` (e.g. `amazon/chronos-2`); **TimesFM** with **`google/timesfm-3.0-pytorch`**; **TimeGPT**; **T0** (`theforecastingcompany/t0-alpha`, `t0-beta`); **TiRex-2** (`NX-AI/TiRex-2` and other `TiRex-2-*` checkpoints, not TiRex 1.0). Other hub models and other checkpoints in those families do not accept `X_df` under default `exog_strategy`. Set `exog_strategy=False` to ignore horizon exog in mixed `FoundationForecast` runs. See [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md#native-exog-by-checkpoint).
+¶ **Exogenous (native):** **Chronos** with `repo_id` containing `chronos-2` (e.g. `amazon/chronos-2`); **TimesFM** with **`google/timesfm-3.0-pytorch`**; **TimeGPT**; **T0** (`theforecastingcompany/t0-alpha`, `t0-beta`); **TiRex-2** (`NX-AI/TiRex-2` and other `TiRex-2-*` checkpoints, not TiRex 1.0). Other hub models and other checkpoints in those families do not accept `X_df` under default `exog_strategy`. Set `exog_strategy=False` to ignore horizon exog in mixed `FoundationForecast` runs. See [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md#native-exog-by-checkpoint).
 
 <details><summary><strong>What this means for production</strong></summary>
 
