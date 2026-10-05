@@ -21,9 +21,9 @@ Forecasting and time series have entered their foundation era. But, just like in
 
 The world already uses different LLMs for different use cases. We're seeing the same thing in forecasting: there is no single model that dominates everywhere. Results change with the data distribution and forecasting horizon, as we've seen in [Impermanent](https://github.com/TimeCopilot/impermanent) and other benchmarks such as [GIFT-Eval](https://huggingface.co/spaces/Salesforce/GIFT-Eval) and [FEV](https://arxiv.org/abs/2509.26468).
 
-At the same time, every lab also ships its own API, dependencies, data conventions, and learning curve. That fragmentation makes foundation models hard to compare fairly, and even harder to use together in production—especially when you need **exogenous variables** (covariates): holidays, prices, weather, or other features known over the forecast horizon, each with its own input format.
+At the same time, every lab also ships its own API, dependencies, data conventions, and learning curve. That fragmentation makes foundation models hard to compare fairly, and even harder to use together in production, especially when you need exogenous variables (covariates): holidays, prices, weather, or other features known over the forecast horizon, each with its own input format.
 
-**FoundationForecast** removes that friction: one `FoundationForecast` class, one data format, and the same methods: `forecast`, `cross_validation`, and `detect_anomalies`, across time series foundation models—including **`X_df`** for known-future covariates on supported checkpoints. ✨
+**FoundationForecast** removes that friction: one `FoundationForecast` class, one data format, and the same methods: `forecast`, `cross_validation`, and `detect_anomalies`, across time series foundation models—including known-future covariates on supported checkpoints. ✨
 
 Developed with 💙 by the [TimeCopilot](https://timecopilot.dev/) crew.
 
