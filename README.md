@@ -40,6 +40,7 @@ from foundationforecast.models import Chronos, Toto
 
 df = pd.read_csv(
     "https://timecopilot.s3.amazonaws.com/public/data/entsoe_4markets_8w.csv",
+    parse_dates=["ds"],
 )
 
 ff = FoundationForecast(
@@ -55,6 +56,10 @@ anomalies_df = ff.detect_anomalies(df, level=99)
 
 ff.plot(df=df, forecasts_df=fcst_df)
 ```
+
+<p align="center">
+  <img src="https://timecopilot.s3.amazonaws.com/public/data/entsoe_4markets_quick_example.png" alt="Example ff.plot output: four ENTSO-E markets with Chronos and Toto forecasts" width="900">
+</p>
 
 Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results, ensure `ds` is a proper datetime dtype (e.g., pass `parse_dates=["ds"]` when reading) or an ISO-8601 string so sorting is correct; cross-validation/anomaly detection will also convert `ds` to datetime internally where needed. If you omit `freq`, it is inferred from regular timestamps in `ds` (pass `freq=` when intervals are irregular).
 
