@@ -120,10 +120,11 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 
 ## News
 
-Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.10.md) for full release notes.
+Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.11.md) for full release notes.
 
 | When | What | Checkpoint / detail |
 |------|------|---------------------|
+| Oct 2026 | **Known-future exog (`X_df`)** | Native covariates on Chronos-2, TimesFM-3, TimeGPT, T0-beta, TiRex-2; fev-bench CI ([v0.1.11](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.11.md)) |
 | Sep 2026 | **Quantile column naming** | Stable `-q-*` suffixes from `100×q` (≤3 dp `quantiles`, integer `level` only) ([v0.1.10](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.10.md)) |
 | Sep 2026 | **Quantile interpolation** | Arbitrary `level` / `quantiles` on fixed-knot models with edge clamping; removed `level=0` sentinel ([v0.1.9](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.9.md)) |
 | Sep 2026 | [**Granite PatchTST-FM r2**](https://huggingface.co/ibm-granite/granite-timeseries-patchtst-fm-r2) | `ibm-granite/granite-timeseries-patchtst-fm-r2` — Apache-2.0 / OpenMDW; requires `granite-tsfm>=0.3.9` ([v0.1.8](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.8.md)) |
