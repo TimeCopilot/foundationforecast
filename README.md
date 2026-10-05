@@ -65,7 +65,7 @@ Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results
 
 ## Highlights
 
-- 📈 **Exogenous variables (covariates).** Pass known-future features with **`X_df`** on `forecast()` (and exog columns in `df` for `cross_validation()`). Native support on Chronos-2, TimesFM-3, TimeGPT, T0, and TiRex-2; see [Exogenous variables](docs/exogenous-variables.md) and the [example notebook](docs/examples/exogenous-variables.ipynb).
+- 📈 **Exogenous variables (covariates).** Pass known-future features with **`X_df`** on `forecast()` (and exog columns in `df` for `cross_validation()`). Native support on Chronos-2, TimesFM-3, TimeGPT, T0, and TiRex-2; see [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md) and the [example notebook](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/examples/exogenous-variables.ipynb).
 - 🎯 **Benchmark replication in CI.** Wrappers are regression-tested against official leaderboard submissions: [`experiments/gift-eval`](experiments/gift-eval) (GIFT-Eval MASE/CRPS on Modal GPU) and [`experiments/fev-bench`](experiments/fev-bench) (fev-bench `test_error` on known-dynamic tasks). [CI](https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml) re-runs these checks on every change.
 - 🚀 **GPU-native**. Automatically runs on GPU when available, without model-specific device configuration.
 
