@@ -37,8 +37,7 @@ from foundationforecast import FoundationForecast
 from foundationforecast.models import Chronos, Toto
 
 df = pd.read_csv(
-    "https://timecopilot.s3.amazonaws.com/public/data/entsoe_4markets_8w.csv",
-    parse_dates=["ds"],
+    "https://timecopilot.s3.amazonaws.com/public/data/entsoe_4markets_8w.csv"
 )
 
 ff = FoundationForecast(
