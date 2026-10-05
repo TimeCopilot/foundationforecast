@@ -34,7 +34,6 @@ Developed with 💙 by the [TimeCopilot](https://timecopilot.dev/) crew.
 Four hourly electricity series (**DE**, **BE**, **NL**, **AT**) from a subset of the fev-bench [`entsoe_1H`](https://arxiv.org/abs/2509.26468) task (`autogluon/fev_datasets`):
 
 ```python
-import matplotlib.pyplot as plt
 import pandas as pd
 from foundationforecast import FoundationForecast
 from foundationforecast.models import Chronos, Toto
@@ -52,21 +51,10 @@ ff = FoundationForecast(
 )
 
 fcst_df = ff.forecast(df, h=24, level=[90])
+cv_df = ff.cross_validation(df, h=24, level=[90])
+anomalies_df = ff.detect_anomalies(df, level=99)
 
-plt.style.use("dark_background")
-plt.rcParams["axes.prop_cycle"] = plt.cycler(
-    color=["#64748b", "#facc15", "#f472b6"]  # history, Chronos, Toto
-)
-ff.plot(
-    df=df,
-    forecasts_df=fcst_df,
-    ids=["DE", "BE", "NL", "AT"],
-    plot_random=False,
-    models=["Chronos", "Toto"],
-    level=[90],
-    max_insample_length=24 * 4,
-)
-plt.show()
+ff.plot(df=df, forecasts_df=fcst_df)
 ```
 
 Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results, ensure `ds` is a proper datetime dtype (e.g., pass `parse_dates=["ds"]` when reading) or an ISO-8601 string so sorting is correct; cross-validation/anomaly detection will also convert `ds` to datetime internally where needed. If you omit `freq`, it is inferred from regular timestamps in `ds` (pass `freq=` when intervals are irregular).
