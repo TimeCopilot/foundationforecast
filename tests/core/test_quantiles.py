@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from foundationforecast.core.quantiles import (
-    PATCHTST_FM_NATIVE_QUANTILES,
     assert_unique_quantile_column_names,
     backend_quantile_levels,
     interpolate_quantiles,
@@ -13,18 +12,6 @@ from foundationforecast.core.quantiles import (
     validate_levels,
     validate_quantiles,
 )
-
-
-def test_patchtst_native_quantile_grid_covers_level_95():
-    assert len(PATCHTST_FM_NATIVE_QUANTILES) == 99
-    assert 0.025 not in PATCHTST_FM_NATIVE_QUANTILES
-    resolved = resolve_quantile_values(
-        PATCHTST_FM_NATIVE_QUANTILES,
-        np.linspace(0.0, 1.0, 99),
-        [0.025, 0.975],
-    )
-    assert resolved.shape == (2,)
-    assert resolved[0] < resolved[1]
 
 
 def test_validate_levels_rejects_zero():

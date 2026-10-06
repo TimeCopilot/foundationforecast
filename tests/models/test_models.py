@@ -6,7 +6,7 @@ from tests.helpers import (
     generate_series,
     panel_with_futr_exog_horizon,
 )
-from .conftest import models, patchtst_models
+from .conftest import models
 from foundationforecast.core.quantiles import quantile_column_name
 
 
@@ -296,7 +296,8 @@ def test_passing_both_level_and_quantiles(model):
 @pytest.mark.parametrize("model", models)
 def test_using_quantiles(model):
     # 0.57: int(100×q) truncates to 56; output must use suffix 57 (100×q text).
-    qs = [round(i * 0.1, 1) for i in range(1, 10)] + [0.57]
+    # 0.025 / 0.975: off 0.01 knot grid (interpolated on fixed-knot backends).
+    qs = [round(i * 0.1, 1) for i in range(1, 10)] + [0.025, 0.57, 0.975]
     df = generate_series(n_series=3, freq="D")
     fcst_df = model.forecast(
         df=df,
@@ -319,51 +320,9 @@ def test_using_quantiles(model):
 
 @pytest.mark.parametrize("model", models)
 def test_using_level(model):
-    # 20/40/60/80 hit native decile knots; 50 maps to 0.25/0.75 (interpolated)
-    level = [20, 40, 50, 60, 80]
-    df = generate_series(n_series=2, freq="D")
-    fcst_df = model.forecast(
-        df=df,
-        h=2,
-        freq="D",
-        level=level,
-    )
-    exp_lv_cols = []
-    for lv in level:
-        exp_lv_cols.extend([f"{model.alias}-lo-{lv}", f"{model.alias}-hi-{lv}"])
-    assert len(exp_lv_cols) == len(fcst_df.columns) - 3
-    assert all(col in fcst_df.columns for col in exp_lv_cols)
-    assert not any(("-q-" in col) for col in fcst_df.columns)
-    _assert_level_monotonicity(model, fcst_df, exp_lv_cols)
-
-
-@pytest.mark.parametrize("model", patchtst_models)
-def test_patchtst_using_quantiles(model):
-    # 0.025 / 0.975 are off PatchTST-FM's 0.01 knot grid (prod level=95 case).
-    qs = [round(i * 0.1, 1) for i in range(1, 10)] + [0.025, 0.57, 0.975]
-    df = generate_series(n_series=3, freq="D", min_length=64, max_length=64)
-    fcst_df = model.forecast(
-        df=df,
-        h=2,
-        freq="D",
-        quantiles=qs,
-    )
-    exp_qs_cols = [quantile_column_name(model.alias, q) for q in qs]
-    assert len(exp_qs_cols) == len(fcst_df.columns) - 3
-    assert all(col in fcst_df.columns for col in exp_qs_cols)
-    legacy_057 = f"{model.alias}-q-{int(0.57 * 100)}"
-    assert legacy_057 not in fcst_df.columns
-    assert not any(("-lo-" in col or "-hi-" in col) for col in fcst_df.columns)
-    ordered_q_cols = [
-        quantile_column_name(model.alias, q) for q in sorted(qs, key=float)
-    ]
-    _assert_quantile_monotonicity(model, fcst_df, ordered_q_cols)
-
-
-@pytest.mark.parametrize("model", patchtst_models)
-def test_patchtst_using_level(model):
+    # 20/40/60/80 hit native decile knots; 50 → 0.25/0.75; 95 → 0.025/0.975 (interpolated)
     level = [20, 40, 50, 60, 80, 95]
-    df = generate_series(n_series=2, freq="D", min_length=64, max_length=64)
+    df = generate_series(n_series=2, freq="D")
     fcst_df = model.forecast(
         df=df,
         h=2,
