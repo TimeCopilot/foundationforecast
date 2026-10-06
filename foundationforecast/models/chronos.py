@@ -340,14 +340,27 @@ class Chronos(ExogCapableForecaster):
                 q_max=q_max,
                 include_median=False,
             )
-            fcsts = [
-                model.predict_quantiles(
-                    batch,
-                    prediction_length=h,
-                    quantile_levels=backend_qs,
-                )
-                for batch in tqdm(dataset)
-            ]  # list of tuples
+            quantile_kwargs: dict[str, Any] = {
+                "prediction_length": h,
+                "quantile_levels": backend_qs,
+            }
+            infer_batch = self.batch_size
+
+            def _predict_quantiles_batch(batch: Any) -> Any:
+                nonlocal infer_batch
+                kwargs = dict(quantile_kwargs)
+                if isinstance(model, Chronos2Pipeline):
+                    kwargs["batch_size"] = infer_batch
+                while True:
+                    try:
+                        return model.predict_quantiles(batch, **kwargs)
+                    except torch.cuda.OutOfMemoryError:
+                        if not isinstance(model, Chronos2Pipeline) or infer_batch < 2:
+                            raise
+                        infer_batch //= 2
+                        kwargs["batch_size"] = infer_batch
+
+            fcsts = [_predict_quantiles_batch(batch) for batch in tqdm(dataset)]
             fcsts_quantiles, fcsts_mean = zip(*fcsts, strict=False)
             if isinstance(model, Chronos2Pipeline):
                 fcsts_mean = [f_mean for fcst in fcsts_mean for f_mean in fcst]  # type: ignore
