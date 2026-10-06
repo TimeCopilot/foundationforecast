@@ -7,6 +7,7 @@
 </div>
 <div align="center">
   <a href="https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml"><img src="https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://codecov.io/gh/TimeCopilot/foundationforecast"><img src="https://codecov.io/gh/TimeCopilot/foundationforecast/graph/badge.svg?branch=main" alt="coverage"></a>
   <a href="https://pypi.python.org/pypi/foundationforecast"><img src="https://img.shields.io/pypi/v/foundationforecast.svg" alt="PyPI"></a>
   <a href="https://github.com/TimeCopilot/foundationforecast"><img src="https://img.shields.io/pypi/pyversions/foundationforecast.svg" alt="versions"></a>
   <a href="https://github.com/TimeCopilot/foundationforecast/blob/main/LICENSE"><img src="https://img.shields.io/github/license/TimeCopilot/foundationforecast" alt="license"></a>
