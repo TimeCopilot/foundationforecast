@@ -135,7 +135,7 @@ class PatchTSTFM(ExogCapableForecaster, _DataProcessor):
     def _native_quantile_levels(model: PatchTSTFMForPrediction) -> list[float]:
         cfg = getattr(model, "config", None)
         cfg_levels = getattr(cfg, "quantile_levels", None) if cfg is not None else None
-        if isinstance(cfg_levels, (list, tuple)) and len(cfg_levels) > 0:
+        if isinstance(cfg_levels, list | tuple) and len(cfg_levels) > 0:
             return sorted(float(q) for q in cfg_levels)
         return list(PATCHTST_FM_NATIVE_QUANTILES)
 
