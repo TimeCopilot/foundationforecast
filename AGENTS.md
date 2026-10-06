@@ -8,6 +8,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `typ
 
 - One **type** per commit (`feat`, `fix`, `test`, `docs`, `refactor`, `chore`, …).
 - Prefer separate commits by type (implementation, then tests, then docs)—not one mixed commit per change.
+- **Before every commit**, run pre-commit so hooks match CI lint (`uv run pre-commit run --all-files`, or `uv run pre-commit run` on staged files). Fix hook failures (or include auto-fixed files) before committing.
 
 ## Releases
 
