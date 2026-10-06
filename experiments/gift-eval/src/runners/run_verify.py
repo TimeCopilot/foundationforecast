@@ -15,6 +15,7 @@ from src.eval.jobs import (
     replication_output_root,
 )
 from src.eval.models import model_keys_with_reference
+from src.verify.replication_aggregate import verify_replication_aggregates
 from src.verify.replication_table import write_replication_table
 from src.verify.verify import ReplicationSkip, verify_all, verify_model
 
@@ -173,6 +174,13 @@ def main(
         verify_all(
             replication_jobs or load_replication_pilot_jobs(),
             resolved_output_root,
+            registry=registry,  # type: ignore[arg-type]
+        )
+    elif replication and not replication_pilot and not verify_only:
+        verify_replication_aggregates(
+            model_keys,
+            resolved_output_root,
+            require_complete=require_complete,
             registry=registry,  # type: ignore[arg-type]
         )
     elif not verify_only:

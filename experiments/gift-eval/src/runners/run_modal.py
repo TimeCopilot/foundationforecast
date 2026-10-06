@@ -2,23 +2,34 @@ import logging
 from pathlib import Path
 
 import modal
+import tomllib
 
-_MODAL_MONOREPO = "/root/monorepo"
-_MODAL_GIFT_EVAL = f"{_MODAL_MONOREPO}/experiments/gift-eval"
+_MODAL_GIFT_EVAL = "/root/gift-eval"
 
 
-def _resolve_paths() -> tuple[Path, Path]:
+def _resolve_gift_eval_root() -> Path:
     here = Path(__file__).resolve()
     try:
         gift_eval_root = here.parents[2]
         if (gift_eval_root / "pyproject.toml").exists():
-            return gift_eval_root, gift_eval_root.parent.parent
+            return gift_eval_root
     except IndexError:
         pass
-    return Path(_MODAL_GIFT_EVAL), Path(_MODAL_MONOREPO)
+    return Path(_MODAL_GIFT_EVAL)
 
 
-_GIFT_EVAL_ROOT, _REPO_ROOT = _resolve_paths()
+def _foundationforecast_pypi_version(gift_eval_root: Path) -> str:
+    repo_pyproject = gift_eval_root.parent.parent / "pyproject.toml"
+    if repo_pyproject.is_file():
+        with repo_pyproject.open("rb") as f:
+            return tomllib.load(f)["project"]["version"]
+    from importlib.metadata import version
+
+    return version("foundationforecast")
+
+
+_GIFT_EVAL_ROOT = _resolve_gift_eval_root()
+_FF_VERSION = _foundationforecast_pypi_version(_GIFT_EVAL_ROOT)
 
 app = modal.App(name="foundationforecast-gift-eval")
 image = (
@@ -28,35 +39,35 @@ image = (
     )
     .apt_install("git")
     .pip_install("uv")
+    .run_commands(
+        "uv pip install --system --compile-bytecode "
+        f"foundationforecast=={_FF_VERSION} "
+        "'timecopilot-gift-eval>=0.3.1' modal pyyaml s3fs typer",
+    )
     .add_local_file(
-        _REPO_ROOT / "pyproject.toml",
-        remote_path=f"{_MODAL_MONOREPO}/pyproject.toml",
+        _GIFT_EVAL_ROOT / "pyproject.toml",
+        remote_path=f"{_MODAL_GIFT_EVAL}/pyproject.toml",
         copy=True,
     )
     .add_local_file(
-        _REPO_ROOT / "README.md",
-        remote_path=f"{_MODAL_MONOREPO}/README.md",
-        copy=True,
-    )
-    .add_local_file(
-        _REPO_ROOT / "uv.lock",
-        remote_path=f"{_MODAL_MONOREPO}/uv.lock",
+        _GIFT_EVAL_ROOT / "README.md",
+        remote_path=f"{_MODAL_GIFT_EVAL}/README.md",
         copy=True,
     )
     .add_local_dir(
-        _REPO_ROOT / "foundationforecast",
-        remote_path=f"{_MODAL_MONOREPO}/foundationforecast",
+        _GIFT_EVAL_ROOT / "src",
+        remote_path=f"{_MODAL_GIFT_EVAL}/src",
         copy=True,
     )
     .add_local_dir(
-        _GIFT_EVAL_ROOT,
-        remote_path=_MODAL_GIFT_EVAL,
+        _GIFT_EVAL_ROOT / "configs",
+        remote_path=f"{_MODAL_GIFT_EVAL}/configs",
         copy=True,
     )
     .workdir(_MODAL_GIFT_EVAL)
     .env({"PYTHONPATH": _MODAL_GIFT_EVAL})
     .run_commands(
-        "uv pip install --system --compile-bytecode -e .",
+        "uv pip install --system --no-deps --compile-bytecode -e .",
     )
 )
 secret = modal.Secret.from_name(

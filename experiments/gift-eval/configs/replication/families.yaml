@@ -1,11 +1,11 @@
 # One representative model per family for notebook-aligned replication runs.
+# Excluded (need native GIFT-Eval notebook runners, not foundationforecast):
+#   amazon--chronos-2, ibm-granite--granite-timeseries-flowstate-r1
 model_keys:
-  - amazon--chronos-2
   - google--timesfm-3.0-pytorch
   - Salesforce--moirai-2.0-R-small
   - Datadog--Toto-2.0-313m
   - NX-AI--TiRex-2-gifteval-zs
-  - ibm-granite--granite-timeseries-flowstate-r1
   - ibm-granite--granite-timeseries-patchtst-fm-r2
   - theforecastingcompany--t0-beta
   - tafsut-univariate-base

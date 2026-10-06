@@ -72,13 +72,16 @@ uv run pytest tests/test_replication.py -n 0 -x
 
 ## Replication run (notebook-aligned, one model per family)
 
-[`configs/replication/`](configs/replication/) holds **9 families** with params traced to
+[`configs/replication/`](configs/replication/) holds **7 families** (FF-replicable) with params traced to
 [official gift-eval notebooks](https://github.com/SalesforceAIResearch/gift-eval/tree/main/notebooks).
 Results go to **`s3://foundationforecast-gift-eval/results/replication/<run_id>/`**
 (not `results/` or `results/ci/`).
 
+Modal installs **`foundationforecast` from PyPI** (version pinned from the monorepo root) and
+only uploads `experiments/gift-eval` (`src/`, `configs/`) — not the full repo.
+
 1. Pick a run id, e.g. `2026-04-05-nb-v1`.
-2. **Pilot** (9 jobs: `m4_weekly` / `short`):
+2. **Pilot** (7 jobs: `m4_weekly` / `short`):
 
 ```bash
 uv run modal run -m src.runners.run_modal::run_replication_pilot --run-id 2026-04-05-nb-v1
@@ -86,12 +89,23 @@ make sync-replication RUN_ID=2026-04-05-nb-v1
 make verify-replication-pilot RUN_ID=2026-04-05-nb-v1
 ```
 
-3. After pilot verify passes, **full grid** (9 × 97 jobs):
+3. After pilot verify passes, **full grid** (7 × 97 jobs):
+
+Chronos-2 and Granite FlowState are **not** in the replication list (they need native GIFT-Eval notebook runners).
 
 ```bash
 uv run modal run -m src.runners.run_modal::run_replication_full --run-id 2026-04-05-nb-v1
 make verify-replication-full RUN_ID=2026-04-05-nb-v1
 ```
+
+**Pilot** uses the same **per-job** MASE/CRPS check as CI (`atol=0.01`, `rtol=2.5%`).
+
+**Full grid** uses a **leaderboard aggregate** check per model:
+geomean(`MASE/Seasonal_Naive`) and geomean(`CRPS/Seasonal_Naive`) on the same
+dataset set as the HF submission, compared with the same default tolerances.
+Individual job drift is allowed if the aggregate still matches (see
+`src/verify/replication_aggregate.py`). CI pytest (`tests/test_replication.py`)
+still enforces strict per-job replication on the CI subset only.
 
 Local single job with replication registry:
 

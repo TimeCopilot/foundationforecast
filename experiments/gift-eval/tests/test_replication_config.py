@@ -35,9 +35,8 @@ def test_moirai2_replication_context_and_batch() -> None:
     assert spec["kwargs"]["batch_size"] == 2048
 
 
-def test_chronos2_replication_no_gluonts_max_length_cap() -> None:
+def test_toto_replication_batch_size() -> None:
     from src.eval.jobs import load_replication_models_config
 
-    spec = load_replication_models_config()["amazon--chronos-2"]
-    assert spec["max_length"] is None
-    assert spec["kwargs"]["alias"] == "Chronos-2"
+    spec = load_replication_models_config()["Datadog--Toto-2.0-313m"]
+    assert spec["kwargs"]["batch_size"] == 512

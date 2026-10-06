@@ -1,15 +1,5 @@
 # Notebook-aligned params for replication runs only (see configs/replication/notebooks.yaml).
 models:
-  amazon--chronos-2:
-    class: foundationforecast.models.chronos.Chronos
-    reference_slug: Chronos-2
-    max_length: null
-    predictor_batch_size: 1024
-    kwargs:
-      repo_id: amazon/chronos-2
-      alias: Chronos-2
-      batch_size: 1024
-
   google--timesfm-3.0-pytorch:
     class: foundationforecast.models.timesfm.TimesFM
     reference_slug: TimesFM-3
@@ -47,14 +37,6 @@ models:
     kwargs:
       repo_id: NX-AI/TiRex-2-gifteval-zs
       batch_size: 512
-
-  ibm-granite--granite-timeseries-flowstate-r1:
-    class: foundationforecast.models.flowstate.FlowState
-    reference_slug: Granite-FlowState-r1.1
-    max_length: null
-    kwargs:
-      repo_id: ibm-granite/granite-timeseries-flowstate-r1
-      batch_size: 16
 
   ibm-granite--granite-timeseries-patchtst-fm-r2:
     class: foundationforecast.models.patchtst_fm.PatchTSTFM
