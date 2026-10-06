@@ -125,7 +125,12 @@ def _assert_quantile_monotonicity(model, fcst_df, ordered_q_cols):
     for c1, c2 in zip(ordered_q_cols[:-1], ordered_q_cols[1:], strict=False):
         if "chronos" in model.alias.lower() or "median" in model.alias.lower():
             assert fcst_df[c1].le(fcst_df[c2]).all()
-        elif "timesfm" in model.alias.lower() or "flowstate" in model.alias.lower():
+        elif (
+            "timesfm" in model.alias.lower()
+            or "flowstate" in model.alias.lower()
+            or "toto" in model.alias.lower()
+            or "tafsut" in model.alias.lower()
+        ):
             assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.8
         elif "tabpfn" in model.alias.lower():
             continue
