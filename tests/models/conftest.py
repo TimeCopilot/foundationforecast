@@ -67,6 +67,8 @@ if (3, 11) <= sys.version_info < (3, 14):
         )
     )
 
+patchtst_models: list = []
+
 if (3, 11) <= sys.version_info < (3, 14):
     from foundationforecast.models.flowstate import FlowState
     from foundationforecast.models.patchtst_fm import PatchTSTFM
@@ -78,15 +80,16 @@ if (3, 11) <= sys.version_info < (3, 14):
             alias="FlowState-Granite",
         )
     )
-    models.append(PatchTSTFM(context_length=2_048))
-    models.append(
+    patchtst_models = [
+        PatchTSTFM(context_length=2_048),
         PatchTSTFM(
             repo_id="ibm-granite/granite-timeseries-patchtst-fm-r2",
             alias="Granite-PatchTST-FM-r2",
             context_length=2_048,
             batch_size=2,
-        )
-    )
+        ),
+    ]
+    models.extend(patchtst_models)
 
 if sys.version_info < (3, 13):
     from contextlib import contextmanager
