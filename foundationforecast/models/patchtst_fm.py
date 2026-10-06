@@ -14,9 +14,9 @@ from tsfm_public import PatchTSTFMForPrediction
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
 from ..core.quantiles import (
+    PATCHTST_FM_NATIVE_QUANTILES,
     PATCHTST_FM_QUANTILE_RANGE,
-    backend_quantile_levels,
-    select_clipped_quantile_values,
+    resolve_quantile_values,
 )
 from ..core.utils import PanelData, TimeSeriesDataset
 
@@ -132,6 +132,14 @@ class PatchTSTFM(ExogCapableForecaster, _DataProcessor):
             yield model
 
     @staticmethod
+    def _native_quantile_levels(model: PatchTSTFMForPrediction) -> list[float]:
+        cfg = getattr(model, "config", None)
+        cfg_levels = getattr(cfg, "quantile_levels", None) if cfg is not None else None
+        if isinstance(cfg_levels, (list, tuple)) and len(cfg_levels) > 0:
+            return sorted(float(q) for q in cfg_levels)
+        return list(PATCHTST_FM_NATIVE_QUANTILES)
+
+    @staticmethod
     def _impute_target(target: torch.Tensor) -> torch.Tensor:
         arr = target.detach().cpu().numpy().astype(np.float32, copy=False)
         if np.isnan(arr).any():
@@ -212,12 +220,7 @@ class PatchTSTFM(ExogCapableForecaster, _DataProcessor):
         if quantiles is None:
             quantile_levels = DEFAULT_QUANTILES
         else:
-            quantile_levels = backend_quantile_levels(
-                quantiles,
-                q_min=q_min,
-                q_max=q_max,
-                include_median=True,
-            )
+            quantile_levels = self._native_quantile_levels(model)
 
         outputs = self._run_model_on_targets(model, targets, h, quantile_levels)
 
@@ -227,18 +230,21 @@ class PatchTSTFM(ExogCapableForecaster, _DataProcessor):
             fcsts.append(fcst)
 
         fcst = torch.stack(fcsts, dim=0)  # (batch, h, quantiles)
-        median_idx = quantile_levels.index(float(np.clip(0.5, q_min, q_max)))
+        median_q = float(np.clip(0.5, q_min, q_max))
+        median_idx = next(
+            i
+            for i, q in enumerate(quantile_levels)
+            if np.isclose(q, median_q, rtol=0.0, atol=1e-9)
+        )
         fcst_np = fcst.detach().cpu().numpy()
         fcst_mean_np = fcst_np[..., median_idx]
         if quantiles is None:
             fcst_quantiles_np = None
         else:
-            fcst_quantiles_np = select_clipped_quantile_values(
+            fcst_quantiles_np = resolve_quantile_values(
                 quantile_levels,
                 fcst_np,
                 quantiles,
-                q_min=q_min,
-                q_max=q_max,
                 axis=-1,
             )
         return fcst_mean_np, fcst_quantiles_np
