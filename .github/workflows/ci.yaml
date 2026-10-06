@@ -130,7 +130,7 @@ jobs:
         run: uv sync --frozen --no-dev
 
       - name: Run GIFT-Eval CI subset on Modal
-        run: uv run modal run -m src.runners.run_modal::run_ci
+        run: make run-ci
         env:
           MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
           MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
@@ -145,11 +145,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Sync CI results from S3
-        run: make sync-ci-results
-
       - name: Verify replication
-        run: uv run pytest tests/test_replication.py -n 0 -x
+        run: make verify-ci
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
 

@@ -65,9 +65,8 @@ Always re-runs and overwrites results (no skip-if-exists). Full grid skips jobs 
 already have outputs.
 
 ```bash
-uv run modal run -m src.runners.run_modal::run_ci
-make sync-ci-results   # download results for local verify / pytest
-uv run pytest tests/test_replication.py -n 0 -x
+make run-ci
+make verify-ci   # sync S3 + pytest
 ```
 
 ## Replication run (notebook-aligned, one model per family)
@@ -84,9 +83,9 @@ only uploads `experiments/gift-eval` (`src/`, `configs/`) — not the full repo.
 2. **Pilot** (7 jobs: `m4_weekly` / `short`):
 
 ```bash
-uv run modal run -m src.runners.run_modal::run_replication_pilot --run-id 2026-04-05-nb-v1
-make sync-replication RUN_ID=2026-04-05-nb-v1
+make run-replication-pilot RUN_ID=2026-04-05-nb-v1
 make verify-replication-pilot RUN_ID=2026-04-05-nb-v1
+# long full grid in background: DETACHED=1 make run-replication-full RUN_ID=...
 ```
 
 3. After pilot verify passes, **full grid** (7 × 97 jobs):
@@ -94,7 +93,7 @@ make verify-replication-pilot RUN_ID=2026-04-05-nb-v1
 Chronos-2 and Granite FlowState are **not** in the replication list (they need native GIFT-Eval notebook runners).
 
 ```bash
-uv run modal run -m src.runners.run_modal::run_replication_full --run-id 2026-04-05-nb-v1
+make run-replication-full RUN_ID=2026-04-05-nb-v1
 make verify-replication-full RUN_ID=2026-04-05-nb-v1
 ```
 
