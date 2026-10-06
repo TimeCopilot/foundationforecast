@@ -14,9 +14,6 @@ jobs:
   test:
     name: test on ${{ matrix.python-version }}${{ matrix.coverage && ' (coverage)' || '' }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     strategy:
       fail-fast: false
       matrix:
