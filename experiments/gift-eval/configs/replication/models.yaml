@@ -1,5 +1,15 @@
 # Notebook-aligned params for replication runs only (see configs/replication/notebooks.yaml).
 models:
+  amazon--chronos-2:
+    class: foundationforecast.models.chronos.Chronos
+    reference_slug: Chronos-2
+    max_length: null
+    predictor_batch_size: 16
+    kwargs:
+      repo_id: amazon/chronos-2
+      alias: Chronos-2
+      batch_size: 16
+
   google--timesfm-3.0-pytorch:
     class: foundationforecast.models.timesfm.TimesFM
     reference_slug: TimesFM-3
@@ -16,11 +26,11 @@ models:
   Salesforce--moirai-2.0-R-small:
     class: foundationforecast.models.moirai.Moirai
     reference_slug: Moirai2
-    predictor_batch_size: 2048
+    predictor_batch_size: 512
     kwargs:
       repo_id: Salesforce/moirai-2.0-R-small
       context_length: 4000
-      batch_size: 2048
+      batch_size: 32
 
   Datadog--Toto-2.0-313m:
     class: foundationforecast.models.toto.Toto

@@ -32,7 +32,18 @@ def test_moirai2_replication_context_and_batch() -> None:
 
     spec = load_replication_models_config()["Salesforce--moirai-2.0-R-small"]
     assert spec["kwargs"]["context_length"] == 4000
-    assert spec["kwargs"]["batch_size"] == 2048
+    assert spec["kwargs"]["batch_size"] == 32
+    assert spec["predictor_batch_size"] == 512
+
+
+def test_chronos2_replication_notebook_runner_params() -> None:
+    from src.eval.jobs import load_replication_models_config
+
+    spec = load_replication_models_config()["amazon--chronos-2"]
+    assert spec["reference_slug"] == "Chronos-2"
+    assert spec["predictor_batch_size"] == 16
+    assert spec["kwargs"]["batch_size"] == 16
+    assert spec["max_length"] is None
 
 
 def test_toto_replication_batch_size() -> None:

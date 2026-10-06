@@ -63,10 +63,13 @@ models:
 
   amazon--chronos-2:
     class: foundationforecast.models.chronos.Chronos
-    reference_slug: chronos-2
+    reference_slug: Chronos-2
+    max_length: null
+    predictor_batch_size: 16
     kwargs:
       repo_id: amazon/chronos-2
-      batch_size: 64
+      alias: Chronos-2
+      batch_size: 16
 
   autogluon--chronos-2-synth:
     class: foundationforecast.models.chronos.Chronos

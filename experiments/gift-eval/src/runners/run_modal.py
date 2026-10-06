@@ -2,9 +2,9 @@ import logging
 from pathlib import Path
 
 import modal
-import tomllib
 
 _MODAL_GIFT_EVAL = "/root/gift-eval"
+_MODAL_MONOREPO = "/root/monorepo"
 
 
 def _resolve_gift_eval_root() -> Path:
@@ -18,18 +18,17 @@ def _resolve_gift_eval_root() -> Path:
     return Path(_MODAL_GIFT_EVAL)
 
 
-def _foundationforecast_pypi_version(gift_eval_root: Path) -> str:
-    repo_pyproject = gift_eval_root.parent.parent / "pyproject.toml"
-    if repo_pyproject.is_file():
-        with repo_pyproject.open("rb") as f:
-            return tomllib.load(f)["project"]["version"]
-    from importlib.metadata import version
-
-    return version("foundationforecast")
+def _resolve_monorepo_root(gift_eval_root: Path) -> Path:
+    candidate = gift_eval_root.parent.parent
+    if (candidate / "pyproject.toml").is_file() and (
+        candidate / "foundationforecast"
+    ).is_dir():
+        return candidate
+    return Path(_MODAL_MONOREPO)
 
 
 _GIFT_EVAL_ROOT = _resolve_gift_eval_root()
-_FF_VERSION = _foundationforecast_pypi_version(_GIFT_EVAL_ROOT)
+_REPO_ROOT = _resolve_monorepo_root(_GIFT_EVAL_ROOT)
 
 app = modal.App(name="foundationforecast-gift-eval")
 image = (
@@ -41,8 +40,25 @@ image = (
     .pip_install("uv")
     .run_commands(
         "uv pip install --system --compile-bytecode "
-        f"foundationforecast=={_FF_VERSION} "
         "'timecopilot-gift-eval>=0.3.1' modal pyyaml s3fs typer",
+    )
+    .add_local_file(
+        _REPO_ROOT / "pyproject.toml",
+        remote_path=f"{_MODAL_MONOREPO}/pyproject.toml",
+        copy=True,
+    )
+    .add_local_file(
+        _REPO_ROOT / "README.md",
+        remote_path=f"{_MODAL_MONOREPO}/README.md",
+        copy=True,
+    )
+    .add_local_dir(
+        _REPO_ROOT / "foundationforecast",
+        remote_path=f"{_MODAL_MONOREPO}/foundationforecast",
+        copy=True,
+    )
+    .run_commands(
+        "uv pip install --system --compile-bytecode -e /root/monorepo",
     )
     .add_local_file(
         _GIFT_EVAL_ROOT / "pyproject.toml",
@@ -158,12 +174,22 @@ def _dispatch_jobs(
         run_gift_eval_modal.starmap(
             args,
             return_exceptions=True,
-            wrap_returned_exceptions=False,
         )
     )
     errors = [result for result in results if isinstance(result, Exception)]
     if errors:
-        raise RuntimeError(f"Modal jobs failed: {errors}")
+        for exc in errors[:10]:
+            logging.error("Job failed: %s", exc)
+        if len(errors) > 10:
+            logging.error("... and %s more failures", len(errors) - 10)
+    logging.info(
+        "Modal batch finished: ok=%s failed=%s total=%s",
+        len(results) - len(errors),
+        len(errors),
+        len(results),
+    )
+    if errors and len(errors) == len(results):
+        raise RuntimeError(f"All Modal jobs failed ({len(errors)} jobs)")
 
 
 def run_ci_modal(
@@ -297,11 +323,17 @@ def run_replication_pilot(run_id: str, force: bool = True) -> None:
 
 
 @app.local_entrypoint()
-def run_replication_full(run_id: str, force: bool = False) -> None:
+def run_replication_full(
+    run_id: str,
+    force: bool = False,
+    model_key: str = "",
+) -> None:
     from src.eval.jobs import load_replication_matrix
 
     prefix = replication_s3_prefix(run_id)
     jobs = load_replication_matrix()
+    if model_key:
+        jobs = [job for job in jobs if job.model_key == model_key]
     if force:
         selected = jobs
     else:

@@ -27,6 +27,10 @@ def _model_spec(model_key: str, registry: Registry) -> dict:
     return models[model_key]
 
 
+def model_spec(model_key: str, *, registry: Registry = "default") -> dict:
+    return _model_spec(model_key, registry)
+
+
 def build_model(
     model_key: str,
     *,
