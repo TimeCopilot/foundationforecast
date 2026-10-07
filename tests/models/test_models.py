@@ -6,13 +6,15 @@ from tests.helpers import (
     generate_series,
     panel_with_futr_exog_horizon,
 )
+from tests.quantile_helpers import (
+    quantile_from_column_name,
+    quantile_pair_may_equal_under_edge_clamp,
+)
 from .conftest import models
 from foundationforecast.core.quantiles import (
     DEFAULT_NATIVE_QUANTILE_RANGE,
     PATCHTST_FM_QUANTILE_RANGE,
     quantile_column_name,
-    quantile_from_column_name,
-    quantile_pair_may_equal_under_edge_clamp,
 )
 
 
