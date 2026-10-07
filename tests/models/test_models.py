@@ -122,22 +122,28 @@ def test_cross_validation(model, freq, n_windows):
 
 
 def _assert_quantile_monotonicity(model, fcst_df, ordered_q_cols):
+    alias = model.alias.lower()
     for c1, c2 in zip(ordered_q_cols[:-1], ordered_q_cols[1:], strict=False):
-        if "chronos" in model.alias.lower() or "median" in model.alias.lower():
+        if "chronos" in alias or "median" in alias:
             assert fcst_df[c1].le(fcst_df[c2]).all()
         elif (
-            "timesfm" in model.alias.lower()
-            or "flowstate" in model.alias.lower()
-            or "toto" in model.alias.lower()
-            or "tafsut" in model.alias.lower()
+            "timesfm" in alias
+            or "flowstate" in alias
+            or "toto" in alias
+            or "tafsut" in alias
         ):
             assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.8
-        elif "tabpfn" in model.alias.lower():
+        elif (
+            "tirex" in alias
+            or alias.startswith("t0")
+            or "patchtst" in alias
+            or "granite" in alias
+        ):
+            assert fcst_df[c1].le(fcst_df[c2]).all()
+        elif "tabpfn" in alias:
             continue
-        elif "moe" in model.alias.lower():
+        elif "moe" in alias:
             assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.5
-        elif "patchtst" in model.alias.lower() or "granite" in model.alias.lower():
-            assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.8
         else:
             assert fcst_df[c1].lt(fcst_df[c2]).all()
 
