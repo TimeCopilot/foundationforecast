@@ -7,7 +7,13 @@ from tests.helpers import (
     panel_with_futr_exog_horizon,
 )
 from .conftest import models
-from foundationforecast.core.quantiles import quantile_column_name
+from foundationforecast.core.quantiles import (
+    DEFAULT_NATIVE_QUANTILE_RANGE,
+    PATCHTST_FM_QUANTILE_RANGE,
+    quantile_column_name,
+    quantile_from_column_name,
+    quantile_pair_may_equal_under_edge_clamp,
+)
 
 
 @pytest.mark.parametrize("model", models)
@@ -121,7 +127,21 @@ def test_cross_validation(model, freq, n_windows):
         )
 
 
+def _native_quantile_bounds(model) -> tuple[float, float]:
+    if hasattr(model, "_quantile_range"):
+        return model._quantile_range()
+    alias = model.alias.lower()
+    if "tirex" in alias:
+        from foundationforecast.models.tirex import DEFAULT_QUANTILES_TIREX
+
+        return DEFAULT_QUANTILES_TIREX[0], DEFAULT_QUANTILES_TIREX[-1]
+    if "patchtst" in alias:
+        return PATCHTST_FM_QUANTILE_RANGE
+    return DEFAULT_NATIVE_QUANTILE_RANGE
+
+
 def _assert_quantile_monotonicity(model, fcst_df, ordered_q_cols):
+    q_min, q_max = _native_quantile_bounds(model)
     for c1, c2 in zip(ordered_q_cols[:-1], ordered_q_cols[1:], strict=False):
         if "chronos" in model.alias.lower() or "median" in model.alias.lower():
             assert fcst_df[c1].le(fcst_df[c2]).all()
@@ -139,7 +159,12 @@ def _assert_quantile_monotonicity(model, fcst_df, ordered_q_cols):
         elif "patchtst" in model.alias.lower() or "granite" in model.alias.lower():
             assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.8
         else:
-            assert fcst_df[c1].lt(fcst_df[c2]).all()
+            q1 = quantile_from_column_name(model.alias, c1)
+            q2 = quantile_from_column_name(model.alias, c2)
+            if quantile_pair_may_equal_under_edge_clamp(q1, q2, q_min, q_max):
+                assert fcst_df[c1].le(fcst_df[c2]).all()
+            else:
+                assert fcst_df[c1].lt(fcst_df[c2]).all()
 
 
 def _assert_level_monotonicity(model, fcst_df, exp_lv_cols):
