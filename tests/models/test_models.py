@@ -122,17 +122,28 @@ def test_cross_validation(model, freq, n_windows):
 
 
 def _assert_quantile_monotonicity(model, fcst_df, ordered_q_cols):
+    alias = model.alias.lower()
     for c1, c2 in zip(ordered_q_cols[:-1], ordered_q_cols[1:], strict=False):
-        if "chronos" in model.alias.lower() or "median" in model.alias.lower():
+        if "chronos" in alias or "median" in alias:
             assert fcst_df[c1].le(fcst_df[c2]).all()
-        elif "timesfm" in model.alias.lower() or "flowstate" in model.alias.lower():
+        elif (
+            "timesfm" in alias
+            or "flowstate" in alias
+            or "toto" in alias
+            or "tafsut" in alias
+        ):
             assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.8
-        elif "tabpfn" in model.alias.lower():
+        elif (
+            "tirex" in alias
+            or alias.startswith("t0")
+            or "patchtst" in alias
+            or "granite" in alias
+        ):
+            assert fcst_df[c1].le(fcst_df[c2]).all()
+        elif "tabpfn" in alias:
             continue
-        elif "moe" in model.alias.lower():
+        elif "moe" in alias:
             assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.5
-        elif "patchtst" in model.alias.lower() or "granite" in model.alias.lower():
-            assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.8
         else:
             assert fcst_df[c1].lt(fcst_df[c2]).all()
 
@@ -296,7 +307,8 @@ def test_passing_both_level_and_quantiles(model):
 @pytest.mark.parametrize("model", models)
 def test_using_quantiles(model):
     # 0.57: int(100×q) truncates to 56; output must use suffix 57 (100×q text).
-    qs = [round(i * 0.1, 1) for i in range(1, 10)] + [0.57]
+    # 0.025 / 0.975: off 0.01 knot grid (interpolated on fixed-knot backends).
+    qs = [round(i * 0.1, 1) for i in range(1, 10)] + [0.025, 0.57, 0.975]
     df = generate_series(n_series=3, freq="D")
     fcst_df = model.forecast(
         df=df,
@@ -319,8 +331,8 @@ def test_using_quantiles(model):
 
 @pytest.mark.parametrize("model", models)
 def test_using_level(model):
-    # 20/40/60/80 hit native decile knots; 50 maps to 0.25/0.75 (interpolated)
-    level = [20, 40, 50, 60, 80]
+    # 20/40/60/80 hit decile knots; 50 → 0.25/0.75; 95 → 0.025/0.975 (interpolated)
+    level = [20, 40, 50, 60, 80, 95]
     df = generate_series(n_series=2, freq="D")
     fcst_df = model.forecast(
         df=df,
