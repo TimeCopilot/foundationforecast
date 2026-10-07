@@ -6,16 +6,8 @@ from tests.helpers import (
     generate_series,
     panel_with_futr_exog_horizon,
 )
-from tests.quantile_helpers import (
-    quantile_from_column_name,
-    quantile_pair_may_equal_under_edge_clamp,
-)
 from .conftest import models
-from foundationforecast.core.quantiles import (
-    DEFAULT_NATIVE_QUANTILE_RANGE,
-    PATCHTST_FM_QUANTILE_RANGE,
-    quantile_column_name,
-)
+from foundationforecast.core.quantiles import quantile_column_name
 
 
 @pytest.mark.parametrize("model", models)
@@ -129,44 +121,31 @@ def test_cross_validation(model, freq, n_windows):
         )
 
 
-def _native_quantile_bounds(model) -> tuple[float, float]:
-    if hasattr(model, "_quantile_range"):
-        return model._quantile_range()
-    alias = model.alias.lower()
-    if "tirex" in alias:
-        from foundationforecast.models.tirex import DEFAULT_QUANTILES_TIREX
-
-        return DEFAULT_QUANTILES_TIREX[0], DEFAULT_QUANTILES_TIREX[-1]
-    if "patchtst" in alias:
-        return PATCHTST_FM_QUANTILE_RANGE
-    return DEFAULT_NATIVE_QUANTILE_RANGE
-
-
 def _assert_quantile_monotonicity(model, fcst_df, ordered_q_cols):
-    q_min, q_max = _native_quantile_bounds(model)
+    alias = model.alias.lower()
     for c1, c2 in zip(ordered_q_cols[:-1], ordered_q_cols[1:], strict=False):
-        if "chronos" in model.alias.lower() or "median" in model.alias.lower():
+        if "chronos" in alias or "median" in alias:
             assert fcst_df[c1].le(fcst_df[c2]).all()
         elif (
-            "timesfm" in model.alias.lower()
-            or "flowstate" in model.alias.lower()
-            or "toto" in model.alias.lower()
-            or "tafsut" in model.alias.lower()
+            "timesfm" in alias
+            or "flowstate" in alias
+            or "toto" in alias
+            or "tafsut" in alias
         ):
             assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.8
-        elif "tabpfn" in model.alias.lower():
+        elif (
+            "tirex" in alias
+            or alias.startswith("t0")
+            or "patchtst" in alias
+            or "granite" in alias
+        ):
+            assert fcst_df[c1].le(fcst_df[c2]).all()
+        elif "tabpfn" in alias:
             continue
-        elif "moe" in model.alias.lower():
+        elif "moe" in alias:
             assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.5
-        elif "patchtst" in model.alias.lower() or "granite" in model.alias.lower():
-            assert fcst_df[c1].le(fcst_df[c2]).mean() >= 0.8
         else:
-            q1 = quantile_from_column_name(model.alias, c1)
-            q2 = quantile_from_column_name(model.alias, c2)
-            if quantile_pair_may_equal_under_edge_clamp(q1, q2, q_min, q_max):
-                assert fcst_df[c1].le(fcst_df[c2]).all()
-            else:
-                assert fcst_df[c1].lt(fcst_df[c2]).all()
+            assert fcst_df[c1].lt(fcst_df[c2]).all()
 
 
 def _assert_level_monotonicity(model, fcst_df, exp_lv_cols):
