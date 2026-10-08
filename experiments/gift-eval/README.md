@@ -28,6 +28,62 @@ The table below compares **official** GIFT-Eval aggregates with **FF** (the same
 
 <img src="https://github.com/user-attachments/assets/627c11c8-cfce-4e40-ba5d-3c3470d47c8c" alt="GIFT-Eval replication table: official vs FoundationForecast MASE and CRPS, with gold/silver/bronze on the top-3 CRPS models" width="1100">
 
+<details>
+<summary>LaTeX source (needs <code>booktabs</code>, <code>amsmath</code>, <code>threeparttable</code>, <code>xcolor</code> with the <code>table</code> option)</summary>
+
+```latex
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\definecolor{rank1}{HTML}{A5D6A7}
+\definecolor{rank2}{HTML}{C8E6C9}
+\definecolor{rank3}{HTML}{E8F5E9}
+\begin{threeparttable}
+\begin{tabular}{l l rrrr rrrr rr}
+\toprule
+ & & \multicolumn{4}{c}{MASE$^\dagger$} & \multicolumn{4}{c}{CRPS$^\dagger$} & \multicolumn{2}{c}{Compute} \\
+\cmidrule(lr){3-6} \cmidrule(lr){7-10} \cmidrule(lr){11-12}
+Org. & Model & Official & FF & $|\Delta|$ (\%) & $\sigma$ & Official & FF & $|\Delta|$ (\%) & $\sigma$ & GPU-h & USD \\
+\midrule
+Amazon & Chronos-2 & 0.698 & 0.704 & 0.9 & 0.023 & 0.485 & 0.483 & 0.6 & 0.046 & 1.62 & 1.78 \\
+ & Chronos-2 small & -- & 0.724 & -- & -- & -- & 0.496 & -- & -- & 0.95 & 1.04 \\
+ & Chronos Bolt base & 0.808 & 0.813 & 0.7 & 0.022 & 0.574 & 0.566 & 1.4 & 0.032 & 4.66 & 5.13 \\
+ & Chronos Bolt small & 0.822 & 0.829 & 0.8 & 0.023 & 0.577 & 0.566 & 1.8 & 0.032 & 1.69 & 1.86 \\
+\addlinespace[2pt]
+Datadog & Toto 2 313M & 0.703 & 0.705 & 0.3 & 0.021 & 0.481 & 0.485 & 0.7 & 0.019 & 1.68 & 1.84 \\
+ & Toto 2 4M & 0.757 & 0.761 & 0.6 & 0.017 & 0.524 & 0.531 & 1.3 & 0.028 & 0.55 & 0.61 \\
+\addlinespace[2pt]
+Google & TimesFM 3 & 0.667 & 0.675 & 1.2 & 0.021 & \cellcolor{rank1}\textbf{0.456} & \cellcolor{rank1}\textbf{0.462} & 1.3 & 0.015 & 6.73 & 7.41 \\
+\addlinespace[2pt]
+Huawei & Tafsut base & 0.693 & 0.694 & 0.2 & 0.003 & 0.481 & 0.482 & 0.2 & 0.006 & 1.42 & 1.56 \\
+\addlinespace[2pt]
+IBM & PatchTST-FM r2 & 0.685 & 0.684 & 0.1 & 0.028 & \cellcolor{rank2}0.467 & \cellcolor{rank2}0.467 & 0.0 & 0.030 & 3.31 & 3.64 \\
+ & PatchTST-FM r1 & 0.717 & 0.716 & 0.2 & 0.006 & 0.488 & 0.487 & 0.1 & 0.007 & 1.25 & 1.37 \\
+\addlinespace[2pt]
+NX-AI & TiRex 2 & 0.697 & 0.704 & 1.0 & 0.015 & 0.478 & 0.485 & 1.6 & 0.025 & 1.29 & 1.42 \\
+ & TiRex 1.1 & 0.716 & 0.724 & 1.1 & 0.040 & 0.488 & 0.494 & 1.1 & 0.043 & 1.57 & 1.73 \\
+\addlinespace[2pt]
+Salesforce & Moirai 2 small & 0.728 & 0.736 & 1.1 & 0.056 & 0.516 & 0.521 & 0.8 & 0.038 & 2.65 & 2.92 \\
+ & Moirai 1.1 large & 0.875 & 0.886 & 1.2 & 0.163 & 0.599 & 0.602 & 0.5 & 0.150 & 1.98 & 2.18 \\
+\addlinespace[2pt]
+TFC & T0 beta & 0.687 & 0.689 & 0.3 & 0.010 & \cellcolor{rank3}0.474 & \cellcolor{rank3}0.475 & 0.4 & 0.014 & 1.41 & 1.55 \\
+ & T0 alpha & 0.724 & 0.729 & 0.7 & 0.018 & 0.494 & 0.495 & 0.3 & 0.017 & 0.94 & 1.03 \\
+\midrule
+\multicolumn{10}{l}{Total (16 models, 97 dataset configs each)} & 33.7 & 37.07 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}[flushleft]
+\footnotesize
+\item Replication of the GIFT-Eval leaderboard with FoundationForecast (FF). $^\dagger$Leaderboard aggregates: geometric mean over the 97 dataset configurations of the metric normalized by Seasonal Naive (lower is better). \emph{Official} is recomputed from the model's submitted CSV in the GIFT-Eval Hugging Face space; \emph{FF} is the same aggregate from our FoundationForecast run. $|\Delta|$ is the absolute relative difference between the two aggregates; every model is within 2\%. $\sigma$ is the standard deviation across the 97 configurations of the per-configuration difference $(\text{FF}-\text{official})$ on the same Seasonal-Naive-normalized scale. Shaded CRPS cells mark the three best models in each column (darker is better; bold is the best). Compute is wall time on a single NVIDIA A10G at \$1.10/GPU-h. Chronos-2 small has no official submission yet.
+\end{tablenotes}
+\end{threeparttable}
+\label{tab:gift-eval-replication}
+\end{table}
+```
+
+</details>
+
 ### Pareto frontier
 
 Accuracy alone does not decide which model to deploy. The figure below plots **cost vs accuracy** for the same 16 models: cheaper is to the right, better (lower error) is up. The purple polyline is the **Pareto frontier**. TimesFM 3 is the most accurate model we ran, at **$7.41**; Toto 2 4M is the cheapest plotted point, at **$0.61**. The full grid is **$37 / 34 GPU-hours**.
