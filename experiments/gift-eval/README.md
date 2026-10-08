@@ -71,7 +71,7 @@ make verify-ci   # sync S3 + pytest
 
 ## Replication run (notebook-aligned, one model per family)
 
-[`configs/replication/`](configs/replication/) holds **8 families** with params traced to
+[`configs/replication/`](configs/replication/) holds **16 families** with params traced to
 [official gift-eval notebooks](https://github.com/SalesforceAIResearch/gift-eval/tree/main/notebooks).
 Results go to **`s3://foundationforecast-gift-eval/results/replication/<run_id>/`**
 (not `results/` or `results/ci/`).
@@ -80,7 +80,7 @@ Modal uploads **`foundationforecast/`** (editable install from the monorepo root
 `experiments/gift-eval` (`src/`, `configs/`).
 
 1. Pick a run id, e.g. `2026-04-05-nb-v1`.
-2. **Pilot** (8 jobs: `m4_weekly` / `short`):
+2. **Pilot** (16 jobs: `m4_weekly` / `short`):
 
 ```bash
 make run-replication-pilot RUN_ID=2026-04-05-nb-v1
@@ -88,11 +88,11 @@ make verify-replication-pilot RUN_ID=2026-04-05-nb-v1
 # long full grid in background: DETACHED=1 make run-replication-full RUN_ID=...
 ```
 
-3. After pilot verify passes, **full grid** (8 × 97 jobs):
+3. After pilot verify passes, **full grid** (16 × 97 jobs):
 
-Chronos-2 uses **foundationforecast** with notebook inference params
-(`batch_size=16`, no `max_length` cap; no cross-learning / `predict_batches_jointly`).
-Granite FlowState is still excluded.
+Chronos-2 and Chronos Bolt use **foundationforecast** with notebook-aligned inference
+(`max_length: null` where the notebook does not cap context; no cross-learning /
+`predict_batches_jointly`).
 
 ```bash
 make run-replication-full RUN_ID=2026-04-05-nb-v1

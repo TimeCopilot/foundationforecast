@@ -15,6 +15,7 @@
 RUN_ID ?=
 DETACHED ?=
 FORCE ?=
+MAX_CONTAINERS ?= 20
 
 # Pass -d to modal run for detached (background) execution.
 MODAL_RUN = uv run modal run $(if $(filter 1 true yes,$(DETACHED)),-d,)
@@ -34,7 +35,7 @@ help:
 	@echo ""
 	@echo "Replication (configs/replication/ — pilot strict, full aggregate verify)"
 	@echo "  run-replication-pilot     RUN_ID=...  — 8× m4_weekly/short on Modal"
-	@echo "  run-replication-full      RUN_ID=...  — 8×97 grid (skips existing unless FORCE=1)"
+	@echo "  run-replication-full      RUN_ID=...  — 16×97 grid (skips existing unless FORCE=1)"
 	@echo "  sync-replication          RUN_ID=...  — S3 → ./results/replication/\$$RUN_ID"
 	@echo "  verify-replication-pilot  RUN_ID=...  — per-job MASE/CRPS vs HF"
 	@echo "  verify-replication-full   RUN_ID=...  — leaderboard aggregate + require complete"
@@ -45,6 +46,7 @@ help:
 	@echo "  replication-table         analysis CSV (verify-only, no assert)"
 	@echo ""
 	@echo "Options: DETACHED=1 for Modal -d ; FORCE=1 to re-run all replication jobs"
+	@echo "          MAX_CONTAINERS=N (default 20) caps parallel GPUs on replication full"
 
 # --- Data -------------------------------------------------------------------
 
@@ -76,6 +78,7 @@ run-replication-pilot:
 run-replication-full:
 	@test -n "$(RUN_ID)" || (echo "Set RUN_ID=..." && exit 1)
 	@$(MODAL_RUN) -m src.runners.run_modal::run_replication_full --run-id $(RUN_ID) \
+		--max-containers $(MAX_CONTAINERS) \
 		$(if $(filter 1 true yes,$(FORCE)),--force,)
 
 sync-replication:
