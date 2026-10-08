@@ -26,7 +26,7 @@ Every FoundationForecast implementation reproduces the model's aggregated MASE a
 
 The table below compares **official** GIFT-Eval aggregates with **FF** (the same aggregate from our FoundationForecast run). Organizations are grouped alphabetically. Shaded MASE and CRPS cells mark the **1st / 2nd / 3rd best** models in each column (darker is better); the ranking is the same on both sides and for both metrics: **TimesFM 3**, **PatchTST-FM r2**, **T0 beta**.
 
-<img src="https://github.com/user-attachments/assets/b965a4dd-5773-429c-bfbb-bbbf070bd514" alt="GIFT-Eval replication table typeset in LaTeX: official vs FoundationForecast MASE and CRPS, with the top-3 models shaded in both metrics" width="1100">
+<img src="https://github.com/user-attachments/assets/2eeac18a-6035-4c74-9514-7a7530800623" alt="GIFT-Eval replication table typeset in LaTeX: official vs FoundationForecast MASE and CRPS, with the top-3 models shaded in both metrics" width="1100">
 
 ### Pareto frontier
 
