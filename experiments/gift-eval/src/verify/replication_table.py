@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+from urllib.error import HTTPError
 
 import pandas as pd
 
+from src.eval.jobs import REPLICATION_PENDING_HF_REFERENCE
 from src.eval.models import Registry, reference_slug
 from src.verify.reference import CRPS_COL, MASE_COL, load_reference_results
 
@@ -55,6 +57,9 @@ def build_replication_table(
 
     rows: list[dict] = []
     for model_key in model_keys:
+        if model_key in REPLICATION_PENDING_HF_REFERENCE:
+            logger.warning("Skipping %s: pending HF reference", model_key)
+            continue
         slug = reference_slug(model_key, registry=registry)
         if slug is None:
             logger.warning("Skipping %s: no reference_slug", model_key)
@@ -63,7 +68,7 @@ def build_replication_table(
         try:
             actual = load_actual_results(model_key, output_root)
             expected = load_reference_results(slug)
-        except FileNotFoundError as exc:
+        except (FileNotFoundError, HTTPError) as exc:
             logger.warning("Skipping %s: %s", model_key, exc)
             continue
 
