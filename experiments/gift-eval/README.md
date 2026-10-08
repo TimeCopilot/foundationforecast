@@ -26,13 +26,13 @@ Every FoundationForecast implementation reproduces the model's aggregated MASE a
 
 The table below compares **official** GIFT-Eval aggregates with **FF** (the same aggregate from our FoundationForecast run). Organizations are grouped alphabetically. Gold / silver / bronze mark the **1st / 2nd / 3rd best CRPS** in the Official and FF columns — the ranking is the same on both sides: **TimesFM 3**, **PatchTST-FM r2**, **T0 beta**.
 
-<img src="assets/replication-table.png" alt="GIFT-Eval replication table: official vs FoundationForecast MASE and CRPS, with gold/silver/bronze on the top-3 CRPS models" width="1100">
+<img src="https://github.com/user-attachments/assets/627c11c8-cfce-4e40-ba5d-3c3470d47c8c" alt="GIFT-Eval replication table: official vs FoundationForecast MASE and CRPS, with gold/silver/bronze on the top-3 CRPS models" width="1100">
 
 ### Pareto frontier
 
 Accuracy alone does not decide which model to deploy. The figure below plots **cost vs accuracy** for the same 16 models: cheaper is to the right, better (lower error) is up. The purple polyline is the **Pareto frontier**. TimesFM 3 is the most accurate model we ran, at **$7.41**; Toto 2 4M is the cheapest plotted point, at **$0.61**. The full grid is **$37 / 34 GPU-hours**.
 
-<img src="assets/pareto-frontier.png" alt="Cost vs accuracy Pareto frontier on 5.9B probabilistic forecast values for 16 foundation models on GIFT-Eval" width="1100">
+<img src="https://github.com/user-attachments/assets/ed6415a6-f523-4969-85e1-4055d678087f" alt="Cost vs accuracy Pareto frontier on 5.9B probabilistic forecast values for 16 foundation models on GIFT-Eval" width="1100">
 
 ## Reproducibility
 
