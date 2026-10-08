@@ -32,7 +32,7 @@ The table below compares **official** GIFT-Eval aggregates with **FF** (the same
 
 Accuracy alone does not decide which model to deploy. The figure below plots **cost vs accuracy** for the same 16 models: cheaper is to the right, better (lower error) is up. The purple polyline is the **Pareto frontier**. TimesFM 3 is the most accurate model we ran, at **$7.41**; Toto 2 4M is the cheapest plotted point, at **$0.61**. The full grid is **$37 / 34 GPU-hours**.
 
-<img src="https://github.com/user-attachments/assets/ed6415a6-f523-4969-85e1-4055d678087f" alt="Cost vs accuracy Pareto frontier on 5.9B probabilistic forecast values for 16 foundation models on GIFT-Eval" width="1100">
+<img src="https://github.com/user-attachments/assets/5befc49c-9ce2-4e58-af59-0a7b372246e1" alt="Cost vs accuracy Pareto frontier on 5.9B probabilistic forecast values for 16 foundation models on GIFT-Eval, MASE and CRPS stacked" width="900">
 
 ## Reproducibility
 
