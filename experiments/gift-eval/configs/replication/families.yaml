@@ -1,0 +1,18 @@
+# One representative model per family for notebook-aligned replication runs.
+model_keys:
+  - amazon--chronos-2
+  - amazon--chronos-bolt-base
+  - amazon--chronos-bolt-small
+  - autogluon--chronos-2-small
+  - Datadog--Toto-2.0-313m
+  - Datadog--Toto-2.0-4m
+  - google--timesfm-3.0-pytorch
+  - ibm-granite--granite-timeseries-patchtst-fm-r1
+  - ibm-granite--granite-timeseries-patchtst-fm-r2
+  - NX-AI--TiRex-1.1-gifteval
+  - NX-AI--TiRex-2-gifteval-zs
+  - Salesforce--moirai-1.1-R-large--Moirai_large
+  - Salesforce--moirai-2.0-R-small
+  - tafsut-univariate-base
+  - theforecastingcompany--t0-alpha
+  - theforecastingcompany--t0-beta

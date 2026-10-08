@@ -7,7 +7,7 @@ import pandas as pd
 from timecopilot_gift_eval import GIFTEval
 
 from src.eval.jobs import Job, result_csv
-from src.eval.models import load_models_config, reference_slug
+from src.eval.models import Registry, reference_slug
 from .reference import (
     REPLICATION_ATOL,
     REPLICATION_METRIC_COLS,
@@ -39,8 +39,9 @@ def verify_job(
     storage_path: Path | str | None = None,
     atol: float = REPLICATION_ATOL,
     rtol: float = REPLICATION_RTOL,
+    registry: Registry = "default",
 ) -> None:
-    slug = reference_slug(job.model_key)
+    slug = reference_slug(job.model_key, registry=registry)
     if slug is None:
         raise ReplicationSkip(f"No reference slug for model_key={job.model_key!r}")
 
@@ -74,6 +75,7 @@ def verify_all(
     storage_path: Path | str | None = None,
     atol: float = REPLICATION_ATOL,
     rtol: float = REPLICATION_RTOL,
+    registry: Registry = "default",
 ) -> None:
     for job in jobs:
         verify_job(
@@ -82,6 +84,7 @@ def verify_all(
             storage_path=storage_path,
             atol=atol,
             rtol=rtol,
+            registry=registry,
         )
 
 
@@ -110,8 +113,9 @@ def verify_model(
     atol: float = REPLICATION_ATOL,
     rtol: float = REPLICATION_RTOL,
     require_complete: bool = False,
+    registry: Registry = "default",
 ) -> None:
-    slug = reference_slug(model_key)
+    slug = reference_slug(model_key, registry=registry)
     if slug is None:
         raise ReplicationSkip(f"No reference slug for model_key={model_key!r}")
 
@@ -145,12 +149,3 @@ def verify_model(
         len(expected),
         slug,
     )
-
-
-def model_keys_with_reference() -> list[str]:
-    models = load_models_config()
-    return [
-        model_key
-        for model_key, spec in models.items()
-        if spec.get("reference_slug") is not None
-    ]
