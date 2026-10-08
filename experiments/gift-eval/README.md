@@ -108,6 +108,83 @@ Individual job drift is allowed if the aggregate still matches (see
 `src/verify/replication_aggregate.py`). CI pytest (`tests/test_replication.py`)
 still enforces strict per-job replication on the CI subset only.
 
+### Replication results (run `2026-10-06-nb-v2`)
+
+FoundationForecast reproduces the **leaderboard aggregates** of every official
+submission it wraps: across 15 models with a published reference, the aggregate
+MASE and CRPS land within **±1.8%** of the official values (tolerance is 2.5%).
+Per-config results are noisier (σ is the standard deviation, over the 97 dataset
+configurations, of the per-config relative difference `ours / official − 1`), but
+the noise averages out in the geometric mean the leaderboard ranks on. The whole
+grid (16 models × 97 configs) took **33.7 GPU-hours ≈ $37** on a single A10G.
+
+MASE and CRPS are the leaderboard aggregates: geometric mean over the 97 configs of
+the metric normalized by Seasonal Naive (lower is better). *Official* is recomputed
+from each model's submitted CSV in the GIFT-Eval Hugging Face space; *ours* from this
+run. Δ is the relative difference of the aggregates. Compute is wall time on an A10G
+(Modal) at $1.10/GPU-h. Chronos-2 small has no official submission yet.
+
+| Model | Org. | MASE official | MASE ours | Δ (%) | σ (%) | CRPS official | CRPS ours | Δ (%) | σ (%) | GPU-h | USD |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| TimesFM 3 | Google | 0.667 | 0.675 | +1.2 | 3.2 | 0.456 | 0.462 | +1.3 | 3.1 | 6.73 | 7.41 |
+| PatchTST-FM r2 | IBM | 0.685 | 0.684 | -0.1 | 3.4 | 0.467 | 0.467 | +0.0 | 3.9 | 3.31 | 3.64 |
+| T0 beta | TFC | 0.687 | 0.689 | +0.3 | 1.4 | 0.474 | 0.475 | +0.4 | 2.8 | 1.41 | 1.55 |
+| Tafsut base | Huawei | 0.693 | 0.694 | +0.2 | 0.4 | 0.481 | 0.482 | +0.2 | 1.1 | 1.42 | 1.56 |
+| Chronos-2 | Amazon | 0.698 | 0.704 | +0.9 | 3.6 | 0.485 | 0.483 | -0.6 | 7.1 | 1.62 | 1.78 |
+| TiRex 2 | NX-AI | 0.697 | 0.704 | +1.0 | 2.2 | 0.478 | 0.485 | +1.6 | 5.3 | 1.29 | 1.42 |
+| Toto 2 313M | Datadog | 0.703 | 0.705 | +0.3 | 2.7 | 0.481 | 0.485 | +0.7 | 4.0 | 1.68 | 1.84 |
+| PatchTST-FM r1 | IBM | 0.717 | 0.716 | -0.2 | 0.9 | 0.488 | 0.487 | -0.1 | 1.2 | 1.25 | 1.37 |
+| TiRex 1.1 | NX-AI | 0.716 | 0.724 | +1.1 | 8.8 | 0.488 | 0.494 | +1.1 | 10.1 | 1.57 | 1.73 |
+| Chronos-2 small | Amazon | — | 0.724 | — | — | — | 0.496 | — | — | 0.95 | 1.04 |
+| T0 alpha | TFC | 0.724 | 0.729 | +0.7 | 2.1 | 0.494 | 0.495 | +0.3 | 2.7 | 0.94 | 1.03 |
+| Moirai 2 small | Salesforce | 0.728 | 0.736 | +1.1 | 5.8 | 0.516 | 0.521 | +0.8 | 5.2 | 2.65 | 2.92 |
+| Toto 2 4M | Datadog | 0.757 | 0.761 | +0.6 | 2.2 | 0.524 | 0.531 | +1.3 | 4.6 | 0.55 | 0.61 |
+| Chronos Bolt base | Amazon | 0.808 | 0.813 | +0.7 | 2.5 | 0.574 | 0.566 | -1.4 | 4.9 | 4.66 | 5.13 |
+| Chronos Bolt small | Amazon | 0.822 | 0.829 | +0.8 | 2.7 | 0.577 | 0.566 | -1.8 | 4.4 | 1.69 | 1.86 |
+| Moirai 1.1 large | Salesforce | 0.875 | 0.886 | +1.2 | 12.5 | 0.599 | 0.602 | +0.5 | 14.0 | 1.98 | 2.18 |
+| **Total** (16 models) | | | | | | | | | | **33.7** | **37.07** |
+
+<details>
+<summary>LaTeX source (needs <code>booktabs</code>)</summary>
+
+```latex
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l l rrrr rrrr rr}
+\toprule
+ & & \multicolumn{4}{c}{MASE$^\dagger$} & \multicolumn{4}{c}{CRPS$^\dagger$} & \multicolumn{2}{c}{Compute} \\
+\cmidrule(lr){3-6} \cmidrule(lr){7-10} \cmidrule(lr){11-12}
+Model & Org. & Official & Ours & $\Delta$ (\%) & $\sigma$ (\%) & Official & Ours & $\Delta$ (\%) & $\sigma$ (\%) & GPU-h & USD \\
+\midrule
+TimesFM 3 & Google & 0.667 & 0.675 & +1.2 & 3.2 & 0.456 & 0.462 & +1.3 & 3.1 & 6.73 & 7.41 \\
+PatchTST-FM r2 & IBM & 0.685 & 0.684 & -0.1 & 3.4 & 0.467 & 0.467 & +0.0 & 3.9 & 3.31 & 3.64 \\
+T0 beta & TFC & 0.687 & 0.689 & +0.3 & 1.4 & 0.474 & 0.475 & +0.4 & 2.8 & 1.41 & 1.55 \\
+Tafsut base & Huawei & 0.693 & 0.694 & +0.2 & 0.4 & 0.481 & 0.482 & +0.2 & 1.1 & 1.42 & 1.56 \\
+Chronos-2 & Amazon & 0.698 & 0.704 & +0.9 & 3.6 & 0.485 & 0.483 & -0.6 & 7.1 & 1.62 & 1.78 \\
+TiRex 2 & NX-AI & 0.697 & 0.704 & +1.0 & 2.2 & 0.478 & 0.485 & +1.6 & 5.3 & 1.29 & 1.42 \\
+Toto 2 313M & Datadog & 0.703 & 0.705 & +0.3 & 2.7 & 0.481 & 0.485 & +0.7 & 4.0 & 1.68 & 1.84 \\
+PatchTST-FM r1 & IBM & 0.717 & 0.716 & -0.2 & 0.9 & 0.488 & 0.487 & -0.1 & 1.2 & 1.25 & 1.37 \\
+TiRex 1.1 & NX-AI & 0.716 & 0.724 & +1.1 & 8.8 & 0.488 & 0.494 & +1.1 & 10.1 & 1.57 & 1.73 \\
+Chronos-2 small & Amazon & -- & 0.724 & -- & -- & -- & 0.496 & -- & -- & 0.95 & 1.04 \\
+T0 alpha & TFC & 0.724 & 0.729 & +0.7 & 2.1 & 0.494 & 0.495 & +0.3 & 2.7 & 0.94 & 1.03 \\
+Moirai 2 small & Salesforce & 0.728 & 0.736 & +1.1 & 5.8 & 0.516 & 0.521 & +0.8 & 5.2 & 2.65 & 2.92 \\
+Toto 2 4M & Datadog & 0.757 & 0.761 & +0.6 & 2.2 & 0.524 & 0.531 & +1.3 & 4.6 & 0.55 & 0.61 \\
+Chronos Bolt base & Amazon & 0.808 & 0.813 & +0.7 & 2.5 & 0.574 & 0.566 & -1.4 & 4.9 & 4.66 & 5.13 \\
+Chronos Bolt small & Amazon & 0.822 & 0.829 & +0.8 & 2.7 & 0.577 & 0.566 & -1.8 & 4.4 & 1.69 & 1.86 \\
+Moirai 1.1 large & Salesforce & 0.875 & 0.886 & +1.2 & 12.5 & 0.599 & 0.602 & +0.5 & 14.0 & 1.98 & 2.18 \\
+\midrule
+\multicolumn{10}{l}{Total (16 models, 97 dataset configs each)} & 33.7 & 37.07 \\
+\bottomrule
+\end{tabular}
+\caption{Replication of the GIFT-Eval leaderboard with FoundationForecast (run \texttt{2026-10-06-nb-v2}). $^\dagger$Leaderboard aggregates: geometric mean over the 97 dataset configurations of the metric normalized by Seasonal Naive (lower is better). \emph{Official} is recomputed from the model's submitted CSV in the GIFT-Eval Hugging Face space; \emph{Ours} from our run; $\Delta$ is their relative difference. $\sigma$ is the standard deviation across the 97 configurations of the per-configuration relative difference $(\text{ours}/\text{official}-1)$. Compute is wall time on a single NVIDIA A10G (Modal) at \$1.10/GPU-h. Chronos-2 small has no official submission yet.}
+\label{tab:gift-eval-replication}
+\end{table}
+```
+
+</details>
+
 Local single job with replication registry:
 
 ```bash
