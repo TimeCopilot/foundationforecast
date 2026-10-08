@@ -1,11 +1,17 @@
 import pytest
-from src.eval.jobs import load_replication_families, load_replication_pilot_jobs
+from src.eval.jobs import (
+    REPLICATION_PENDING_HF_REFERENCE,
+    load_replication_families,
+    load_replication_pilot_jobs,
+)
 from src.eval.models import build_model, reference_slug
 from src.verify.reference import load_reference_results
 
 
 @pytest.mark.parametrize("model_key", load_replication_families())
 def test_replication_alias_matches_hf_reference_model_column(model_key: str) -> None:
+    if model_key in REPLICATION_PENDING_HF_REFERENCE:
+        pytest.skip("GIFT-Eval HF reference results not published yet")
     slug = reference_slug(model_key, registry="replication")
     assert slug is not None, f"missing reference_slug for {model_key}"
     expected_name = load_reference_results(slug)["model"].iloc[0]
@@ -51,3 +57,28 @@ def test_toto_replication_batch_size() -> None:
 
     spec = load_replication_models_config()["Datadog--Toto-2.0-313m"]
     assert spec["kwargs"]["batch_size"] == 512
+
+
+def test_replication_families_count() -> None:
+    assert len(load_replication_families()) == 16
+
+
+def test_chronos2_small_replication_params() -> None:
+    from src.eval.jobs import load_replication_models_config
+
+    spec = load_replication_models_config()["autogluon--chronos-2-small"]
+    assert spec["kwargs"]["repo_id"] == "autogluon/chronos-2-small"
+    assert spec["kwargs"]["batch_size"] == 16
+    assert spec["max_length"] is None
+    assert spec["predictor_batch_size"] == 16
+
+
+def test_moirai11_replication_context_and_batch() -> None:
+    from src.eval.jobs import load_replication_models_config
+
+    large = load_replication_models_config()[
+        "Salesforce--moirai-1.1-R-large--Moirai_large"
+    ]
+    assert large["kwargs"]["context_length"] == 4000
+    assert large["kwargs"]["batch_size"] == 16
+    assert large["predictor_batch_size"] == 512
