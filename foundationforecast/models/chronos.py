@@ -64,6 +64,47 @@ class ChronosFinetuningConfig:
     save_path: str | Path | None = None
 
 
+class _QuantileBatchPredictor:
+    """Call ``model.predict_quantiles`` per batch, backing off on CUDA OOM.
+
+    When ``adaptive_batch_size`` is set (Chronos-2 pipelines accept a
+    ``batch_size`` inference argument), a ``torch.cuda.OutOfMemoryError`` halves
+    the inference batch size and retries. The reduced size is kept for later
+    batches. Other pipelines, or a batch size that cannot be halved further,
+    re-raise the error.
+    """
+
+    def __init__(
+        self,
+        model: Any,
+        *,
+        prediction_length: int,
+        quantile_levels: list[float],
+        batch_size: int,
+        adaptive_batch_size: bool,
+    ) -> None:
+        self.model = model
+        self.kwargs: dict[str, Any] = {
+            "prediction_length": prediction_length,
+            "quantile_levels": quantile_levels,
+        }
+        self.batch_size = batch_size
+        self.adaptive_batch_size = adaptive_batch_size
+
+    def __call__(self, batch: Any) -> Any:
+        kwargs = dict(self.kwargs)
+        if self.adaptive_batch_size:
+            kwargs["batch_size"] = self.batch_size
+        while True:
+            try:
+                return self.model.predict_quantiles(batch, **kwargs)
+            except torch.cuda.OutOfMemoryError:
+                if not self.adaptive_batch_size or self.batch_size < 2:
+                    raise
+                self.batch_size //= 2
+                kwargs["batch_size"] = self.batch_size
+
+
 class Chronos(ExogCapableForecaster):
     """
     Chronos models are large pre-trained models for time series forecasting,
@@ -340,27 +381,14 @@ class Chronos(ExogCapableForecaster):
                 q_max=q_max,
                 include_median=False,
             )
-            quantile_kwargs: dict[str, Any] = {
-                "prediction_length": h,
-                "quantile_levels": backend_qs,
-            }
-            infer_batch = self.batch_size
-
-            def _predict_quantiles_batch(batch: Any) -> Any:
-                nonlocal infer_batch
-                kwargs = dict(quantile_kwargs)
-                if isinstance(model, Chronos2Pipeline):
-                    kwargs["batch_size"] = infer_batch
-                while True:
-                    try:
-                        return model.predict_quantiles(batch, **kwargs)
-                    except torch.cuda.OutOfMemoryError:
-                        if not isinstance(model, Chronos2Pipeline) or infer_batch < 2:
-                            raise
-                        infer_batch //= 2
-                        kwargs["batch_size"] = infer_batch
-
-            fcsts = [_predict_quantiles_batch(batch) for batch in tqdm(dataset)]
+            predict_quantiles = _QuantileBatchPredictor(
+                model,
+                prediction_length=h,
+                quantile_levels=backend_qs,
+                batch_size=self.batch_size,
+                adaptive_batch_size=isinstance(model, Chronos2Pipeline),
+            )
+            fcsts = [predict_quantiles(batch) for batch in tqdm(dataset)]
             fcsts_quantiles, fcsts_mean = zip(*fcsts, strict=False)
             if isinstance(model, Chronos2Pipeline):
                 fcsts_mean = [f_mean for fcst in fcsts_mean for f_mean in fcst]  # type: ignore
