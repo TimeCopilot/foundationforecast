@@ -10,6 +10,53 @@ models:
       alias: Chronos-2
       batch_size: 16
 
+  amazon--chronos-bolt-base:
+    class: foundationforecast.models.chronos.Chronos
+    reference_slug: chronos_bolt_base
+    max_length: null
+    predictor_batch_size: 1024
+    kwargs:
+      repo_id: amazon/chronos-bolt-base
+      alias: chronos_bolt_base
+      batch_size: 32
+
+  amazon--chronos-bolt-small:
+    class: foundationforecast.models.chronos.Chronos
+    reference_slug: chronos_bolt_small
+    max_length: null
+    predictor_batch_size: 1024
+    kwargs:
+      repo_id: amazon/chronos-bolt-small
+      alias: chronos_bolt_small
+      batch_size: 64
+
+  autogluon--chronos-2-small:
+    class: foundationforecast.models.chronos.Chronos
+    # HF GIFT-Eval results/{slug} not published yet; enable aggregate verify when live.
+    reference_slug: Chronos-2-Small
+    max_length: null
+    predictor_batch_size: 16
+    kwargs:
+      repo_id: autogluon/chronos-2-small
+      alias: Chronos-2-Small
+      batch_size: 16
+
+  Datadog--Toto-2.0-313m:
+    class: foundationforecast.models.toto.Toto
+    reference_slug: Toto-2.0-313m
+    kwargs:
+      repo_id: Datadog/Toto-2.0-313m
+      context_length: 4096
+      batch_size: 512
+
+  Datadog--Toto-2.0-4m:
+    class: foundationforecast.models.toto.Toto
+    reference_slug: Toto-2.0-4m
+    kwargs:
+      repo_id: Datadog/Toto-2.0-4m
+      context_length: 4096
+      batch_size: 512
+
   google--timesfm-3.0-pytorch:
     class: foundationforecast.models.timesfm.TimesFM
     reference_slug: TimesFM-3
@@ -23,30 +70,14 @@ models:
       use_variate_attention: true
       use_sdpa: true
 
-  Salesforce--moirai-2.0-R-small:
-    class: foundationforecast.models.moirai.Moirai
-    reference_slug: Moirai2
-    predictor_batch_size: 512
+  ibm-granite--granite-timeseries-patchtst-fm-r1:
+    class: foundationforecast.models.patchtst_fm.PatchTSTFM
+    reference_slug: Granite-PatchTST-FM-r1
+    predictor_batch_size: 1024
     kwargs:
-      repo_id: Salesforce/moirai-2.0-R-small
-      context_length: 4000
+      repo_id: ibm-granite/granite-timeseries-patchtst-fm-r1
+      alias: Granite-PatchTST-FM-r1
       batch_size: 32
-
-  Datadog--Toto-2.0-313m:
-    class: foundationforecast.models.toto.Toto
-    reference_slug: Toto-2.0-313m
-    kwargs:
-      repo_id: Datadog/Toto-2.0-313m
-      context_length: 4096
-      batch_size: 512
-
-  NX-AI--TiRex-2-gifteval-zs:
-    class: foundationforecast.models.tirex.TiRex
-    reference_slug: TiRex-2-Zeroshot
-    predictor_batch_size: 512
-    kwargs:
-      repo_id: NX-AI/TiRex-2-gifteval-zs
-      batch_size: 512
 
   ibm-granite--granite-timeseries-patchtst-fm-r2:
     class: foundationforecast.models.patchtst_fm.PatchTSTFM
@@ -57,14 +88,41 @@ models:
       context_length: 8192
       batch_size: 32
 
-  theforecastingcompany--t0-beta:
-    class: foundationforecast.models.t0.T0
-    reference_slug: t0-beta
+  NX-AI--TiRex-1.1-gifteval:
+    class: foundationforecast.models.tirex.TiRex
+    reference_slug: TiRex
+    predictor_batch_size: 512
     kwargs:
-      repo_id: theforecastingcompany/t0-beta
-      alias: t0-beta
-      context_length: 8192
-      batch_size: 64
+      repo_id: NX-AI/TiRex-1.1-gifteval
+      alias: TiRex
+      batch_size: 512
+
+  NX-AI--TiRex-2-gifteval-zs:
+    class: foundationforecast.models.tirex.TiRex
+    reference_slug: TiRex-2-Zeroshot
+    predictor_batch_size: 512
+    kwargs:
+      repo_id: NX-AI/TiRex-2-gifteval-zs
+      batch_size: 512
+
+  Salesforce--moirai-1.1-R-large--Moirai_large:
+    class: foundationforecast.models.moirai.Moirai
+    reference_slug: Moirai_large
+    predictor_batch_size: 512
+    kwargs:
+      repo_id: Salesforce/moirai-1.1-R-large
+      alias: Moirai_large
+      context_length: 4000
+      batch_size: 16
+
+  Salesforce--moirai-2.0-R-small:
+    class: foundationforecast.models.moirai.Moirai
+    reference_slug: Moirai2
+    predictor_batch_size: 512
+    kwargs:
+      repo_id: Salesforce/moirai-2.0-R-small
+      context_length: 4000
+      batch_size: 32
 
   tafsut-univariate-base:
     class: foundationforecast.models.tafsut.Tafsut
@@ -73,3 +131,21 @@ models:
       repo_id: Tafsut-FM/tafsut-univariate-base
       alias: tafsut
       batch_size: 128
+
+  theforecastingcompany--t0-alpha:
+    class: foundationforecast.models.t0.T0
+    reference_slug: t0-alpha
+    kwargs:
+      repo_id: theforecastingcompany/t0-alpha
+      alias: t0-alpha
+      context_length: 8192
+      batch_size: 64
+
+  theforecastingcompany--t0-beta:
+    class: foundationforecast.models.t0.T0
+    reference_slug: t0-beta
+    kwargs:
+      repo_id: theforecastingcompany/t0-beta
+      alias: t0-beta
+      context_length: 8192
+      batch_size: 64

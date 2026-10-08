@@ -1,11 +1,18 @@
 # One representative model per family for notebook-aligned replication runs.
-# Excluded: ibm-granite--granite-timeseries-flowstate-r1 (native FlowState wrapper).
 model_keys:
   - amazon--chronos-2
-  - google--timesfm-3.0-pytorch
-  - Salesforce--moirai-2.0-R-small
+  - amazon--chronos-bolt-base
+  - amazon--chronos-bolt-small
+  - autogluon--chronos-2-small
   - Datadog--Toto-2.0-313m
-  - NX-AI--TiRex-2-gifteval-zs
+  - Datadog--Toto-2.0-4m
+  - google--timesfm-3.0-pytorch
+  - ibm-granite--granite-timeseries-patchtst-fm-r1
   - ibm-granite--granite-timeseries-patchtst-fm-r2
-  - theforecastingcompany--t0-beta
+  - NX-AI--TiRex-1.1-gifteval
+  - NX-AI--TiRex-2-gifteval-zs
+  - Salesforce--moirai-1.1-R-large--Moirai_large
+  - Salesforce--moirai-2.0-R-small
   - tafsut-univariate-base
+  - theforecastingcompany--t0-alpha
+  - theforecastingcompany--t0-beta

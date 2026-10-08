@@ -79,12 +79,22 @@ models:
       alias: Chronos-2-Synth
       batch_size: 64
 
+  autogluon--chronos-2-small:
+    class: foundationforecast.models.chronos.Chronos
+    reference_slug: Chronos-2-Small
+    max_length: null
+    predictor_batch_size: 16
+    kwargs:
+      repo_id: autogluon/chronos-2-small
+      alias: Chronos-2-Small
+      batch_size: 16
+
   # --- TimesFM ---
   google--timesfm-1.0-200m:
     class: foundationforecast.models.timesfm.TimesFM
     reference_slug: timesfm
     kwargs:
-      repo_id: google/timesfm-1.0-200m
+      repo_id: google/timesfm-1.0-200m-pytorch
       alias: TimesFM
       batch_size: 64
 

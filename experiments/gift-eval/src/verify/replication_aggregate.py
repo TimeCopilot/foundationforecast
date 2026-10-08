@@ -11,7 +11,12 @@ import pandas as pd
 from numpy.testing import assert_allclose
 from scipy import stats
 
-from src.eval.jobs import Job, load_replication_matrix, result_csv
+from src.eval.jobs import (
+    REPLICATION_PENDING_HF_REFERENCE,
+    Job,
+    load_replication_matrix,
+    result_csv,
+)
 from src.eval.models import Registry, reference_slug
 from src.verify.reference import CRPS_COL, MASE_COL, load_reference_results
 from src.verify.verify import ReplicationSkip, load_actual_results
@@ -169,6 +174,10 @@ def verify_replication_aggregates(
     failed: list[tuple[str, str]] = []
 
     for key in model_keys:
+        if key in REPLICATION_PENDING_HF_REFERENCE:
+            skipped.append((key, "GIFT-Eval HF reference results not published yet"))
+            logger.warning("Skipped %s: pending HF reference", key)
+            continue
         try:
             verify_replication_aggregate(
                 key,

@@ -161,6 +161,7 @@ def _dispatch_jobs(
     output_root: str,
     force: bool,
     registry: str = "default",
+    max_containers: int | None = None,
 ) -> None:
     logging.basicConfig(level=logging.INFO)
     if not jobs:
@@ -170,8 +171,12 @@ def _dispatch_jobs(
         (*job_tuple, storage_path, output_root, force, registry)
         for job_tuple in _job_tuples(jobs)
     ]
+    run_fn = run_gift_eval_modal
+    if max_containers is not None:
+        run_fn = run_gift_eval_modal.with_options(max_containers=max_containers)
+        logging.info("Modal max_containers=%s", max_containers)
     results = list(
-        run_gift_eval_modal.starmap(
+        run_fn.starmap(
             args,
             return_exceptions=True,
         )
@@ -201,31 +206,6 @@ def run_ci_modal(
     _dispatch_jobs(jobs, storage_path=storage_path, output_root=output_root, force=True)
 
 
-def _s3_job_paths(
-    job,
-    *,
-    bucket: str,
-    prefix: str,
-) -> tuple[str, str]:
-    base = f"s3://{bucket}/{prefix}/{job.model_key}/{job.dataset_name}/{job.term}"
-    return f"{base}/all_results.csv", f"{base}/timing.json"
-
-
-def _job_matches_mode(
-    *,
-    mode: str,
-    has_results: bool,
-    has_timing: bool,
-) -> bool:
-    if mode == "missing":
-        return not has_results
-    if mode == "missing_timing":
-        return has_results and not has_timing
-    if mode == "all":
-        return True
-    raise ValueError(f"Unknown job selection mode: {mode!r}")
-
-
 def _jobs_from_s3(
     jobs: list,
     *,
@@ -233,21 +213,14 @@ def _jobs_from_s3(
     prefix: str,
     mode: str,
 ) -> list:
-    import fsspec
+    from src.eval.jobs import filter_jobs_by_s3_mode
 
-    fs = fsspec.filesystem("s3")
-    selected = []
-    for job in jobs:
-        results_path, timing_path = _s3_job_paths(job, bucket=bucket, prefix=prefix)
-        has_results = fs.exists(results_path)
-        has_timing = fs.exists(timing_path)
-        if _job_matches_mode(
-            mode=mode,
-            has_results=has_results,
-            has_timing=has_timing,
-        ):
-            selected.append(job)
-    return selected
+    return filter_jobs_by_s3_mode(
+        jobs,
+        bucket=bucket,
+        prefix=prefix,
+        mode=mode,
+    )
 
 
 @app.local_entrypoint()
@@ -327,6 +300,7 @@ def run_replication_full(
     run_id: str,
     force: bool = False,
     model_key: str = "",
+    max_containers: int = 20,
 ) -> None:
     from src.eval.jobs import load_replication_matrix
 
@@ -343,10 +317,12 @@ def run_replication_full(
             prefix=prefix,
             mode="missing",
         )
+    logging.basicConfig(level=logging.INFO)
     logging.info(
-        "Replication full grid: %s jobs (force=%s) → s3://%s/%s",
+        "Replication full grid: %s jobs (force=%s, max_containers=%s) → s3://%s/%s",
         len(selected),
         force,
+        max_containers,
         S3_BUCKET,
         prefix,
     )
@@ -356,4 +332,5 @@ def run_replication_full(
         output_root=f"/s3-bucket/{prefix}",
         force=force,
         registry="replication",
+        max_containers=max_containers,
     )
