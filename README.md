@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/fa32671b-51ab-4c54-9586-65aa53a88a8a#gh-dark-mode-only" alt="FoundationForecast" width="900" style="display:block;margin:0 auto;">
-  <img src="https://github.com/user-attachments/assets/0930f516-7ffa-48d4-bba3-6343f85f3fb2#gh-light-mode-only" alt="FoundationForecast" width="900" style="display:block;margin:0 auto;">
+  <img src="https://github.com/user-attachments/assets/fa32671b-51ab-4c54-9586-65aa53a88a8a#gh-dark-mode-only" alt="FoundationForecast" width="900">
+  <img src="https://github.com/user-attachments/assets/0930f516-7ffa-48d4-bba3-6343f85f3fb2#gh-light-mode-only" alt="FoundationForecast" width="900">
 </div>
 <div align="center">
   <em>The API for the time series foundation era · Forecast · Cross-validation · Anomaly detection</em>
