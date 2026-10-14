@@ -99,7 +99,7 @@ markdown_extensions:
   - footnotes
   - pymdownx.magiclink
   - pymdownx.snippets:
-      base_path: [!relative $config_dir]
+      base_path: ["."]
       check_paths: true
   - pymdownx.superfences
   - pymdownx.tabbed:
@@ -115,8 +115,6 @@ markdown_extensions:
 plugins:
   - search
   - autorefs
-  - mkdocs-jupyter
-  - include-markdown
   - mkdocstrings:
       handlers:
         python:
