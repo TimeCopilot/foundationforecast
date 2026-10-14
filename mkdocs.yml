@@ -39,6 +39,9 @@ nav:
       - api/forecaster.md
       - api/models/foundation/models.md
       - api/models/utils/forecaster.md
+  - Experiments:
+      - GIFT-Eval: experiments/gift-eval.md
+      - fev-bench: experiments/fev-bench.md
   - Community:
       - Getting Help: community/help.md
       - Contributing: contributing.md
