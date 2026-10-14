@@ -8,7 +8,7 @@ fev-bench defines `known_dynamic_columns`, `past_dynamic_columns`, and `static_c
 
 Do **not** compare aggregate results to the paper’s “30 known dynamic” or “42 dynamic covariate” figures without noting that those mixes include tasks where leaderboard models used past/static covariates we do not feed.
 
-Task list: [configs/known_only_tasks.yaml](configs/known_only_tasks.yaml).
+Task list: [configs/known_only_tasks.yaml](https://github.com/TimeCopilot/foundationforecast/blob/main/experiments/fev-bench/configs/known_only_tasks.yaml).
 
 ## Setup
 
