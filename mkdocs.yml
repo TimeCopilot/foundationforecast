@@ -129,6 +129,8 @@ plugins:
             heading_level: 3
             inherited_members: true
             members: true
+            extensions:
+              - griffe_inherited_docstrings
             merge_init_into_class: true
 
 copyright: 2026 - foundationforecast
