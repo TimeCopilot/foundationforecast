@@ -24,6 +24,16 @@ from ..core.quantiles import (
 from ..core.utils import PanelData, TimeSeriesDataset, process_panel_from_df
 
 
+def _peft_load_kwargs() -> dict[str, Any]:
+    # peft >= 0.21 only imports an adapter's base model class from allowlisted
+    # packages, and Chronos-2 adapters point at ``chronos.chronos2.model``.
+    try:
+        from peft.auto import get_default_import_allowlist
+    except ImportError:
+        return {}
+    return {"import_allowlist": [*get_default_import_allowlist(), "chronos"]}
+
+
 @dataclass
 class ChronosFinetuningConfig:
     """Configuration for finetuning a Chronos pipeline before forecasting.
@@ -340,14 +350,17 @@ class Chronos(ExogCapableForecaster):
         repo_path = Path(self.repo_id)
         # LoRA checkpoints save adapter_config.json; BaseChronosPipeline.from_pretrained
         # uses AutoConfig and fails. Chronos2Pipeline.from_pretrained handles LoRA via PEFT.
+        load_kwargs: dict[str, Any] = {}
         if repo_path.is_dir() and (repo_path / "adapter_config.json").exists():
             cls = Chronos2Pipeline
+            load_kwargs = _peft_load_kwargs()
         else:
             cls = BaseChronosPipeline
         return cls.from_pretrained(
             self.repo_id,
             device_map=device_map,
             torch_dtype=self.dtype,
+            **load_kwargs,
         )
 
     @contextmanager
