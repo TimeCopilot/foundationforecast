@@ -139,6 +139,7 @@ Recent additions and checkpoints (newest first). See the [changelog](https://git
 
 | When | What | Checkpoint / detail |
 |------|------|---------------------|
+| Oct 2026 | **GIFT-Eval replication for $37** | 16 models on the full benchmark, each official submission matched within 2% MASE/CRPS; new Experiments docs section ([v0.1.13](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.13.md)) |
 | Oct 2026 | **Known-future exog (`X_df`)** | Native covariates on Chronos-2, TimesFM-3, TimeGPT, T0-beta, TiRex-2; fev-bench CI ([v0.1.11](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.11.md)) |
 | Sep 2026 | **Quantile column naming** | Stable `-q-*` suffixes from `100×q` (≤3 dp `quantiles`, integer `level` only) ([v0.1.10](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.10.md)) |
 | Sep 2026 | **Quantile interpolation** | Arbitrary `level` / `quantiles` on fixed-knot models with edge clamping; removed `level=0` sentinel ([v0.1.9](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.9.md)) |
