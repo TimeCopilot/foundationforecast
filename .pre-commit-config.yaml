@@ -21,7 +21,9 @@ repos:
     hooks:
       - id: toml-sort-fix
         args: ["--all", "--trailing-comma-inline-array", "--in-place"]
+        exclude: (^|/)uv\.lock$
         stages: [pre-commit]
       - id: toml-sort
         args: ["--all", "--trailing-comma-inline-array", "--in-place", "--check"]
+        exclude: (^|/)uv\.lock$
         stages: [manual]
