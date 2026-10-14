@@ -47,7 +47,7 @@ Docs and docstring examples:
 
 ```bash
 uv run pytest -m docs -o addopts= -n 0
-uv run --group docs mkdocs build
+uv run --group docs zensical build
 ```
 
 ### What CI enforces ([`.github/workflows/ci.yaml`](.github/workflows/ci.yaml))
@@ -56,7 +56,7 @@ uv run --group docs mkdocs build
 | --- | --- |
 | **test** | `uv run pytest` on Python 3.10–3.13; coverage gate (≥80%) on 3.12. Needs `HF_TOKEN` / `TABPFN_TOKEN` for model tests. |
 | **test-docs** | Executable markdown in `docs/` (except changelog files), `README.md`, and Python docstrings via `mktestdocs`. |
-| **build-docs** | `mkdocs build` |
+| **build-docs** | `zensical build` (strict) |
 | **lint** | Full `pre-commit` (ruff, mypy on `foundationforecast/` only—`experiments/` excluded) |
 | **test-gift-eval** | Modal GPU run for [`configs/ci_subset.yaml`](experiments/gift-eval/configs/ci_subset.yaml), then `make verify-ci` (S3 sync + strict per-job MASE/CRPS vs Hugging Face references). |
 | **test-fev-bench** | Modal CI for known-dynamic tasks, S3 sync, then `tests/test_replication.py` vs fev-bench leaderboard CSVs. |

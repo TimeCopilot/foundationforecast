@@ -56,7 +56,7 @@ uv run pytest -m docs
 
 ## Documentation Changes
 
-The docs are built with [Zensical](https://zensical.org). Serve them locally with live reload:
+The docs are built with [Zensical](https://zensical.org), which requires Python 3.11 or newer (the library itself supports 3.10, but the docs tooling is skipped there). Serve them locally with live reload:
 
 ```bash
 uv run --group docs zensical serve
