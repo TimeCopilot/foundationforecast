@@ -5,6 +5,7 @@ requires = ["hatchling"]
 [dependency-groups]
 dev = [
   "mktestdocs>=0.2.5",
+  "peft>=0.13.0,<1",
   "pre-commit",
   "pytest-codspeed>=5.0.3",
   "pytest-cov>=6.0",
