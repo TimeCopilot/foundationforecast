@@ -17,6 +17,7 @@ dev = [
   "ruff>=0.12",
 ]
 docs = [
+  "griffe-inherited-docstrings>=1.1",
   "matplotlib>=3.10.6",
   "mkdocstrings-python>=2.0",
   "mkdocstrings[python]>=1.0",

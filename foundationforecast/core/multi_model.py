@@ -206,6 +206,28 @@ class MultiModelForecasterMixin:
         futr_df: pd.DataFrame | None = None,
         futr_exog_list: list[str] | None = None,
     ) -> pd.DataFrame:
+        """Forecast the next `h` steps of every series with every model.
+
+        Args:
+            df: Historical data with columns `unique_id`, `ds`, and `y`, plus any
+                exogenous columns.
+            h: Forecast horizon, in steps of `freq`.
+            freq: Pandas frequency of `ds`. Inferred from `df` when omitted.
+            level: Prediction-interval levels in percent (e.g. `[80, 95]`).
+                Cannot be combined with `quantiles`.
+            quantiles: Quantiles in `(0, 1)`. Cannot be combined with `level`.
+            panel: Precomputed panel data; internal, leave as `None`.
+            X_df: Known-future exogenous values for the next `h` steps, with
+                `unique_id`, `ds`, and the exogenous columns (no `y`).
+            futr_df: Alias for `X_df`.
+            futr_exog_list: Exogenous column names to use. Inferred from `X_df`
+                when omitted.
+
+        Returns:
+            One row per series and future timestamp, with `unique_id`, `ds`, and
+                one point-forecast column per model alias, plus that model's
+                `-lo-`/`-hi-` or `-q-` columns.
+        """
         return self._call_models(
             "forecast",
             merge_on=["unique_id", "ds"],
@@ -232,6 +254,26 @@ class MultiModelForecasterMixin:
         *,
         futr_exog_list: list[str] | None = None,
     ) -> pd.DataFrame:
+        """Backtest every model over the same rolling windows.
+
+        Args:
+            df: Historical data with columns `unique_id`, `ds`, and `y`. To use
+                exogenous variables, include them (and `y`) through the end of
+                every window.
+            h: Forecast horizon for each window.
+            freq: Pandas frequency of `ds`. Inferred from `df` when omitted.
+            n_windows: Number of windows.
+            step_size: Steps between consecutive cutoffs. Defaults to `h`.
+            level: Prediction-interval levels in percent. Cannot be combined
+                with `quantiles`.
+            quantiles: Quantiles in `(0, 1)`. Cannot be combined with `level`.
+            futr_exog_list: Exogenous column names to use. Inferred from the
+                non-target columns of `df` when omitted.
+
+        Returns:
+            One row per series, window, and timestamp, with `unique_id`, `ds`,
+                `cutoff`, `y`, and one forecast column per model alias.
+        """
         return self._call_models(
             "cross_validation",
             merge_on=["unique_id", "ds", "cutoff"],
@@ -253,6 +295,25 @@ class MultiModelForecasterMixin:
         n_windows: int | None = None,
         level: int | float = 99,
     ) -> pd.DataFrame:
+        """Flag anomalies with every model.
+
+        Each model backtests the history and marks values outside its `level`
+        prediction interval.
+
+        Args:
+            df: Historical data with columns `unique_id`, `ds`, and `y`.
+            h: Forecast horizon for each window. Defaults to the seasonality
+                implied by `freq`.
+            freq: Pandas frequency of `ds`. Inferred from `df` when omitted.
+            n_windows: Number of windows. Defaults to as many as the shortest
+                series allows.
+            level: Interval level in percent used as the anomaly threshold.
+
+        Returns:
+            One row per series and checked timestamp, with `unique_id`, `ds`,
+                `cutoff`, `y`, and per model alias the forecast,
+                `-lo-{level}`/`-hi-{level}` bounds, and a boolean `-anomaly` column.
+        """
         return self._call_models(
             "detect_anomalies",
             merge_on=["unique_id", "ds", "cutoff"],

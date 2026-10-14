@@ -1,63 +1,143 @@
 # `foundationforecast.models`
 
-::: foundationforecast.models.chronos
+::: foundationforecast.models.chronos.Chronos
     options:
+        show_root_heading: true
+        show_root_full_path: false
         members:
-            - Chronos
-            - ChronosFinetuningConfig
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog
 
-::: foundationforecast.models.flowstate
+::: foundationforecast.models.chronos.ChronosFinetuningConfig
     options:
-        members:
-            - FlowState
+        show_root_heading: true
+        show_root_full_path: false
 
-::: foundationforecast.models.moirai
+::: foundationforecast.models.flowstate.FlowState
     options:
+        show_root_heading: true
+        show_root_full_path: false
         members:
-            - Moirai
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog
 
-::: foundationforecast.models.patchtst_fm
+::: foundationforecast.models.moirai.Moirai
     options:
+        show_root_heading: true
+        show_root_full_path: false
         members:
-            - PatchTSTFM
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog
 
-::: foundationforecast.models.sundial
+::: foundationforecast.models.patchtst_fm.PatchTSTFM
     options:
+        show_root_heading: true
+        show_root_full_path: false
         members:
-            - Sundial
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog
 
-::: foundationforecast.models.t0
+::: foundationforecast.models.sundial.Sundial
     options:
+        show_root_heading: true
+        show_root_full_path: false
         members:
-            - T0
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog
 
-::: foundationforecast.models.tabpfn
+::: foundationforecast.models.t0.T0
     options:
+        show_root_heading: true
+        show_root_full_path: false
         members:
-            - TabPFN
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog
 
-::: foundationforecast.models.tafsut
+::: foundationforecast.models.tabpfn.TabPFN
     options:
+        show_root_heading: true
+        show_root_full_path: false
         members:
-            - Tafsut
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog
 
-::: foundationforecast.models.timegpt
+::: foundationforecast.models.tafsut.Tafsut
     options:
+        show_root_heading: true
+        show_root_full_path: false
         members:
-            - TimeGPT
-            - TimeGPTFinetuningConfig
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog
 
-::: foundationforecast.models.timesfm
+::: foundationforecast.models.timegpt.TimeGPT
     options:
+        show_root_heading: true
+        show_root_full_path: false
         members:
-            - TimesFM
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog
 
-::: foundationforecast.models.tirex
+::: foundationforecast.models.timegpt.TimeGPTFinetuningConfig
     options:
-        members:
-            - TiRex
+        show_root_heading: true
+        show_root_full_path: false
 
-::: foundationforecast.models.toto
+::: foundationforecast.models.timesfm.TimesFM
     options:
+        show_root_heading: true
+        show_root_full_path: false
         members:
-            - Toto
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog
+
+::: foundationforecast.models.tirex.TiRex
+    options:
+        show_root_heading: true
+        show_root_full_path: false
+        members:
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog
+
+::: foundationforecast.models.toto.Toto
+    options:
+        show_root_heading: true
+        show_root_full_path: false
+        members:
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog

@@ -285,6 +285,31 @@ class Forecaster:
         futr_df: pd.DataFrame | None = None,
         futr_exog_list: list[str] | None = None,
     ) -> pd.DataFrame:
+        """Forecast the next `h` steps of every series in `df`.
+
+        Args:
+            df: Historical data with columns `unique_id`, `ds`, and `y`, plus any
+                exogenous columns.
+            h: Forecast horizon, in steps of `freq`.
+            freq: Pandas frequency of `ds`. Inferred from `df` when omitted.
+            level: Prediction-interval levels in percent (e.g. `[80, 95]`). Adds
+                `{alias}-lo-{L}` and `{alias}-hi-{L}` columns. Cannot be combined
+                with `quantiles`.
+            quantiles: Quantiles in `(0, 1)` (e.g. `[0.1, 0.5, 0.9]`). Adds
+                `{alias}-q-{pct}` columns. Cannot be combined with `level`.
+            panel: Precomputed panel data; internal, leave as `None`.
+            X_df: Known-future exogenous values for the next `h` steps, with
+                `unique_id`, `ds`, and the exogenous columns (no `y`). See the
+                Exogenous variables guide.
+            futr_df: Alias for `X_df`.
+            futr_exog_list: Exogenous column names to use. Inferred from `X_df`
+                when omitted.
+
+        Returns:
+            One row per series and future timestamp, with `unique_id`, `ds`, the
+                point forecast in the model alias column, and any interval or
+                quantile columns.
+        """
         raise NotImplementedError("This method must be implemented in a subclass.")
 
     def supports_native_futr_exog(self) -> bool:
@@ -358,6 +383,30 @@ class Forecaster:
         *,
         futr_exog_list: list[str] | None = None,
     ) -> pd.DataFrame:
+        """Backtest the model over rolling windows at the end of each series.
+
+        For each window the model forecasts `h` steps from a cutoff using only
+        the data before it, and the forecasts are joined with the actual values.
+
+        Args:
+            df: Historical data with columns `unique_id`, `ds`, and `y`. To use
+                exogenous variables, include them (and `y`) through the end of
+                every window.
+            h: Forecast horizon for each window.
+            freq: Pandas frequency of `ds`. Inferred from `df` when omitted.
+            n_windows: Number of windows.
+            step_size: Steps between consecutive cutoffs. Defaults to `h`.
+            level: Prediction-interval levels in percent. Cannot be combined
+                with `quantiles`.
+            quantiles: Quantiles in `(0, 1)`. Cannot be combined with `level`.
+            futr_exog_list: Exogenous column names to use. Inferred from the
+                non-target columns of `df` when omitted.
+
+        Returns:
+            One row per series, window, and timestamp, with `unique_id`, `ds`,
+                `cutoff`, `y`, the point forecast in the model alias column, and
+                any interval or quantile columns.
+        """
         self.validate_input(df, h)
         freq = self._maybe_infer_freq(df, freq)
         df = maybe_convert_col_to_datetime(df, "ds")
@@ -425,6 +474,26 @@ class Forecaster:
         n_windows: int | None = None,
         level: int | float = 99,
     ) -> pd.DataFrame:
+        """Flag observations that fall outside the model's prediction interval.
+
+        Runs `cross_validation` over the history, then marks a value as an
+        anomaly when its forecast residual exceeds the `level` interval, using
+        the per-series residual standard deviation.
+
+        Args:
+            df: Historical data with columns `unique_id`, `ds`, and `y`.
+            h: Forecast horizon for each window. Defaults to the seasonality
+                implied by `freq`.
+            freq: Pandas frequency of `ds`. Inferred from `df` when omitted.
+            n_windows: Number of windows. Defaults to as many as the shortest
+                series allows.
+            level: Interval level in percent used as the anomaly threshold.
+
+        Returns:
+            One row per series and checked timestamp, with `unique_id`, `ds`,
+                `cutoff`, `y`, the forecast, `{alias}-lo-{level}`,
+                `{alias}-hi-{level}`, and a boolean `{alias}-anomaly` column.
+        """
         from scipy import stats
 
         freq = self._maybe_infer_freq(df, freq)

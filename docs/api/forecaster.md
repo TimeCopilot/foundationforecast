@@ -1,6 +1,13 @@
 # `foundationforecast.FoundationForecast`
 
-::: foundationforecast._foundation_forecast
+::: foundationforecast.FoundationForecast
     options:
+        show_root_heading: true
+        show_root_full_path: false
+        show_source: false
         members:
-            - FoundationForecast
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - clear_model_cache
