@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 import torch
 
@@ -5,6 +7,7 @@ from tests.helpers import generate_series
 from foundationforecast.models.chronos import (
     Chronos,
     ChronosFinetuningConfig,
+    _peft_load_kwargs,
     _QuantileBatchPredictor,
 )
 
@@ -97,6 +100,19 @@ def test_chronos_lora_finetuning_save_and_reuse(tmp_path):
     assert not fcst_reuse.empty
     assert "Chronos" in fcst_reuse.columns
     assert len(fcst_reuse) == n_series * 2
+
+
+def test_peft_load_kwargs_adds_chronos_to_the_default_allowlist():
+    from peft.auto import get_default_import_allowlist
+
+    allowlist = _peft_load_kwargs()["import_allowlist"]
+    assert "chronos" in allowlist
+    assert set(get_default_import_allowlist()) <= set(allowlist)
+
+
+def test_peft_load_kwargs_is_empty_when_peft_has_no_allowlist(monkeypatch):
+    monkeypatch.setitem(sys.modules, "peft.auto", None)
+    assert _peft_load_kwargs() == {}
 
 
 class _FakeOOMPipeline:
