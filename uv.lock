@@ -1514,7 +1514,7 @@ provides-extras = ["plot"]
 [package.metadata.requires-dev]
 dev = [
     { name = "mktestdocs", specifier = ">=0.2.5" },
-    { name = "peft", specifier = ">=0.13.0,<1" },
+    { name = "peft", specifier = ">=0.20.0,<1" },
     { name = "pre-commit" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-codspeed", specifier = ">=5.0.3" },
