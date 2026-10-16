@@ -135,10 +135,11 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 
 ## News
 
-Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.14.md) for full release notes.
+Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.15.md) for full release notes.
 
 | When | What | Checkpoint / detail |
 |------|------|---------------------|
+| Oct 2026 | [**Timestral**](https://huggingface.co/collections/mistralai/timestral) | `mistralai/Timestral-{5M,28M,123M,209M}` — requires `timecopilot-timestral>=0.1.0`; native `X_df`; GIFT-Eval and fev-bench CI ([v0.1.15](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.15.md)) |
 | Oct 2026 | [**T0 gamma**](https://huggingface.co/theforecastingcompany/t0-gamma) | `theforecastingcompany/t0-gamma` — requires `tfc-t0[torch]>=0.6.0`; GIFT-Eval and fev-bench CI ([v0.1.14](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.14.md)) |
 | Oct 2026 | **GIFT-Eval replication for $37** | 16 models on the full benchmark, each official submission matched within 2% MASE/CRPS; new Experiments docs section ([v0.1.13](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.13.md)) |
 | Oct 2026 | **Known-future exog (`X_df`)** | Native covariates on Chronos-2, TimesFM-3, TimeGPT, T0-beta, TiRex-2; fev-bench CI ([v0.1.11](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.11.md)) |
