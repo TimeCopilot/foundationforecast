@@ -37,7 +37,6 @@ PATCHTST_FM_QUANTILE_RANGE = (0.01, 0.99)
 # PatchTST-FM checkpoints expose quantiles on a 0.01 grid (see tsfm_public config).
 PATCHTST_FM_NATIVE_QUANTILES: list[float] = [round(i / 100, 2) for i in range(1, 100)]
 T0_ALPHA_QUANTILE_RANGE = (0.1, 0.9)
-T0_BETA_QUANTILE_RANGE = (0.01, 0.99)
 DEFAULT_NATIVE_QUANTILE_RANGE = (0.01, 0.99)
 
 QUANTILE_GRID_TOLERANCE = 1e-6
