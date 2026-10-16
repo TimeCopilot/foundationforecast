@@ -47,4 +47,5 @@ Below is the list of available foundation models. Click a model name for API det
 - [TiRex / TiRex-2](api/models/foundation/models.md#foundationforecast.models.tirex.TiRex) ([arXiv:2505.23719](https://arxiv.org/abs/2505.23719), [arXiv:2607.01204](https://arxiv.org/abs/2607.01204)) — Python 3.11+
 - [TimeGPT](api/models/foundation/models.md#foundationforecast.models.timegpt.TimeGPT) ([arXiv:2310.03589](https://arxiv.org/abs/2310.03589)) — requires `NIXTLA_API_KEY`
 - [TimesFM](api/models/foundation/models.md#foundationforecast.models.timesfm.TimesFM) ([arXiv:2310.10688](https://arxiv.org/abs/2310.10688)) — supports 1.0, 2.0, 2.5, and 3.0; 3.0 weights are [non-commercial](https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE)
+- [Timestral](api/models/foundation/models.md#foundationforecast.models.timestral.Timestral) ([Timestral-5M/28M/123M/209M](https://huggingface.co/collections/mistralai/timestral); requires `timecopilot-timestral>=0.1.0`) — Modified MIT weights (revenue cap)
 - [Toto](api/models/foundation/models.md#foundationforecast.models.toto.Toto) ([arXiv:2505.14766](https://arxiv.org/abs/2505.14766))

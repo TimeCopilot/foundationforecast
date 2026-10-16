@@ -58,6 +58,7 @@ dependencies = [
   "tfc-t0[torch]>=0.6.0 ; python_full_version >= '3.11' and python_full_version < '3.14'",
   "timecopilot-chronos-forecasting>=0.2.2",
   "timecopilot-timesfm>=0.4.0",
+  "timecopilot-timestral>=0.1.0",
   "timecopilot-tirex2>=0.1.0 ; python_full_version >= '3.11'",
   "timecopilot-tirex>=0.1.1 ; python_full_version >= '3.11'",
   "timecopilot-toto-2>=0.1.1",
@@ -73,7 +74,7 @@ license = "Apache-2.0"
 name = "foundationforecast"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.1.14"
+version = "0.1.15"
 
 [project.optional-dependencies]
 plot = [

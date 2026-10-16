@@ -66,7 +66,7 @@ Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results
 
 ## Highlights
 
-- 📈 **Exogenous variables (covariates).** Pass known-future features with **`X_df`** on `forecast()` (and exog columns in `df` for `cross_validation()`). Native support on Chronos-2, TimesFM-3, TimeGPT, T0, and TiRex-2; see [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md) and the [example notebook](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/examples/exogenous-variables.ipynb).
+- 📈 **Exogenous variables (covariates).** Pass known-future features with **`X_df`** on `forecast()` (and exog columns in `df` for `cross_validation()`). Native support on Chronos-2, TimesFM-3, TimeGPT, T0, TiRex-2, and Timestral; see [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md) and the [example notebook](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/examples/exogenous-variables.ipynb).
 - 💸 **Full GIFT-Eval replication for $37.** 16 models, 97 dataset configurations each, in about 34 GPU-hours, every model with an official submission within 2% of its leaderboard MASE/CRPS. TimesFM 3 is the most accurate, for under $8. Read the [writeup](https://github.com/TimeCopilot/foundationforecast/blob/main/experiments/gift-eval/README.md).
 - 🎯 **Benchmark replication in CI.** Wrappers are regression-tested against official leaderboard submissions: [`experiments/gift-eval`](https://github.com/TimeCopilot/foundationforecast/tree/main/experiments/gift-eval) (GIFT-Eval MASE/CRPS on Modal GPU) and [`experiments/fev-bench`](https://github.com/TimeCopilot/foundationforecast/tree/main/experiments/fev-bench) (fev-bench `test_error` on known-dynamic tasks). [CI](https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml) re-runs these checks on every change.
 - 🚀 **GPU-native**. Automatically runs on GPU when available, without model-specific device configuration.
@@ -92,11 +92,12 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/nx-ai.png" width="28" alt="NX-AI"> | [TiRex](https://arxiv.org/abs/2505.23719) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Community / Apache-2.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/nixtla.png" width="28" alt="Nixtla"> | [TimeGPT](https://arxiv.org/abs/2310.03589) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Nixtla API§ |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/google.png" width="28" alt="Google"> | [TimesFM](https://arxiv.org/abs/2310.10688) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Apache-2.0 |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/mistral.png" width="28" alt="Mistral"> | [Timestral](https://huggingface.co/collections/mistralai/timestral) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Modified MIT∥ |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/datadog.png" width="28" alt="Datadog"> | [Toto](https://arxiv.org/abs/2505.14766) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
 
 Licenses verified against Hugging Face model cards. Check the model card for your `repo_id` when in doubt.
 
-¶ **Exogenous (native):** **Chronos** with `repo_id` containing `chronos-2` (e.g. `amazon/chronos-2`); **TimesFM** with **`google/timesfm-3.0-pytorch`**; **TimeGPT**; **T0** (`theforecastingcompany/t0-alpha`, `t0-beta`, `t0-gamma`); **TiRex-2** (`NX-AI/TiRex-2` and other `TiRex-2-*` checkpoints, not TiRex 1.0). Other hub models and other checkpoints in those families do not accept `X_df` under default `exog_strategy`. Set `exog_strategy=False` to ignore horizon exog in mixed `FoundationForecast` runs. See [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md#native-exog-by-checkpoint).
+¶ **Exogenous (native):** **Chronos** with `repo_id` containing `chronos-2` (e.g. `amazon/chronos-2`); **TimesFM** with **`google/timesfm-3.0-pytorch`**; **TimeGPT**; **T0** (`theforecastingcompany/t0-alpha`, `t0-beta`, `t0-gamma`); **TiRex-2** (`NX-AI/TiRex-2` and other `TiRex-2-*` checkpoints, not TiRex 1.0); **Timestral** (`mistralai/Timestral-*`). Other hub models and other checkpoints in those families do not accept `X_df` under default `exog_strategy`. Set `exog_strategy=False` to ignore horizon exog in mixed `FoundationForecast` runs. See [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md#native-exog-by-checkpoint).
 
 <details><summary><strong>What this means for production</strong></summary>
 
@@ -107,6 +108,7 @@ Licenses verified against Hugging Face model cards. Check the model card for you
 - **TabPFN NC**‡: TabPFN-2.6+ and TabPFN-3 weights are non-commercial; production requires a [Prior Labs commercial license or API](https://docs.priorlabs.ai/models). First LOCAL use requires accepting terms at [ux.priorlabs.ai](https://ux.priorlabs.ai) (`TABPFN_TOKEN`). TabPFN-3 is LOCAL-only today.
 - **Community / Apache-2.0** (TiRex): TiRex 1.0 uses the [NXAI Community License](https://huggingface.co/NX-AI/TiRex/blob/main/LICENSE) (commercial limits for large enterprises); TiRex 2.0 is Apache-2.0.
 - **Nixtla API**§: hosted service via `NIXTLA_API_KEY`; production under [Nixtla terms/pricing](https://www.nixtla.io/docs), not open weights.
+- **Modified MIT∥** (Timestral): checkpoint weights use Mistral's [Modified MIT license](https://huggingface.co/mistralai/Timestral-209M) (companies above USD 20M monthly revenue need a commercial license from Mistral); inference code is Apache-2.0 via `timecopilot-timestral`.
 
 **FoundationForecast** itself is [Apache-2.0](LICENSE) regardless of which model you plug in.
 
@@ -127,6 +129,7 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 - **TiRex:** `NX-AI/TiRex`, `NX-AI/TiRex-2`
 - **TimeGPT:** pass `model=` to `TimeGPT()`, e.g. `timegpt-1`, [`timegpt-1-long-horizon`](https://www.nixtla.io/docs/forecasting/model-version/longhorizon_model), `timegpt-2-mini`, `timegpt-2`, `timegpt-2-pro`
 - **TimesFM:** `google/timesfm-{1.0-200m,2.0-500m,2.5-200m,3.0}-pytorch` (3.0 weights are [non-commercial](https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE))
+- **Timestral:** `mistralai/Timestral-{5M,28M,123M,209M}` (requires `timecopilot-timestral>=0.1.0`)
 - **Toto:** `Datadog/Toto-Open-Base-1.0`, `Datadog/Toto-2.0-{4m,22m,313m,1B,2.5B}`
 
 </details>
@@ -135,10 +138,11 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 
 ## News
 
-Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.14.md) for full release notes.
+Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.15.md) for full release notes.
 
 | When | What | Checkpoint / detail |
 |------|------|---------------------|
+| Oct 2026 | [**Timestral**](https://huggingface.co/collections/mistralai/timestral) | `mistralai/Timestral-{5M,28M,123M,209M}` — requires `timecopilot-timestral>=0.1.0`; native `X_df`; GIFT-Eval and fev-bench CI ([v0.1.15](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.15.md)) |
 | Oct 2026 | [**T0 gamma**](https://huggingface.co/theforecastingcompany/t0-gamma) | `theforecastingcompany/t0-gamma` — requires `tfc-t0[torch]>=0.6.0`; GIFT-Eval and fev-bench CI ([v0.1.14](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.14.md)) |
 | Oct 2026 | **GIFT-Eval replication for $37** | 16 models on the full benchmark, each official submission matched within 2% MASE/CRPS; new Experiments docs section ([v0.1.13](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.13.md)) |
 | Oct 2026 | **Known-future exog (`X_df`)** | Native covariates on Chronos-2, TimesFM-3, TimeGPT, T0-beta, TiRex-2; fev-bench CI ([v0.1.11](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.11.md)) |

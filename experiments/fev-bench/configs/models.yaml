@@ -38,6 +38,14 @@ models:
       snap_integers: true
       cross_inference: 64
 
+  mistralai--Timestral-209M:
+    class: foundationforecast.models.timestral.Timestral
+    reference_csv: timestral-209m.csv
+    kwargs:
+      repo_id: mistralai/Timestral-209M
+      alias: Timestral-209M
+      batch_size: 64
+
   NX-AI--TiRex-2:
     class: foundationforecast.models.tirex.TiRex
     reference_csv: tirex-2.csv
