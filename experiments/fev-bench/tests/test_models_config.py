@@ -60,6 +60,23 @@ def test_t0_beta_registered_with_leaderboard_reference():
     assert entry["kwargs"]["repo_id"] == "theforecastingcompany/t0-beta"
 
 
+def test_t0_gamma_registered_with_leaderboard_reference():
+    models = load_models_config()
+    entry = models["theforecastingcompany--t0-gamma"]
+    assert entry["class"] == "foundationforecast.models.t0.T0"
+    assert entry["reference_csv"] == "t0-gamma.csv"
+    kwargs = entry["kwargs"]
+    assert kwargs["repo_id"] == "theforecastingcompany/t0-gamma"
+    assert kwargs["cross_inference"] == 64
+    for flag in (
+        "trim_leading_missing",
+        "symmetric_averaging",
+        "clip_nonnegative",
+        "snap_integers",
+    ):
+        assert kwargs[flag] is True
+
+
 def test_tirex_2_registered_with_leaderboard_reference():
     models = load_models_config()
     entry = models["NX-AI--TiRex-2"]

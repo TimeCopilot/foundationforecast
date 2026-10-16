@@ -15,6 +15,11 @@ jobs:
   - model_key: theforecastingcompany--t0-beta
     task_name: entsoe_1H
 
+  - model_key: theforecastingcompany--t0-gamma
+    task_name: epf_pjm
+  - model_key: theforecastingcompany--t0-gamma
+    task_name: entsoe_1H
+
   - model_key: NX-AI--TiRex-2
     task_name: epf_pjm
   - model_key: NX-AI--TiRex-2
