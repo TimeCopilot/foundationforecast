@@ -9,6 +9,7 @@ from .models import (
     TimeGPT,
     TimeGPTFinetuningConfig,
     TimesFM,
+    Timestral,
     Toto,
 )
 
@@ -21,6 +22,7 @@ __all__ = [
     "TimeGPT",
     "TimeGPTFinetuningConfig",
     "TimesFM",
+    "Timestral",
     "Toto",
 ]
 
