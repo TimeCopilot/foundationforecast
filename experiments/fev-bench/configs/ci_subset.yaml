@@ -15,10 +15,6 @@ jobs:
   - model_key: theforecastingcompany--t0-beta
     task_name: entsoe_1H
 
-  - model_key: mistralai--Timestral-5M
-    task_name: epf_pjm
-  - model_key: mistralai--Timestral-5M
-    task_name: entsoe_1H
   - model_key: mistralai--Timestral-209M
     task_name: epf_pjm
   - model_key: mistralai--Timestral-209M
