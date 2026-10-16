@@ -92,7 +92,7 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/nx-ai.png" width="28" alt="NX-AI"> | [TiRex](https://arxiv.org/abs/2505.23719) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Community / Apache-2.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/nixtla.png" width="28" alt="Nixtla"> | [TimeGPT](https://arxiv.org/abs/2310.03589) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Nixtla API§ |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/google.png" width="28" alt="Google"> | [TimesFM](https://arxiv.org/abs/2310.10688) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Apache-2.0 |
-| <img src="https://raw.githubusercontent.com/TimeCopilot/foundationforecast/main/docs/assets/logos/mistral.png" width="28" alt="Mistral"> | [Timestral](https://huggingface.co/collections/mistralai/timestral) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Modified MIT∥ |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/mistral.png" width="28" alt="Mistral"> | [Timestral](https://huggingface.co/collections/mistralai/timestral) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Modified MIT∥ |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/datadog.png" width="28" alt="Datadog"> | [Toto](https://arxiv.org/abs/2505.14766) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
 
 Licenses verified against Hugging Face model cards. Check the model card for your `repo_id` when in doubt.
