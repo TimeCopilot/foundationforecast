@@ -8,10 +8,8 @@ from tqdm import tqdm
 
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
-from ..core.quantiles import select_clipped_quantile_values
+from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData
-
-TIMESTRAL_QUANTILE_RANGE = (0.01, 0.99)
 
 
 class Timestral(ExogCapableForecaster):
@@ -183,7 +181,6 @@ class Timestral(ExogCapableForecaster):
             df, batch_size=self.batch_size, panel=panel
         )
         fcst_df = horizon_df[["unique_id", "ds"]].copy()
-        q_min, q_max = TIMESTRAL_QUANTILE_RANGE
         fcsts: list[np.ndarray] = []
         native_levels: list[float] | None = None
         uids = np.asarray(dataset.uids)
@@ -214,12 +211,10 @@ class Timestral(ExogCapableForecaster):
         median_idx = native_levels.index(0.5)
         fcst_df[self.alias] = fcsts_np[..., median_idx].reshape(-1, 1)
         if qc.quantiles is not None:
-            fcsts_quantiles_np = select_clipped_quantile_values(
+            fcsts_quantiles_np = resolve_quantile_values(
                 native_levels,
                 fcsts_np,
                 qc.quantiles,
-                q_min=q_min,
-                q_max=q_max,
                 axis=-1,
             )
             fcst_df = self._assign_quantile_forecasts(
@@ -249,7 +244,6 @@ class Timestral(ExogCapableForecaster):
             df, batch_size=self.batch_size, panel=panel
         )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
-        q_min, q_max = TIMESTRAL_QUANTILE_RANGE
         fcsts: list[np.ndarray] = []
         native_levels: list[float] | None = None
         with self._get_model() as model:
@@ -267,12 +261,10 @@ class Timestral(ExogCapableForecaster):
         median_idx = native_levels.index(0.5)
         fcst_df[self.alias] = fcsts_np[..., median_idx].reshape(-1, 1)
         if qc.quantiles is not None:
-            fcsts_quantiles_np = select_clipped_quantile_values(
+            fcsts_quantiles_np = resolve_quantile_values(
                 native_levels,
                 fcsts_np,
                 qc.quantiles,
-                q_min=q_min,
-                q_max=q_max,
                 axis=-1,
             )
             fcst_df = self._assign_quantile_forecasts(
