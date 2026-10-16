@@ -94,6 +94,7 @@ When adding a new foundation model:
 - **tirex** — [`timecopilot-tirex`](https://pypi.org/project/timecopilot-tirex/)
 - **toto** — [`timecopilot-toto`](https://pypi.org/project/timecopilot-toto/)
 - **uni2ts** — [`timecopilot-uni2ts`](https://pypi.org/project/timecopilot-uni2ts/)
+- **timestral** — [`timecopilot-timestral`](https://pypi.org/project/timecopilot-timestral/)
 
 FlowState and PatchTST-FM use upstream [`granite-tsfm`](https://pypi.org/project/granite-tsfm/)
 (`>=0.3.9`; PatchTST-FM r2 requires overlapping-patch support). The former
