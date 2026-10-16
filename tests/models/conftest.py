@@ -66,6 +66,19 @@ if (3, 11) <= sys.version_info < (3, 14):
             batch_size=2,
         )
     )
+    models.append(
+        T0(
+            repo_id="theforecastingcompany/t0-gamma",
+            alias="t0-gamma",
+            context_length=256,
+            batch_size=2,
+            trim_leading_missing=True,
+            symmetric_averaging=True,
+            clip_nonnegative=True,
+            snap_integers=True,
+            cross_inference=2,
+        )
+    )
 
 if (3, 11) <= sys.version_info < (3, 14):
     from foundationforecast.models.flowstate import FlowState
