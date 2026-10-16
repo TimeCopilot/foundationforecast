@@ -1143,7 +1143,7 @@ wheels = [
 
 [[package]]
 name = "foundationforecast"
-version = "0.1.13"
+version = "0.1.14"
 source = { editable = "../../" }
 dependencies = [
     { name = "gluonts", extra = ["torch"] },
@@ -1155,7 +1155,7 @@ dependencies = [
     { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "tabpfn-time-series", marker = "python_full_version < '3.13'" },
     { name = "tafsut" },
-    { name = "tfc-t0", marker = "python_full_version < '3.14'" },
+    { name = "tfc-t0", extra = ["torch"], marker = "python_full_version < '3.14'" },
     { name = "timecopilot-chronos-forecasting" },
     { name = "timecopilot-timesfm" },
     { name = "timecopilot-timestral" },
@@ -1181,7 +1181,7 @@ requires-dist = [
     { name = "scipy" },
     { name = "tabpfn-time-series", marker = "python_full_version < '3.13'", specifier = ">=1.2.0" },
     { name = "tafsut", specifier = ">=0.1.0" },
-    { name = "tfc-t0", marker = "python_full_version >= '3.11' and python_full_version < '3.14'", specifier = ">=0.5.0" },
+    { name = "tfc-t0", extras = ["torch"], marker = "python_full_version >= '3.11' and python_full_version < '3.14'", specifier = ">=0.6.0" },
     { name = "timecopilot-chronos-forecasting", specifier = ">=0.2.2" },
     { name = "timecopilot-timesfm", specifier = ">=0.4.0" },
     { name = "timecopilot-timestral", specifier = ">=0.1.0" },
@@ -5045,21 +5045,25 @@ wheels = [
 
 [[package]]
 name = "tfc-t0"
-version = "0.5.0"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "einops", marker = "python_full_version < '3.14'" },
     { name = "huggingface-hub", marker = "python_full_version < '3.14'" },
     { name = "jaxtyping", marker = "python_full_version < '3.14'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' and python_full_version < '3.14'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ba/0d/1a25ce944f4ecc4598937ecb34330b93484dd4f4111770d3181d73d21da4/tfc_t0-0.6.0.tar.gz", hash = "sha256:40284afc78a544485f4f62aaf541f66f988028f6e51691a308cf604134da94d4", size = 1125198, upload-time = "2026-10-13T09:47:46.291Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/55/82/4e47c03dd3a22af03fded4d85feb1c7770d71623ea2173809b731c2d2a21/tfc_t0-0.6.0-py3-none-any.whl", hash = "sha256:0db2315e051d1fcb3c40f9525534817d40ee2f700d3b7498145a86cf0bcfd864", size = 75131, upload-time = "2026-10-13T09:47:44.624Z" },
+]
+
+[package.optional-dependencies]
+torch = [
+    { name = "einops", marker = "python_full_version < '3.14'" },
     { name = "rotary-embedding-torch", marker = "python_full_version < '3.14'" },
     { name = "safetensors", marker = "python_full_version < '3.14'" },
     { name = "torch", marker = "python_full_version < '3.14'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/cd/50/72f469a14395b80efa72c5a94a6a595673cf5fa73e2f92c5dbba082c6c63/tfc_t0-0.5.0.tar.gz", hash = "sha256:603e43a16da6210ca11fc26f957b1b43a7f2a60caa59e34643a015ec85335da7", size = 523589, upload-time = "2026-09-17T14:21:35.373Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/77/6b/a33a4382e70f7612ae82f0c5f4178f5c1132f317508ef6def180054f73cd/tfc_t0-0.5.0-py3-none-any.whl", hash = "sha256:551936dfe72b0464d3963d0b3bf4415d49b6ac37c5695ff97b8ff844f12c6a8c", size = 55148, upload-time = "2026-09-17T14:21:33.802Z" },
 ]
 
 [[package]]

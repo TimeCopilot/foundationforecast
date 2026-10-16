@@ -24,4 +24,5 @@ For model API details, see the [Model Hub](../model-hub.md).
 | [Toto Family](toto-family.ipynb) | Forecast with Toto 1.0 and 2.0 | Python 3.10+ |
 | [PatchTST-FM Family](patchtst-fm-family.ipynb) | Forecast with IBM Research and Granite PatchTST-FM r1/r2 | Python 3.11–3.13; GPU recommended |
 | [Timestral Family](timestral-family.ipynb) | Forecast with Timestral 5M, 28M, 123M and 209M | Python 3.10+ |
+| [T0 Family](t0-family.ipynb) | Forecast with t0-alpha, t0-beta and t0-gamma, including the t0-gamma benchmark settings | Python 3.11–3.13 |
 | [Finetuning](finetuning.ipynb) | Adapt Chronos 2 and TimeGPT to your data | Python 3.10+; GPU recommended |

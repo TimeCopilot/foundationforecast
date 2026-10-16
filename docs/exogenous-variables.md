@@ -42,7 +42,7 @@ FoundationForecast uses **`supports_native_futr_exog()`** on the forecaster inst
 | **PatchTST-FM** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **Sundial** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **TabPFN** | any | No | Use `exog_strategy=False` in multi-model runs |
-| **T0** | `theforecastingcompany/t0-alpha`, `theforecastingcompany/t0-beta` | Yes | `future_covariates` in `tfc-t0` |
+| **T0** | `theforecastingcompany/t0-alpha`, `theforecastingcompany/t0-beta`, `theforecastingcompany/t0-gamma` | Yes | `future_covariates` in `tfc-t0` |
 | **Tafsut** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **TiRex** | checkpoint `TiRex-2` or `TiRex-2-*`, e.g. `NX-AI/TiRex-2` | Yes | TiRex 1.0 (e.g. `NX-AI/TiRex`) → error with `X_df` |
 | **TimeGPT** | any Nixtla `model=` id (e.g. `timegpt-1`, `timegpt-2`) | Yes | Hosted API via `X_df` |

@@ -55,7 +55,7 @@ dependencies = [
   "scipy",
   "tabpfn-time-series>=1.2.0 ; python_full_version < '3.13'",
   "tafsut>=0.1.0",
-  "tfc-t0>=0.5.0 ; python_full_version >= '3.11' and python_full_version < '3.14'",
+  "tfc-t0[torch]>=0.6.0 ; python_full_version >= '3.11' and python_full_version < '3.14'",
   "timecopilot-chronos-forecasting>=0.2.2",
   "timecopilot-timesfm>=0.4.0",
   "timecopilot-timestral>=0.1.0",
@@ -74,7 +74,7 @@ license = "Apache-2.0"
 name = "foundationforecast"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.1.13"
+version = "0.1.14"
 
 [project.optional-dependencies]
 plot = [

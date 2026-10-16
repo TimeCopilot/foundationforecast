@@ -1,6 +1,7 @@
 import json
 import sys
 from contextlib import contextmanager
+from functools import cache
 
 if sys.version_info < (3, 11) or sys.version_info >= (3, 14):
     raise ImportError("T0 requires Python >= 3.11 and < 3.14")
@@ -11,17 +12,26 @@ import torch
 from huggingface_hub import hf_hub_download
 from huggingface_hub.constants import CONFIG_NAME
 from t0 import T0Forecaster
+from t0.torch import batch_series
 from tqdm import tqdm
 
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import (
     T0_ALPHA_QUANTILE_RANGE,
-    T0_BETA_QUANTILE_RANGE,
     backend_quantile_levels,
     select_clipped_quantile_values,
 )
 from ..core.utils import PanelData
+
+
+@cache
+def _checkpoint_config(repo_id: str) -> dict:
+    # huggingface_hub may not inject config.json into model kwargs when the
+    # checkpoint repo is gated; it is read here and passed explicitly.
+    config_path = hf_hub_download(repo_id, CONFIG_NAME)
+    with open(config_path, encoding="utf-8") as f:
+        return json.load(f)
 
 
 class T0(ExogCapableForecaster):
@@ -46,6 +56,11 @@ class T0(ExogCapableForecaster):
         alias: str = "t0-alpha",
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        trim_leading_missing: bool = False,
+        symmetric_averaging: bool = False,
+        clip_nonnegative: bool = False,
+        snap_integers: bool = False,
+        cross_inference: int = 0,
     ):
         # ruff: noqa: E501
         """
@@ -65,12 +80,30 @@ class T0(ExogCapableForecaster):
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and
                 release weights on every call.
+            exog_strategy (ExogStrategyConfig, optional): How exogenous
+                variables in ``X_df`` are handled. Defaults to "auto", which
+                passes known-future covariates to T0 natively.
+            trim_leading_missing (bool, optional): Treat the missing stretch
+                before a series' first observation as padding rather than as
+                missing values. Defaults to False.
+            symmetric_averaging (bool, optional): Average each forecast with
+                the mirrored forecast of the negated series. Runs the model
+                twice. Defaults to False.
+            clip_nonnegative (bool, optional): Clip forecasts at zero for
+                series whose history is non-negative. Defaults to False.
+            snap_integers (bool, optional): Round forecasts to integers for
+                series whose history is integer-valued. Defaults to False.
+            cross_inference (int, optional): Forecast up to this many series
+                of a batch together as one group, so the model attends across
+                them. Groups never span batches, so the effective group size
+                is at most ``batch_size``. ``0`` (default) forecasts each
+                series on its own. Ignored when known-future covariates are
+                passed natively.
 
         Notes:
             **Requirements:**
 
-            - T0 requires Python 3.11 to 3.13 and ``tfc-t0>=0.5.0`` (required
-              for ``t0-beta``; also supports ``t0-alpha``).
+            - T0 requires Python 3.11 to 3.13 and ``tfc-t0[torch]>=0.6.0``.
 
             **Available models:**
 
@@ -78,6 +111,7 @@ class T0(ExogCapableForecaster):
             | ------------------------------------------------------------------------------------------------- | ---------- |
             | [`theforecastingcompany/t0-alpha`](https://huggingface.co/theforecastingcompany/t0-alpha)         | ~102M      |
             | [`theforecastingcompany/t0-beta`](https://huggingface.co/theforecastingcompany/t0-beta)           | ~256M      |
+            | [`theforecastingcompany/t0-gamma`](https://huggingface.co/theforecastingcompany/t0-gamma)         | ~256M      |
 
             **Resources:**
 
@@ -89,8 +123,13 @@ class T0(ExogCapableForecaster):
             - The model is loaded onto the best available device (GPU if
               available, otherwise CPU).
             - ``t0-alpha`` predicts 5 quantile knots (0.1, 0.25, 0.5, 0.75, 0.9);
-              ``t0-beta`` predicts 21 native levels (0.01–0.99). Requested
-              quantiles are interpolated; the median (0.5) is the point forecast.
+              ``t0-beta`` and ``t0-gamma`` predict 21 native levels
+              (0.01–0.99). Requested quantiles are interpolated; the median
+              (0.5) is the point forecast.
+            - The published ``t0-gamma`` benchmark scores enable
+              ``trim_leading_missing``, ``symmetric_averaging``,
+              ``clip_nonnegative`` and ``snap_integers``, with
+              ``cross_inference=64``.
             - NaN values in the context are treated as missing observations.
             - Known-future exogenous variables are passed via ``X_df`` at forecast
               time (``exog_strategy="auto"``).
@@ -103,14 +142,15 @@ class T0(ExogCapableForecaster):
         self.context_length = context_length
         self.batch_size = batch_size
         self.alias = alias
+        self.trim_leading_missing = trim_leading_missing
+        self.symmetric_averaging = symmetric_averaging
+        self.clip_nonnegative = clip_nonnegative
+        self.snap_integers = snap_integers
+        self.cross_inference = cross_inference
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
     def _load_model(self) -> T0Forecaster:
-        # huggingface_hub may not inject config.json into model kwargs when the
-        # checkpoint repo is gated; pass the config explicitly.
-        config_path = hf_hub_download(self.repo_id, CONFIG_NAME)
-        with open(config_path, encoding="utf-8") as f:
-            config = json.load(f)
+        config = _checkpoint_config(self.repo_id)
         return (
             T0Forecaster.from_pretrained(self.repo_id, **config).to(self.device).eval()
         )
@@ -121,9 +161,48 @@ class T0(ExogCapableForecaster):
             yield model
 
     def _quantile_range(self) -> tuple[float, float]:
-        if "beta" in self.repo_id:
-            return T0_BETA_QUANTILE_RANGE
-        return T0_ALPHA_QUANTILE_RANGE
+        levels = _checkpoint_config(self.repo_id).get("quantile_levels")
+        if not levels:
+            return T0_ALPHA_QUANTILE_RANGE
+        return float(min(levels)), float(max(levels))
+
+    def _inference_kwargs(self) -> dict[str, bool]:
+        return {
+            "trim_leading_missing": self.trim_leading_missing,
+            "symmetric_averaging": self.symmetric_averaging,
+            "clip_nonnegative": self.clip_nonnegative,
+            "snap_integers": self.snap_integers,
+        }
+
+    def _predict_grouped(
+        self,
+        model: T0Forecaster,
+        batch: list[torch.Tensor],
+        h: int,
+        quantile_levels: list[float],
+    ) -> np.ndarray:
+        """Forecast ``cross_inference`` series at a time as one group."""
+        blocks = []
+        for start in range(0, len(batch), self.cross_inference):
+            members = [
+                ts[-self.context_length :].to(dtype=torch.float32)
+                for ts in batch[start : start + self.cross_inference]
+            ]
+            width = max(len(ts) for ts in members)
+            block = torch.full((len(members), width), float("nan"))
+            for row, ts in enumerate(members):
+                block[row, width - len(ts) :] = ts
+            blocks.append(block)
+        context, mask, group_ids = batch_series(blocks)
+        out = model.predict(
+            context.to(self.device),
+            horizon=h,
+            quantile_levels=quantile_levels,
+            mask=mask.to(self.device),
+            group_ids=group_ids.to(self.device),
+            **self._inference_kwargs(),
+        )
+        return out.quantiles.cpu().numpy()
 
     def _batch_context_width(self, batch: list[torch.Tensor]) -> int:
         return min(max(len(ts) for ts in batch), self.context_length)
@@ -225,6 +304,7 @@ class T0(ExogCapableForecaster):
                     horizon=h,
                     quantile_levels=pred_quantiles,
                     future_covariates=future_cov,
+                    **self._inference_kwargs(),
                 )
                 fcsts.append(out.quantiles.cpu().numpy())
         fcsts_np = np.concatenate(fcsts, axis=0)
@@ -326,10 +406,14 @@ class T0(ExogCapableForecaster):
         fcsts: list[np.ndarray] = []
         with self._get_model() as model:
             for batch in tqdm(dataset):
+                if self.cross_inference > 1:
+                    fcsts.append(self._predict_grouped(model, batch, h, pred_quantiles))
+                    continue
                 out = model.predict(
                     self._to_context(batch),
                     horizon=h,
                     quantile_levels=pred_quantiles,
+                    **self._inference_kwargs(),
                 )
                 # shape: (batch, h, n_quantiles)
                 fcsts.append(out.quantiles.cpu().numpy())

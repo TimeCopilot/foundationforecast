@@ -35,6 +35,7 @@ nav:
           - Toto: examples/toto-family.ipynb
           - PatchTST-FM: examples/patchtst-fm-family.ipynb
           - Timestral: examples/timestral-family.ipynb
+          - T0: examples/t0-family.ipynb
       - Finetuning: examples/finetuning.ipynb
   - API Reference:
       - api/forecaster.md
@@ -48,6 +49,7 @@ nav:
       - Contributing: contributing.md
   - Changelogs:
       - changelogs/index.md
+      - changelogs/v0.1.14.md
       - changelogs/v0.1.13.md
       - changelogs/v0.1.12.md
       - changelogs/v0.1.11.md
