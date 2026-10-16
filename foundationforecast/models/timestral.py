@@ -54,8 +54,9 @@ class Timestral(ExogCapableForecaster):
             symmetric_averaging (bool, optional): Average each forecast with
                 the mirrored forecast of the negated series. Defaults to True,
                 matching the published benchmark settings.
-            clip_nonnegative (bool, optional): Clip forecasts at zero for
-                non-negative histories. Defaults to True.
+            clip_nonnegative (bool, optional): After forecasting, clamp every
+                quantile to ≥ 0 when that series' observed history is entirely
+                non-negative. Defaults to True.
 
         Notes:
             **Requirements:** ``timecopilot-timestral>=0.1.0`` (Python 3.10+).
