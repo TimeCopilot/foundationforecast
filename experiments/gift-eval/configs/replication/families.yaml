@@ -16,3 +16,4 @@ model_keys:
   - tafsut-univariate-base
   - theforecastingcompany--t0-alpha
   - theforecastingcompany--t0-beta
+  - mistralai--Timestral-209M

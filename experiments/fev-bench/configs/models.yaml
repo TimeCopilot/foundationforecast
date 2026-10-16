@@ -25,6 +25,38 @@ models:
       alias: t0-beta
       batch_size: 16
 
+  mistralai--Timestral-5M:
+    class: foundationforecast.models.timestral.Timestral
+    reference_csv: timestral-5m.csv
+    kwargs:
+      repo_id: mistralai/Timestral-5M
+      alias: Timestral-5M
+      batch_size: 64
+
+  mistralai--Timestral-28M:
+    class: foundationforecast.models.timestral.Timestral
+    reference_csv: timestral-28m.csv
+    kwargs:
+      repo_id: mistralai/Timestral-28M
+      alias: Timestral-28M
+      batch_size: 64
+
+  mistralai--Timestral-123M:
+    class: foundationforecast.models.timestral.Timestral
+    reference_csv: timestral-123m.csv
+    kwargs:
+      repo_id: mistralai/Timestral-123M
+      alias: Timestral-123M
+      batch_size: 64
+
+  mistralai--Timestral-209M:
+    class: foundationforecast.models.timestral.Timestral
+    reference_csv: timestral-209m.csv
+    kwargs:
+      repo_id: mistralai/Timestral-209M
+      alias: Timestral-209M
+      batch_size: 64
+
   NX-AI--TiRex-2:
     class: foundationforecast.models.tirex.TiRex
     reference_csv: tirex-2.csv

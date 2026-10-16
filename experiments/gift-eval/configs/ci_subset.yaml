@@ -38,6 +38,12 @@ jobs:
   - model_key: theforecastingcompany--t0-alpha
     dataset_name: m4_weekly
     term: short
+  - model_key: mistralai--Timestral-5M
+    dataset_name: m4_weekly
+    term: short
+  - model_key: mistralai--Timestral-209M
+    dataset_name: m4_weekly
+    term: short
   - model_key: tafsut-univariate-base
     dataset_name: m4_weekly
     term: short

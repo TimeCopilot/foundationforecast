@@ -1158,6 +1158,7 @@ dependencies = [
     { name = "tfc-t0", marker = "python_full_version < '3.14'" },
     { name = "timecopilot-chronos-forecasting" },
     { name = "timecopilot-timesfm" },
+    { name = "timecopilot-timestral" },
     { name = "timecopilot-tirex" },
     { name = "timecopilot-tirex2" },
     { name = "timecopilot-toto" },
@@ -1183,6 +1184,7 @@ requires-dist = [
     { name = "tfc-t0", marker = "python_full_version >= '3.11' and python_full_version < '3.14'", specifier = ">=0.5.0" },
     { name = "timecopilot-chronos-forecasting", specifier = ">=0.2.2" },
     { name = "timecopilot-timesfm", specifier = ">=0.4.0" },
+    { name = "timecopilot-timestral", specifier = ">=0.1.0" },
     { name = "timecopilot-tirex", marker = "python_full_version >= '3.11'", specifier = ">=0.1.1" },
     { name = "timecopilot-tirex2", marker = "python_full_version >= '3.11'", specifier = ">=0.1.0" },
     { name = "timecopilot-toto", specifier = ">=0.1.7" },
@@ -1198,7 +1200,7 @@ provides-extras = ["plot"]
 [package.metadata.requires-dev]
 dev = [
     { name = "mktestdocs", specifier = ">=0.2.5" },
-    { name = "peft", specifier = ">=0.13.0,<1" },
+    { name = "peft", specifier = ">=0.20.0,<1" },
     { name = "pre-commit" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-codspeed", specifier = ">=5.0.3" },
@@ -5121,6 +5123,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e9/a7/85a07334d68be96f40e33e9087bf3e60e3a51d5c30984ac0764168854b75/timecopilot_timesfm-0.4.0.tar.gz", hash = "sha256:59d73de66e697fadc4613f4e2c49f1d81c71b35f042e4654aa745010c28eab0f", size = 91968, upload-time = "2026-09-07T16:38:04.76Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/08/c8956c7ca45a9d6dd06e8070957494087f0f243494a08b5005ab4fbc3c82/timecopilot_timesfm-0.4.0-py3-none-any.whl", hash = "sha256:874aac6e53ec1210a3debe3e350b61ce390880bf3f16ae4af5053f63eb3f2989", size = 135822, upload-time = "2026-09-07T16:38:03.66Z" },
+]
+
+[[package]]
+name = "timecopilot-timestral"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "huggingface-hub" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "safetensors" },
+    { name = "torch" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/51/95/76978ffd279865cf3a86fa69d00cc5e626cc756ebd0bfddafde56e382f6f/timecopilot_timestral-0.1.0.tar.gz", hash = "sha256:bd7e8bc461416a9f183bf7ed02bc9b4d3ca4e8e5ac3e384659d6f2945528601c", size = 31805, upload-time = "2026-10-16T19:50:32.765Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d3/13/d86c4e4b6350c0e3dc03a5da23ad8ae190e967d26ce3cdb325c5389d35ea/timecopilot_timestral-0.1.0-py3-none-any.whl", hash = "sha256:a84f1c729d948e7e9617e17a5ce38705f17aa13403bdde5e2a918a96c4f94ec8", size = 34182, upload-time = "2026-10-16T19:50:31.587Z" },
 ]
 
 [[package]]

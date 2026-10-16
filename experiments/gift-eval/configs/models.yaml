@@ -280,6 +280,38 @@ models:
       alias: t0-beta
       batch_size: 16
 
+  mistralai--Timestral-5M:
+    class: foundationforecast.models.timestral.Timestral
+    reference_slug: Timestral-5M
+    kwargs:
+      repo_id: mistralai/Timestral-5M
+      alias: Timestral-5M
+      batch_size: 64
+
+  mistralai--Timestral-28M:
+    class: foundationforecast.models.timestral.Timestral
+    reference_slug: Timestral-28M
+    kwargs:
+      repo_id: mistralai/Timestral-28M
+      alias: Timestral-28M
+      batch_size: 64
+
+  mistralai--Timestral-123M:
+    class: foundationforecast.models.timestral.Timestral
+    reference_slug: Timestral-123M
+    kwargs:
+      repo_id: mistralai/Timestral-123M
+      alias: Timestral-123M
+      batch_size: 64
+
+  mistralai--Timestral-209M:
+    class: foundationforecast.models.timestral.Timestral
+    reference_slug: Timestral-209M
+    kwargs:
+      repo_id: mistralai/Timestral-209M
+      alias: Timestral-209M
+      batch_size: 64
+
   thuml--sundial-base-128m:
     class: foundationforecast.models.sundial.Sundial
     reference_slug: sundial_base_128m

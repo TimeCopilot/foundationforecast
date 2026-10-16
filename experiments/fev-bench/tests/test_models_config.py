@@ -60,6 +60,14 @@ def test_t0_beta_registered_with_leaderboard_reference():
     assert entry["kwargs"]["repo_id"] == "theforecastingcompany/t0-beta"
 
 
+def test_timestral_209m_registered_with_leaderboard_reference():
+    models = load_models_config()
+    entry = models["mistralai--Timestral-209M"]
+    assert entry["class"] == "foundationforecast.models.timestral.Timestral"
+    assert entry["reference_csv"] == "timestral-209m.csv"
+    assert entry["kwargs"]["repo_id"] == "mistralai/Timestral-209M"
+
+
 def test_tirex_2_registered_with_leaderboard_reference():
     models = load_models_config()
     entry = models["NX-AI--TiRex-2"]
