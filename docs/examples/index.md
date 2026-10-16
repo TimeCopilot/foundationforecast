@@ -23,4 +23,5 @@ For model API details, see the [Model Hub](../model-hub.md).
 | [TabPFN Family](tabpfn-family.ipynb) | Forecast with TabPFN-2 and TabPFN-3 (LOCAL) | Python 3.10–3.12; `TABPFN_TOKEN` |
 | [Toto Family](toto-family.ipynb) | Forecast with Toto 1.0 and 2.0 | Python 3.10+ |
 | [PatchTST-FM Family](patchtst-fm-family.ipynb) | Forecast with IBM Research and Granite PatchTST-FM r1/r2 | Python 3.11–3.13; GPU recommended |
+| [T0 Family](t0-family.ipynb) | Forecast with t0-alpha, t0-beta and t0-gamma, including the t0-gamma benchmark settings | Python 3.11–3.13 |
 | [Finetuning](finetuning.ipynb) | Adapt Chronos 2 and TimeGPT to your data | Python 3.10+; GPU recommended |

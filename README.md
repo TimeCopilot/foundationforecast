@@ -96,7 +96,7 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 
 Licenses verified against Hugging Face model cards. Check the model card for your `repo_id` when in doubt.
 
-¶ **Exogenous (native):** **Chronos** with `repo_id` containing `chronos-2` (e.g. `amazon/chronos-2`); **TimesFM** with **`google/timesfm-3.0-pytorch`**; **TimeGPT**; **T0** (`theforecastingcompany/t0-alpha`, `t0-beta`); **TiRex-2** (`NX-AI/TiRex-2` and other `TiRex-2-*` checkpoints, not TiRex 1.0). Other hub models and other checkpoints in those families do not accept `X_df` under default `exog_strategy`. Set `exog_strategy=False` to ignore horizon exog in mixed `FoundationForecast` runs. See [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md#native-exog-by-checkpoint).
+¶ **Exogenous (native):** **Chronos** with `repo_id` containing `chronos-2` (e.g. `amazon/chronos-2`); **TimesFM** with **`google/timesfm-3.0-pytorch`**; **TimeGPT**; **T0** (`theforecastingcompany/t0-alpha`, `t0-beta`, `t0-gamma`); **TiRex-2** (`NX-AI/TiRex-2` and other `TiRex-2-*` checkpoints, not TiRex 1.0). Other hub models and other checkpoints in those families do not accept `X_df` under default `exog_strategy`. Set `exog_strategy=False` to ignore horizon exog in mixed `FoundationForecast` runs. See [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md#native-exog-by-checkpoint).
 
 <details><summary><strong>What this means for production</strong></summary>
 
@@ -121,7 +121,7 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 - **Moirai:** `Salesforce/moirai-{1.0,1.1,2.0}-R-{small,base,large}`, `Salesforce/moirai-moe-1.0-R-*`
 - **PatchTST-FM:** `ibm-research/patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r2` (r2 requires `granite-tsfm>=0.3.9`)
 - **Sundial:** `thuml/sundial-base-128m`
-- **T0:** `theforecastingcompany/t0-alpha`, `theforecastingcompany/t0-beta` (requires `tfc-t0>=0.5.0`)
+- **T0:** `theforecastingcompany/t0-alpha`, `theforecastingcompany/t0-beta`, `theforecastingcompany/t0-gamma` (requires `tfc-t0[torch]>=0.6.0`)
 - **TabPFN:** default `tabpfn-v2-regressor-2noar4o2.ckpt`; TabPFN-3 via `model_path="tabpfn-v3-regressor-v3_20260506_timeseries.ckpt"` (LOCAL, `TABPFN_TOKEN`); or CLIENT mode with a Prior Labs API token
 - **Tafsut:** `Tafsut-FM/tafsut-univariate-base`
 - **TiRex:** `NX-AI/TiRex`, `NX-AI/TiRex-2`

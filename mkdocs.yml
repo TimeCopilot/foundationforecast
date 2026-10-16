@@ -34,6 +34,7 @@ nav:
           - TabPFN: examples/tabpfn-family.ipynb
           - Toto: examples/toto-family.ipynb
           - PatchTST-FM: examples/patchtst-fm-family.ipynb
+          - T0: examples/t0-family.ipynb
       - Finetuning: examples/finetuning.ipynb
   - API Reference:
       - api/forecaster.md

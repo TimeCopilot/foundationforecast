@@ -25,6 +25,19 @@ models:
       alias: t0-beta
       batch_size: 16
 
+  theforecastingcompany--t0-gamma:
+    class: foundationforecast.models.t0.T0
+    reference_csv: t0-gamma.csv
+    kwargs:
+      repo_id: theforecastingcompany/t0-gamma
+      alias: t0-gamma
+      batch_size: 64
+      trim_leading_missing: true
+      symmetric_averaging: true
+      clip_nonnegative: true
+      snap_integers: true
+      cross_inference: 64
+
   NX-AI--TiRex-2:
     class: foundationforecast.models.tirex.TiRex
     reference_csv: tirex-2.csv

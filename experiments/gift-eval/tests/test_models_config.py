@@ -10,6 +10,24 @@ def test_t0_beta_registered_in_models_yaml():
     assert entry["kwargs"]["alias"] == "t0-beta"
 
 
+def test_t0_gamma_registered_with_leaderboard_settings():
+    models = load_models_config()
+    entry = models["theforecastingcompany--t0-gamma"]
+    assert entry["class"] == "foundationforecast.models.t0.T0"
+    assert entry["reference_slug"] == "t0-gamma"
+    kwargs = entry["kwargs"]
+    assert kwargs["repo_id"] == "theforecastingcompany/t0-gamma"
+    assert kwargs["context_length"] == 8192
+    assert kwargs["cross_inference"] == 64
+    for flag in (
+        "trim_leading_missing",
+        "symmetric_averaging",
+        "clip_nonnegative",
+        "snap_integers",
+    ):
+        assert kwargs[flag] is True
+
+
 def test_granite_patchtst_r2_registered_in_models_yaml():
     models = load_models_config()
     entry = models["ibm-granite--granite-timeseries-patchtst-fm-r2"]
