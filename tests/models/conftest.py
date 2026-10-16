@@ -4,6 +4,7 @@ from foundationforecast.models.chronos import Chronos
 from foundationforecast.models.moirai import Moirai
 from foundationforecast.models.tafsut import Tafsut
 from foundationforecast.models.timesfm import TimesFM
+from foundationforecast.models.timestral import Timestral
 from foundationforecast.models.toto import Toto
 
 models = [
@@ -40,6 +41,12 @@ models = [
         repo_id="Salesforce/moirai-2.0-R-small",
     ),
     Tafsut(context_length=512, batch_size=2),
+    Timestral(
+        repo_id="mistralai/Timestral-5M",
+        alias="Timestral-5M",
+        context_length=256,
+        batch_size=2,
+    ),
 ]
 
 if sys.version_info >= (3, 11):
