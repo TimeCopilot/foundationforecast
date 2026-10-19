@@ -42,6 +42,14 @@ To run **foundationforecast** in your local environment:
 
 ✅ You're ready to start contributing!
 
+## Python 3.14 and 3.15 (preview)
+
+The library installs on **Python 3.10+** (`requires-python = ">=3.10"`). [CI](https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml) runs a **preview** job on **3.14** and **3.15** (`continue-on-error: true`) to track dependency wheels and the cross-model test suite as CPython and PyTorch move forward.
+
+On **3.14+**, these optional dependencies are **not** installed (upstream caps): `granite-tsfm`, `tfc-t0`, and `timecopilot-uni2ts`. Wrappers gated to **3.11–3.13** (`FlowState`, `PatchTST-FM`, `T0`) and **&lt; 3.13** (`TabPFN`, `Sundial`) stay unavailable by design. Models that typically remain available on 3.14+ include **Chronos**, **TimesFM**, **Timestral**, **TiRex**, **TimeGPT**, **Toto**, and **Tafsut**, subject to `torch` / `transformers` support on that interpreter.
+
+When preview CI is green, we can promote 3.14 (and later 3.15) into the required **test** matrix.
+
 ## Running Tests
 
 ```bash
