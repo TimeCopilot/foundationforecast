@@ -20,10 +20,10 @@ Releases are **SemVer** tags on `main`. There is no rolling `CHANGELOG.md`; each
 4. Run `uv lock`. If dependencies or the editable `foundationforecast` pin changed for benchmarks, refresh locks under [`experiments/gift-eval`](experiments/gift-eval) and/or [`experiments/fev-bench`](experiments/fev-bench) with `uv lock` there too.
 5. Update user-visible docs for the release when behavior or the model surface changes: [`README.md`](README.md) (support matrix, highlights timeline), [`docs/model-hub.md`](docs/model-hub.md), API pages under `docs/api/`, and examples/notebooks as needed.
 6. Open a PR titled **`chore(release): vX.Y.Z`**, merge to `main`.
-7. Publish from `main` (creates the tag and GitHub Release):
+7. Publish from `main` (creates the tag and GitHub Release). Set the GitHub release name with **`--title`** (same as the tag, e.g. `vX.Y.Z`):
 
    ```bash
-   gh release create vX.Y.Z --discussion-category "General" -F docs/changelogs/vX.Y.Z.md
+   gh release create vX.Y.Z --title "vX.Y.Z" --discussion-category "General" -F docs/changelogs/vX.Y.Z.md
    ```
 
 Pushing the release tag runs:
