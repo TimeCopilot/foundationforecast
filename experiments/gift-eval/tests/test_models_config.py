@@ -28,6 +28,14 @@ def test_t0_gamma_registered_with_leaderboard_settings():
         assert kwargs[flag] is True
 
 
+def test_timestral_209m_registered_with_leaderboard_settings():
+    models = load_models_config()
+    entry = models["mistralai--Timestral-209M"]
+    assert entry["class"] == "foundationforecast.models.timestral.Timestral"
+    assert entry["reference_slug"] == "Timestral-209M"
+    assert entry["kwargs"]["repo_id"] == "mistralai/Timestral-209M"
+
+
 def test_granite_patchtst_r2_registered_in_models_yaml():
     models = load_models_config()
     entry = models["ibm-granite--granite-timeseries-patchtst-fm-r2"]
