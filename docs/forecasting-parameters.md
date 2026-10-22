@@ -95,7 +95,7 @@ request the median.
 
 ### Interpolation on fixed-knot models
 
-Some models (TiRex, TimesFM, TabPFN, FlowState, Tafsut, Toto 2.0, …) predict a
+Some models (TiRex, TimesFM, TabPFN, Tabby, FlowState, Tafsut, Toto 2.0, …) predict a
 fixed set of native quantile **knots** internally. When you request levels or
 quantiles that do not exactly match those knots, the library linearly
 interpolates between adjacent knots.
