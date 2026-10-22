@@ -2,6 +2,7 @@ import sys
 
 from foundationforecast.models.chronos import Chronos
 from foundationforecast.models.moirai import Moirai
+from foundationforecast.models.tabby import Tabby
 from foundationforecast.models.tafsut import Tafsut
 from foundationforecast.models.timesfm import TimesFM
 from foundationforecast.models.timestral import Timestral
@@ -41,6 +42,7 @@ models = [
         repo_id="Salesforce/moirai-2.0-R-small",
     ),
     Tafsut(context_length=512, batch_size=2),
+    Tabby(context_length=512, batch_size=2),
     Timestral(
         repo_id="mistralai/Timestral-5M",
         alias="Timestral-5M",
