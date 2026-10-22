@@ -41,6 +41,7 @@ FoundationForecast uses **`supports_native_futr_exog()`** on the forecaster inst
 | **Moirai** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **PatchTST-FM** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **Sundial** | any | No | Use `exog_strategy=False` in multi-model runs |
+| **Tabby** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **TabPFN** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **T0** | `theforecastingcompany/t0-alpha`, `theforecastingcompany/t0-beta`, `theforecastingcompany/t0-gamma` | Yes | `future_covariates` in `tfc-t0` |
 | **Tafsut** | any | No | Use `exog_strategy=False` in multi-model runs |
