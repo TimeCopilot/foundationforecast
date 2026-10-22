@@ -2,6 +2,7 @@ import sys
 
 from .chronos import Chronos, ChronosFinetuningConfig
 from .moirai import Moirai
+from .tabby import Tabby
 from .tafsut import Tafsut
 from .timegpt import TimeGPT, TimeGPTFinetuningConfig
 from .timesfm import TimesFM
@@ -12,6 +13,7 @@ __all__ = [
     "Chronos",
     "ChronosFinetuningConfig",
     "Moirai",
+    "Tabby",
     "Tafsut",
     "TimeGPT",
     "TimeGPTFinetuningConfig",
