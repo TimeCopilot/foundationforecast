@@ -67,3 +67,14 @@ def test_model_python_defaults_unless_overridden():
 
     assert model_python("h2oai--timeh2o-v1", default="3.11") == "3.12"
     assert model_python("mistralai--Timestral-209M", default="3.11") == "3.11"
+
+
+def test_tabby_registered_with_leaderboard_settings():
+    models = load_models_config()
+    entry = models["paris-noah--Tabby"]
+    assert entry["class"] == "foundationforecast.models.tabby.Tabby"
+    assert entry["reference_slug"] == "Tabby"
+    kwargs = entry["kwargs"]
+    assert kwargs["repo_id"] == "paris-noah/Tabby"
+    assert kwargs["context_length"] == 8096
+    assert kwargs["precision"] == "bf16"
