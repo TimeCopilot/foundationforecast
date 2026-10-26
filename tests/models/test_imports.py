@@ -49,6 +49,16 @@ def test_patchtst_fm_import_fails():
 
 
 @pytest.mark.skipif(
+    sys.version_info >= (3, 12),
+    reason="TimeH2O requires Python >= 3.12",
+)
+def test_timeh2o_import_fails():
+    with pytest.raises(ImportError) as excinfo:
+        from foundationforecast.models.timeh2o import TimeH2O  # noqa: F401
+    assert "requires Python >= 3.12" in str(excinfo.value)
+
+
+@pytest.mark.skipif(
     sys.version_info < (3, 13),
     reason="Sundial requires Python < 3.13",
 )

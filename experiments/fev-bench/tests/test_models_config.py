@@ -91,3 +91,22 @@ def test_tirex_2_registered_with_leaderboard_reference():
     assert entry["class"] == "foundationforecast.models.tirex.TiRex"
     assert entry["reference_csv"] == "tirex-2.csv"
     assert entry["kwargs"]["repo_id"] == "NX-AI/TiRex-2"
+
+
+def test_timeh2o_registered_with_leaderboard_reference():
+    models = load_models_config()
+    entry = models["h2oai--timeh2o-v1"]
+    assert entry["class"] == "foundationforecast.models.timeh2o.TimeH2O"
+    assert entry["reference_csv"] == "timeh2o-v1.csv"
+    assert entry["python"] == "3.12"
+    kwargs = entry["kwargs"]
+    assert kwargs["repo_id"] == "h2oai/timeh2o-v1"
+    assert kwargs["clip_nonnegative"] is True
+    assert kwargs["snap_integer"] is True
+
+
+def test_model_python_defaults_unless_overridden():
+    from src.eval.models import model_python
+
+    assert model_python("h2oai--timeh2o-v1", default="3.11") == "3.12"
+    assert model_python("NX-AI--TiRex-2", default="3.11") == "3.11"

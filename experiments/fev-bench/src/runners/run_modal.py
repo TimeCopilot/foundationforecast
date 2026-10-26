@@ -21,44 +21,52 @@ def _resolve_paths() -> tuple[Path, Path]:
 _FEV_BENCH_ROOT, _REPO_ROOT = _resolve_paths()
 
 app = modal.App(name="foundationforecast-fev-bench")
-image = (
-    modal.Image.from_registry(
-        "nvidia/cuda:12.8.1-devel-ubuntu24.04",
-        add_python="3.11",
+DEFAULT_PYTHON = "3.11"
+
+
+def _build_image(python_version: str) -> modal.Image:
+    return (
+        modal.Image.from_registry(
+            "nvidia/cuda:12.8.1-devel-ubuntu24.04",
+            add_python=python_version,
+        )
+        .apt_install("git")
+        .pip_install("uv")
+        .add_local_file(
+            _REPO_ROOT / "pyproject.toml",
+            remote_path=f"{_MODAL_MONOREPO}/pyproject.toml",
+            copy=True,
+        )
+        .add_local_file(
+            _REPO_ROOT / "README.md",
+            remote_path=f"{_MODAL_MONOREPO}/README.md",
+            copy=True,
+        )
+        .add_local_file(
+            _REPO_ROOT / "uv.lock",
+            remote_path=f"{_MODAL_MONOREPO}/uv.lock",
+            copy=True,
+        )
+        .add_local_dir(
+            _REPO_ROOT / "foundationforecast",
+            remote_path=f"{_MODAL_MONOREPO}/foundationforecast",
+            copy=True,
+        )
+        .add_local_dir(
+            _FEV_BENCH_ROOT,
+            remote_path=_MODAL_FEV_BENCH,
+            copy=True,
+        )
+        .workdir(_MODAL_FEV_BENCH)
+        .env({"PYTHONPATH": _MODAL_FEV_BENCH})
+        .run_commands(
+            "uv pip install --system --compile-bytecode -e .",
+        )
     )
-    .apt_install("git")
-    .pip_install("uv")
-    .add_local_file(
-        _REPO_ROOT / "pyproject.toml",
-        remote_path=f"{_MODAL_MONOREPO}/pyproject.toml",
-        copy=True,
-    )
-    .add_local_file(
-        _REPO_ROOT / "README.md",
-        remote_path=f"{_MODAL_MONOREPO}/README.md",
-        copy=True,
-    )
-    .add_local_file(
-        _REPO_ROOT / "uv.lock",
-        remote_path=f"{_MODAL_MONOREPO}/uv.lock",
-        copy=True,
-    )
-    .add_local_dir(
-        _REPO_ROOT / "foundationforecast",
-        remote_path=f"{_MODAL_MONOREPO}/foundationforecast",
-        copy=True,
-    )
-    .add_local_dir(
-        _FEV_BENCH_ROOT,
-        remote_path=_MODAL_FEV_BENCH,
-        copy=True,
-    )
-    .workdir(_MODAL_FEV_BENCH)
-    .env({"PYTHONPATH": _MODAL_FEV_BENCH})
-    .run_commands(
-        "uv pip install --system --compile-bytecode -e .",
-    )
-)
+
+
+image = _build_image(DEFAULT_PYTHON)
+image_py312 = _build_image("3.12")
 secret = modal.Secret.from_name(
     "aws-secret",
     required_keys=["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
@@ -79,15 +87,16 @@ S3_RESULTS_PREFIX = "results"
 S3_CI_RESULTS_PREFIX = "results/ci"
 
 
-@app.function(
-    image=image,
+_FUNCTION_OPTIONS = dict(
     volumes=volume,
     secrets=[secret, hf_secret],
     timeout=60 * 60 * 6,
     gpu="A10G",
     cpu=8,
 )
-def run_fev_eval_modal(
+
+
+def _run_fev_eval_job(
     model_key: str,
     task_name: str,
     output_root: str = "/s3-bucket/results",
@@ -109,6 +118,34 @@ def run_fev_eval_modal(
     run_fev_eval(job, output_root=Path(output_root), num_proc=num_proc)
 
 
+@app.function(image=image, **_FUNCTION_OPTIONS)
+def run_fev_eval_modal(
+    model_key: str,
+    task_name: str,
+    output_root: str = "/s3-bucket/results",
+    force: bool = False,
+    num_proc: int = 8,
+) -> None:
+    _run_fev_eval_job(model_key, task_name, output_root, force, num_proc)
+
+
+@app.function(image=image_py312, **_FUNCTION_OPTIONS)
+def run_fev_eval_modal_py312(
+    model_key: str,
+    task_name: str,
+    output_root: str = "/s3-bucket/results",
+    force: bool = False,
+    num_proc: int = 8,
+) -> None:
+    _run_fev_eval_job(model_key, task_name, output_root, force, num_proc)
+
+
+_MODAL_FUNCTIONS = {
+    DEFAULT_PYTHON: run_fev_eval_modal,
+    "3.12": run_fev_eval_modal_py312,
+}
+
+
 def _dispatch_jobs(
     jobs: list,
     *,
@@ -119,14 +156,25 @@ def _dispatch_jobs(
     if not jobs:
         logging.info("No jobs to run")
         return
-    args = [(job.model_key, job.task_name, output_root, force, 8) for job in jobs]
-    results = list(
-        run_fev_eval_modal.starmap(
-            args,
-            return_exceptions=True,
-            wrap_returned_exceptions=False,
+    from src.eval.models import model_python
+
+    args_by_python: dict[str, list[tuple]] = {}
+    for job in jobs:
+        python_version = model_python(job.model_key, default=DEFAULT_PYTHON)
+        args_by_python.setdefault(python_version, []).append(
+            (job.model_key, job.task_name, output_root, force, 8)
         )
-    )
+    results = []
+    for python_version, args in args_by_python.items():
+        if python_version not in _MODAL_FUNCTIONS:
+            raise ValueError(f"No Modal image for Python {python_version!r}")
+        results.extend(
+            _MODAL_FUNCTIONS[python_version].starmap(
+                args,
+                return_exceptions=True,
+                wrap_returned_exceptions=False,
+            )
+        )
     errors = [result for result in results if isinstance(result, Exception)]
     if errors:
         raise RuntimeError(f"Modal jobs failed: {errors}")

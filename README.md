@@ -66,7 +66,7 @@ Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results
 
 ## Highlights
 
-- 📈 **Exogenous variables (covariates).** Pass known-future features with **`X_df`** on `forecast()` (and exog columns in `df` for `cross_validation()`). Native support on Chronos-2, TimesFM-3, TimeGPT, T0, TiRex-2, and Timestral; see [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md) and the [example notebook](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/examples/exogenous-variables.ipynb).
+- 📈 **Exogenous variables (covariates).** Pass known-future features with **`X_df`** on `forecast()` (and exog columns in `df` for `cross_validation()`). Native support on Chronos-2, TimesFM-3, TimeGPT, T0, TimeH2O, TiRex-2, and Timestral; see [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md) and the [example notebook](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/examples/exogenous-variables.ipynb).
 - 💸 **Full GIFT-Eval replication for $37.** 16 models, 97 dataset configurations each, in about 34 GPU-hours, every model with an official submission within 2% of its leaderboard MASE/CRPS. TimesFM 3 is the most accurate, for under $8. Read the [writeup](https://github.com/TimeCopilot/foundationforecast/blob/main/experiments/gift-eval/README.md).
 - 🎯 **Benchmark replication in CI.** Wrappers are regression-tested against official leaderboard submissions: [`experiments/gift-eval`](https://github.com/TimeCopilot/foundationforecast/tree/main/experiments/gift-eval) (GIFT-Eval MASE/CRPS on Modal GPU) and [`experiments/fev-bench`](https://github.com/TimeCopilot/foundationforecast/tree/main/experiments/fev-bench) (fev-bench `test_error` on known-dynamic tasks). [CI](https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml) re-runs these checks on every change.
 - 🚀 **GPU-native**. Automatically runs on GPU when available, without model-specific device configuration.
@@ -90,6 +90,7 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/priorlabs.png" width="28" alt="Prior Labs"> | [TabPFN](https://arxiv.org/abs/2501.02945) | ✓ | ✓ | ✓ | ✓ | | | TabPFN NC‡ |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/tafsut.png" width="28" alt="Tafsut"> | [Tafsut](https://github.com/Tafsut-FM/tafsut) | ✓ | ✓ | ✓ | ✓ | | | MIT |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/nx-ai.png" width="28" alt="NX-AI"> | [TiRex](https://arxiv.org/abs/2505.23719) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Community / Apache-2.0 |
+| <img src="https://cdn-avatars.huggingface.co/v1/production/uploads/1673570796144-63c0a91f7f52541dfc7c831b.png" width="28" alt="H2O.ai"> | [TimeH2O](https://huggingface.co/h2oai/timeh2o-v1) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | H2O.ai NC# |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/nixtla.png" width="28" alt="Nixtla"> | [TimeGPT](https://arxiv.org/abs/2310.03589) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Nixtla API§ |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/google.png" width="28" alt="Google"> | [TimesFM](https://arxiv.org/abs/2310.10688) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Apache-2.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/mistral.png" width="28" alt="Mistral"> | [Timestral](https://huggingface.co/collections/mistralai/timestral) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Modified MIT∥ |
@@ -97,7 +98,7 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 
 Licenses verified against Hugging Face model cards. Check the model card for your `repo_id` when in doubt.
 
-¶ **Exogenous (native):** **Chronos** with `repo_id` containing `chronos-2` (e.g. `amazon/chronos-2`); **TimesFM** with **`google/timesfm-3.0-pytorch`**; **TimeGPT**; **T0** (`theforecastingcompany/t0-alpha`, `t0-beta`, `t0-gamma`); **TiRex-2** (`NX-AI/TiRex-2` and other `TiRex-2-*` checkpoints, not TiRex 1.0); **Timestral** (`mistralai/Timestral-*`). Other hub models and other checkpoints in those families do not accept `X_df` under default `exog_strategy`. Set `exog_strategy=False` to ignore horizon exog in mixed `FoundationForecast` runs. See [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md#native-exog-by-checkpoint).
+¶ **Exogenous (native):** **Chronos** with `repo_id` containing `chronos-2` (e.g. `amazon/chronos-2`); **TimesFM** with **`google/timesfm-3.0-pytorch`**; **TimeGPT**; **T0** (`theforecastingcompany/t0-alpha`, `t0-beta`, `t0-gamma`); **TimeH2O** (`h2oai/timeh2o-v1`, not `-tiny`); **TiRex-2** (`NX-AI/TiRex-2` and other `TiRex-2-*` checkpoints, not TiRex 1.0); **Timestral** (`mistralai/Timestral-*`). Other hub models and other checkpoints in those families do not accept `X_df` under default `exog_strategy`. Set `exog_strategy=False` to ignore horizon exog in mixed `FoundationForecast` runs. See [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md#native-exog-by-checkpoint).
 
 <details><summary><strong>What this means for production</strong></summary>
 
@@ -107,6 +108,7 @@ Licenses verified against Hugging Face model cards. Check the model card for you
 - **TimesFM 3.0**: weights for `google/timesfm-3.0-pytorch` are [non-commercial](https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE); TimesFM 1.0–2.5 checkpoints remain Apache-2.0.
 - **TabPFN NC**‡: TabPFN-2.6+ and TabPFN-3 weights are non-commercial; production requires a [Prior Labs commercial license or API](https://docs.priorlabs.ai/models). First LOCAL use requires accepting terms at [ux.priorlabs.ai](https://ux.priorlabs.ai) (`TABPFN_TOKEN`). TabPFN-3 is LOCAL-only today.
 - **Community / Apache-2.0** (TiRex): TiRex 1.0 uses the [NXAI Community License](https://huggingface.co/NX-AI/TiRex/blob/main/LICENSE) (commercial limits for large enterprises); TiRex 2.0 is Apache-2.0.
+- **H2O.ai NC#** (TimeH2O): checkpoint weights are [non-commercial](https://huggingface.co/h2oai/timeh2o-v1) and gated on Hugging Face (accept terms and set `HF_TOKEN`); inference code is Apache-2.0 via `h2ofm`.
 - **Nixtla API**§: hosted service via `NIXTLA_API_KEY`; production under [Nixtla terms/pricing](https://www.nixtla.io/docs), not open weights.
 - **Modified MIT∥** (Timestral): checkpoint weights use Mistral's [Modified MIT license](https://huggingface.co/mistralai/Timestral-209M) (companies above USD 20M monthly revenue need a commercial license from Mistral); inference code is Apache-2.0 via `timecopilot-timestral`.
 
@@ -114,7 +116,7 @@ Licenses verified against Hugging Face model cards. Check the model card for you
 
 </details>
 
-Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &lt; 3.13). See the [Model Hub](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/model-hub.md) for details and default checkpoints.
+Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &lt; 3.13, TimeH2O 3.12+). See the [Model Hub](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/model-hub.md) for details and default checkpoints.
 
 <details><summary><strong>Example checkpoints &amp; API model IDs</strong></summary>
 
@@ -127,6 +129,7 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 - **TabPFN:** default `tabpfn-v2-regressor-2noar4o2.ckpt`; TabPFN-3 via `model_path="tabpfn-v3-regressor-v3_20260506_timeseries.ckpt"` (LOCAL, `TABPFN_TOKEN`); or CLIENT mode with a Prior Labs API token
 - **Tafsut:** `Tafsut-FM/tafsut-univariate-base`
 - **TiRex:** `NX-AI/TiRex`, `NX-AI/TiRex-2`
+- **TimeH2O:** `h2oai/timeh2o-v1`, `h2oai/timeh2o-v1-tiny` (requires `h2ofm>=0.43.0`, Python 3.12+)
 - **TimeGPT:** pass `model=` to `TimeGPT()`, e.g. `timegpt-1`, [`timegpt-1-long-horizon`](https://www.nixtla.io/docs/forecasting/model-version/longhorizon_model), `timegpt-2-mini`, `timegpt-2`, `timegpt-2-pro`
 - **TimesFM:** `google/timesfm-{1.0-200m,2.0-500m,2.5-200m,3.0}-pytorch` (3.0 weights are [non-commercial](https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE))
 - **Timestral:** `mistralai/Timestral-{5M,28M,123M,209M}` (requires `timecopilot-timestral>=0.1.0`)

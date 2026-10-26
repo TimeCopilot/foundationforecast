@@ -53,3 +53,14 @@ models:
       repo_id: NX-AI/TiRex-2
       alias: TiRex-2
       batch_size: 64
+
+  h2oai--timeh2o-v1:
+    class: foundationforecast.models.timeh2o.TimeH2O
+    reference_csv: timeh2o-v1.csv
+    python: "3.12"
+    kwargs:
+      repo_id: h2oai/timeh2o-v1
+      alias: timeh2o-v1
+      batch_size: 256
+      clip_nonnegative: true
+      snap_integer: true

@@ -108,6 +108,18 @@ if (3, 11) <= sys.version_info < (3, 14):
         )
     )
 
+if sys.version_info >= (3, 12):
+    from foundationforecast.models.timeh2o import TimeH2O
+
+    models.append(TimeH2O(context_length=256, batch_size=2))
+    models.append(
+        TimeH2O(
+            repo_id="h2oai/timeh2o-v1-tiny",
+            alias="TimeH2O-tiny",
+            batch_size=2,
+        )
+    )
+
 if sys.version_info < (3, 13):
     from contextlib import contextmanager
 

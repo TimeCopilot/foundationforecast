@@ -54,7 +54,7 @@ On every merge to `main`, [CI](https://github.com/TimeCopilot/foundationforecast
 
 | Need | What |
 | --- | --- |
-| Python | 3.11+ (`uv sync` from this directory; editable install of repo-root `foundationforecast`) |
+| Python | 3.11+ (`uv sync` from this directory; editable install of repo-root `foundationforecast`). Modal jobs use 3.11 unless a `configs/models.yaml` entry sets `python` (TimeH2O: `"3.12"`) |
 | GPU jobs | [Modal](https://modal.com) (`MODAL_TOKEN_ID`, `MODAL_TOKEN_SECRET`) |
 | Object store | S3 bucket `foundationforecast-gift-eval` (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) |
 | Weights | `HF_TOKEN` (gated models such as `t0-alpha`); accept Hub licenses |
