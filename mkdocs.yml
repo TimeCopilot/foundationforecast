@@ -50,6 +50,7 @@ nav:
       - Contributing: contributing.md
   - Changelogs:
       - changelogs/index.md
+      - changelogs/v0.1.16.md
       - changelogs/v0.1.15.md
       - changelogs/v0.1.14.md
       - changelogs/v0.1.13.md
