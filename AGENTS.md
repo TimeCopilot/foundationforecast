@@ -55,6 +55,7 @@ uv run --group docs zensical build
 | Job | Purpose |
 | --- | --- |
 | **test** | `uv run pytest` on Python 3.10–3.13; coverage gate (≥80%) on 3.12. Needs `HF_TOKEN` / `TABPFN_TOKEN` for model tests. |
+| **test-future-python** | Same pytest run on **3.14** and **3.15**; `continue-on-error: true` until promoted to required. |
 | **test-docs** | Executable markdown in `docs/` (except changelog files), `README.md`, and Python docstrings via `mktestdocs`. |
 | **build-docs** | `zensical build` (strict) |
 | **lint** | Full `pre-commit` (ruff, mypy on `foundationforecast/` only—`experiments/` excluded) |
