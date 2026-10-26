@@ -32,6 +32,11 @@ if (3, 11) <= sys.version_info < (3, 14):
 
     __all__.extend(["FlowState", "PatchTSTFM", "T0"])
 
+if sys.version_info >= (3, 12):
+    from .timeh2o import TimeH2O as TimeH2O
+
+    __all__.append("TimeH2O")
+
 if sys.version_info < (3, 13):
     from .sundial import Sundial as Sundial
     from .tabpfn import TabPFN as TabPFN
