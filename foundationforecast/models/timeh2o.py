@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import torch
 from h2ofm import TimeH2O as H2OTimeH2O
+from pandas.api.types import is_bool_dtype, is_numeric_dtype
 from tqdm import tqdm
 
 from ..core.exog.covariates import ExogStrategyConfig
@@ -33,6 +34,8 @@ class TimeH2O(ExogCapableForecaster):
         alias: str = "TimeH2O",
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        clip_nonnegative: bool = False,
+        snap_integer: bool = False,
     ):
         # ruff: noqa: E501
         """
@@ -57,6 +60,10 @@ class TimeH2O(ExogCapableForecaster):
                 passes known-future covariates to ``h2oai/timeh2o-v1``
                 natively. ``h2oai/timeh2o-v1-tiny`` has no covariate support
                 and raises an error when ``X_df`` is passed.
+            clip_nonnegative (bool, optional): Clamp forecasts at zero for
+                series whose history is nonnegative. Defaults to False.
+            snap_integer (bool, optional): Round forecasts to integers for
+                series whose history is integer-valued. Defaults to False.
 
         Notes:
             **Requirements:**
@@ -85,7 +92,11 @@ class TimeH2O(ExogCapableForecaster):
             - The trained quantile grid spans 0.1–0.9; ``h2ofm`` extrapolates
               requested levels outside it with Gaussian tails. The median
               (0.5) is the point forecast.
+            - The published GIFT-Eval and fev-bench scores enable
+              ``clip_nonnegative`` and ``snap_integer``.
             - NaN values in the context are treated as missing observations.
+            - Non-numeric covariates (strings, booleans, categoricals) are
+              passed as categorical rows and encoded by ``h2ofm``.
         """
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
@@ -95,6 +106,8 @@ class TimeH2O(ExogCapableForecaster):
         self.context_length = context_length
         self.batch_size = batch_size
         self.alias = alias
+        self.clip_nonnegative = clip_nonnegative
+        self.snap_integer = snap_integer
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def _load_model(self) -> H2OTimeH2O:
@@ -128,20 +141,26 @@ class TimeH2O(ExogCapableForecaster):
         horizon_df: pd.DataFrame,
         futr_exog_list: list[str],
         h: int,
-    ) -> list[np.ndarray]:
-        """Build one ``(F, T + h)`` covariate array per series."""
+    ) -> list[list[np.ndarray]]:
+        """Build one list of ``T + h`` covariate rows per series.
+
+        Rows keep their dtype so ``h2ofm`` encodes non-numeric ones as
+        categorical.
+        """
         covariates = []
         for ts, uid in zip(batch, uids, strict=True):
             n_hist = self._context_width(ts)
-            hist = df.loc[df["unique_id"] == uid, futr_exog_list].to_numpy(
-                dtype=np.float32
-            )[-n_hist:]
-            hor = horizon_df.loc[
-                horizon_df["unique_id"] == uid, futr_exog_list
-            ].to_numpy(dtype=np.float32)
-            if hor.shape[0] != h:
+            hist = df.loc[df["unique_id"] == uid, futr_exog_list].iloc[-n_hist:]
+            hor = horizon_df.loc[horizon_df["unique_id"] == uid, futr_exog_list]
+            if len(hor) != h:
                 raise ValueError("Horizon exog length mismatch.")
-            covariates.append(np.concatenate([hist, hor], axis=0).T)
+            rows = []
+            for col in futr_exog_list:
+                row = np.concatenate([hist[col].to_numpy(), hor[col].to_numpy()])
+                if is_numeric_dtype(row.dtype) and not is_bool_dtype(row.dtype):
+                    row = row.astype(np.float32)
+                rows.append(row)
+            covariates.append(rows)
         return covariates
 
     def _predict(
@@ -150,7 +169,7 @@ class TimeH2O(ExogCapableForecaster):
         contexts: list[np.ndarray],
         h: int,
         quantile_levels: list[float],
-        future_covariates: list[np.ndarray] | None = None,
+        future_covariates: list[list[np.ndarray]] | None = None,
     ) -> np.ndarray:
         """Return forecasts shaped ``(n_series, h, n_levels)``."""
         forecasts = model.forecast_many(
@@ -159,6 +178,8 @@ class TimeH2O(ExogCapableForecaster):
             quantile_levels=quantile_levels,
             future_covariates=future_covariates,
             context_length=self.context_length,
+            clip_nonnegative=self.clip_nonnegative,
+            snap_integer=self.snap_integer,
         )
         return np.stack([np.asarray(f.quantiles) for f in forecasts], axis=0)
 
@@ -230,7 +251,10 @@ class TimeH2O(ExogCapableForecaster):
         futr_exog_list: list[str],
     ) -> pd.DataFrame | None:
         dataset = self._make_timeseries_dataset(
-            df, batch_size=self.batch_size, dtype=torch.float32, panel=panel
+            df[["unique_id", "ds", "y"]],
+            batch_size=self.batch_size,
+            dtype=torch.float32,
+            panel=panel,
         )
         return self._forecast(
             df,
