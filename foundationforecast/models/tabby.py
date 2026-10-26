@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -9,14 +9,14 @@ from tqdm import tqdm
 from transformers import AutoModel
 
 from ..core.exog.covariates import ExogStrategyConfig
-from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
+from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
 from ..core.utils import PanelData, TimeSeriesDataset
 
 TABBY_QUANTILES = [round(i / 100, 2) for i in range(1, 100)]
 
 
-class Tabby(ExogCapableForecaster, _DataProcessor):
+class Tabby(ExogCapableForecaster):
     """
     Tabby is a zero-shot probabilistic univariate time series foundation model
     from [Huawei Paris Noah's Ark Lab](https://huggingface.co/paris-noah).
@@ -34,6 +34,7 @@ class Tabby(ExogCapableForecaster, _DataProcessor):
         alias: str = "Tabby",
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        precision: Literal["bf16", "fp32"] = "bf16",
     ):
         """
         Args:
@@ -53,6 +54,10 @@ class Tabby(ExogCapableForecaster, _DataProcessor):
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and
                 release weights on every call.
+            precision (str, optional): ``"bf16"`` (default) runs the forward
+                pass under bfloat16 autocast on CUDA, as in the published
+                GIFT-Eval evaluation; ``"fp32"`` disables autocast. On CPU the
+                model always runs in float32.
 
         Notes:
             **Academic Reference:**
@@ -70,7 +75,9 @@ class Tabby(ExogCapableForecaster, _DataProcessor):
             - 99 native quantile knots (0.01–0.99); the median (0.5) is the
               point forecast. Requested ``level`` / ``quantiles`` are linearly
               interpolated with edge clamping.
-            - Missing values in the context are handled natively via NaN.
+            - Missing values in the context are handled natively via NaN;
+              left padding of shorter series in a batch is flagged as padding
+              (``past_is_pad``) rather than missing data.
             - Univariate only; no covariates.
             - Weights are [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
         """
@@ -82,6 +89,7 @@ class Tabby(ExogCapableForecaster, _DataProcessor):
         self.context_length = context_length
         self.batch_size = batch_size
         self.alias = alias
+        self.precision = precision
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def _load_model(self) -> Any:
@@ -102,6 +110,19 @@ class Tabby(ExogCapableForecaster, _DataProcessor):
             return [float(q) for q in levels]
         return list(TABBY_QUANTILES)
 
+    def _to_context(
+        self, batch: list[torch.Tensor]
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Left-pad a ragged batch, returning ``(context, past_is_pad)``."""
+        series = [ts[-self.context_length :].to(torch.float32) for ts in batch]
+        width = max(len(ts) for ts in series)
+        context = torch.full((len(series), width), float("nan"))
+        past_is_pad = torch.zeros((len(series), width), dtype=torch.bool)
+        for idx, ts in enumerate(series):
+            context[idx, width - len(ts) :] = ts
+            past_is_pad[idx, : width - len(ts)] = True
+        return context, past_is_pad
+
     def _predict_batch(
         self,
         model: Any,
@@ -110,14 +131,21 @@ class Tabby(ExogCapableForecaster, _DataProcessor):
         quantiles: list[float] | None,
         supported_quantiles: list[float],
     ) -> tuple[np.ndarray, np.ndarray | None]:
-        context = self._prepare_and_validate_context(batch)
-        if context.shape[1] > self.context_length:
-            context = context[..., -self.context_length :]
-        with torch.inference_mode():
-            # (batch_size, 99, h)
-            out = model.predict(context.to(dtype=torch.float32), prediction_length=h)
-        fcst_np = np.asarray(out.detach().cpu().numpy())
-        fcst_np = np.moveaxis(fcst_np, 1, -1)  # (batch_size, h, 99)
+        context, past_is_pad = self._to_context(batch)
+        context = context.to(self.device)
+        use_bf16 = self.precision == "bf16" and self.device.type == "cuda"
+        with (
+            torch.inference_mode(),
+            torch.autocast("cuda", dtype=torch.bfloat16, enabled=use_bf16),
+        ):
+            out = model(
+                context=context,
+                context_mask=torch.isfinite(context).float(),
+                past_is_pad=past_is_pad.to(self.device),
+                prediction_length=h,
+            )["quantile_preds"]
+        # (batch_size, 99, h) -> (batch_size, h, 99)
+        fcst_np = np.moveaxis(out.float().cpu().numpy(), 1, -1)
         median_idx = supported_quantiles.index(0.5)
         fcst_mean_np = fcst_np[..., median_idx]
         fcst_quantiles_np = fcst_np if quantiles is not None else None
@@ -225,6 +253,7 @@ class Tabby(ExogCapableForecaster, _DataProcessor):
         dataset = self._make_timeseries_dataset(
             df,
             batch_size=self.batch_size,
+            dtype=torch.float32,
             panel=panel,
         )
         fcst_df = dataset.make_future_dataframe(h=h, freq=freq)
