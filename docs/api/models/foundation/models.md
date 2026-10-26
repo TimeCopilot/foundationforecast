@@ -104,6 +104,17 @@
             - plot
             - supports_native_futr_exog
 
+::: foundationforecast.models.timeh2o.TimeH2O
+    options:
+        show_root_heading: true
+        show_root_full_path: false
+        members:
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog
+
 ::: foundationforecast.models.timegpt.TimeGPT
     options:
         show_root_heading: true
