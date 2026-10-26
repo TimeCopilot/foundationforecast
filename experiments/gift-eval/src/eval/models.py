@@ -71,6 +71,15 @@ def predictor_max_length(
     return int(getattr(forecaster, "context_length", default))
 
 
+def model_python(
+    model_key: str,
+    *,
+    default: str,
+    registry: Registry = "default",
+) -> str:
+    return str(_model_spec(model_key, registry).get("python", default))
+
+
 def reference_slug(model_key: str, *, registry: Registry = "default") -> str | None:
     return _model_spec(model_key, registry).get("reference_slug")
 

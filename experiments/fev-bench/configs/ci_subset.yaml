@@ -29,3 +29,8 @@ jobs:
     task_name: epf_pjm
   - model_key: NX-AI--TiRex-2
     task_name: entsoe_1H
+
+  - model_key: h2oai--timeh2o-v1
+    task_name: epf_pjm
+  - model_key: h2oai--timeh2o-v1
+    task_name: entsoe_1H

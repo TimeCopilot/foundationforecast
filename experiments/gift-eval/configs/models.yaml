@@ -326,6 +326,30 @@ models:
       alias: Timestral-209M
       batch_size: 64
 
+  h2oai--timeh2o-v1:
+    class: foundationforecast.models.timeh2o.TimeH2O
+    reference_slug: TimeH2O-v1
+    python: "3.12"
+    kwargs:
+      repo_id: h2oai/timeh2o-v1
+      alias: TimeH2O-v1
+      context_length: 16384
+      batch_size: 64
+      clip_nonnegative: true
+      snap_integer: true
+
+  h2oai--timeh2o-v1-tiny:
+    class: foundationforecast.models.timeh2o.TimeH2O
+    reference_slug: TimeH2O-v1-tiny
+    python: "3.12"
+    kwargs:
+      repo_id: h2oai/timeh2o-v1-tiny
+      alias: TimeH2O-v1-tiny
+      context_length: 16384
+      batch_size: 128
+      clip_nonnegative: true
+      snap_integer: true
+
   thuml--sundial-base-128m:
     class: foundationforecast.models.sundial.Sundial
     reference_slug: sundial_base_128m

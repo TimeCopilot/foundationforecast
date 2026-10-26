@@ -32,3 +32,10 @@ def reference_csv(model_key: str) -> str | None:
     if model_key not in models:
         raise KeyError(f"Unknown model_key {model_key!r}")
     return models[model_key].get("reference_csv")
+
+
+def model_python(model_key: str, *, default: str) -> str:
+    models = load_models_config()
+    if model_key not in models:
+        raise KeyError(f"Unknown model_key {model_key!r}")
+    return str(models[model_key].get("python", default))

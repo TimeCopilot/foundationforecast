@@ -47,3 +47,6 @@ jobs:
   - model_key: tafsut-univariate-base
     dataset_name: m4_weekly
     term: short
+  - model_key: h2oai--timeh2o-v1
+    dataset_name: m4_weekly
+    term: short

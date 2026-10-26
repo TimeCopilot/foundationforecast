@@ -31,61 +31,69 @@ _GIFT_EVAL_ROOT = _resolve_gift_eval_root()
 _REPO_ROOT = _resolve_monorepo_root(_GIFT_EVAL_ROOT)
 
 app = modal.App(name="foundationforecast-gift-eval")
-image = (
-    modal.Image.from_registry(
-        "nvidia/cuda:12.8.1-devel-ubuntu24.04",
-        add_python="3.11",
+DEFAULT_PYTHON = "3.11"
+
+
+def _build_image(python_version: str) -> modal.Image:
+    return (
+        modal.Image.from_registry(
+            "nvidia/cuda:12.8.1-devel-ubuntu24.04",
+            add_python=python_version,
+        )
+        .apt_install("git")
+        .pip_install("uv")
+        .run_commands(
+            "uv pip install --system --compile-bytecode "
+            "'timecopilot-gift-eval>=0.3.1' modal pyyaml s3fs typer",
+        )
+        .add_local_file(
+            _REPO_ROOT / "pyproject.toml",
+            remote_path=f"{_MODAL_MONOREPO}/pyproject.toml",
+            copy=True,
+        )
+        .add_local_file(
+            _REPO_ROOT / "README.md",
+            remote_path=f"{_MODAL_MONOREPO}/README.md",
+            copy=True,
+        )
+        .add_local_dir(
+            _REPO_ROOT / "foundationforecast",
+            remote_path=f"{_MODAL_MONOREPO}/foundationforecast",
+            copy=True,
+        )
+        .run_commands(
+            "uv pip install --system --compile-bytecode -e /root/monorepo",
+        )
+        .add_local_file(
+            _GIFT_EVAL_ROOT / "pyproject.toml",
+            remote_path=f"{_MODAL_GIFT_EVAL}/pyproject.toml",
+            copy=True,
+        )
+        .add_local_file(
+            _GIFT_EVAL_ROOT / "README.md",
+            remote_path=f"{_MODAL_GIFT_EVAL}/README.md",
+            copy=True,
+        )
+        .add_local_dir(
+            _GIFT_EVAL_ROOT / "src",
+            remote_path=f"{_MODAL_GIFT_EVAL}/src",
+            copy=True,
+        )
+        .add_local_dir(
+            _GIFT_EVAL_ROOT / "configs",
+            remote_path=f"{_MODAL_GIFT_EVAL}/configs",
+            copy=True,
+        )
+        .workdir(_MODAL_GIFT_EVAL)
+        .env({"PYTHONPATH": _MODAL_GIFT_EVAL})
+        .run_commands(
+            "uv pip install --system --no-deps --compile-bytecode -e .",
+        )
     )
-    .apt_install("git")
-    .pip_install("uv")
-    .run_commands(
-        "uv pip install --system --compile-bytecode "
-        "'timecopilot-gift-eval>=0.3.1' modal pyyaml s3fs typer",
-    )
-    .add_local_file(
-        _REPO_ROOT / "pyproject.toml",
-        remote_path=f"{_MODAL_MONOREPO}/pyproject.toml",
-        copy=True,
-    )
-    .add_local_file(
-        _REPO_ROOT / "README.md",
-        remote_path=f"{_MODAL_MONOREPO}/README.md",
-        copy=True,
-    )
-    .add_local_dir(
-        _REPO_ROOT / "foundationforecast",
-        remote_path=f"{_MODAL_MONOREPO}/foundationforecast",
-        copy=True,
-    )
-    .run_commands(
-        "uv pip install --system --compile-bytecode -e /root/monorepo",
-    )
-    .add_local_file(
-        _GIFT_EVAL_ROOT / "pyproject.toml",
-        remote_path=f"{_MODAL_GIFT_EVAL}/pyproject.toml",
-        copy=True,
-    )
-    .add_local_file(
-        _GIFT_EVAL_ROOT / "README.md",
-        remote_path=f"{_MODAL_GIFT_EVAL}/README.md",
-        copy=True,
-    )
-    .add_local_dir(
-        _GIFT_EVAL_ROOT / "src",
-        remote_path=f"{_MODAL_GIFT_EVAL}/src",
-        copy=True,
-    )
-    .add_local_dir(
-        _GIFT_EVAL_ROOT / "configs",
-        remote_path=f"{_MODAL_GIFT_EVAL}/configs",
-        copy=True,
-    )
-    .workdir(_MODAL_GIFT_EVAL)
-    .env({"PYTHONPATH": _MODAL_GIFT_EVAL})
-    .run_commands(
-        "uv pip install --system --no-deps --compile-bytecode -e .",
-    )
-)
+
+
+image = _build_image(DEFAULT_PYTHON)
+image_py312 = _build_image("3.12")
 secret = modal.Secret.from_name(
     "aws-secret",
     required_keys=["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
@@ -110,15 +118,16 @@ def replication_s3_prefix(run_id: str) -> str:
     return f"results/replication/{run_id}"
 
 
-@app.function(
-    image=image,
+_FUNCTION_OPTIONS = dict(
     volumes=volume,
     secrets=[secret, hf_secret],
     timeout=60 * 60 * 6,
     gpu="A10G",
     cpu=8,
 )
-def run_gift_eval_modal(
+
+
+def _run_gift_eval_job(
     model_key: str,
     dataset_name: str,
     term: str,
@@ -150,6 +159,42 @@ def run_gift_eval_modal(
     )
 
 
+@app.function(image=image, **_FUNCTION_OPTIONS)
+def run_gift_eval_modal(
+    model_key: str,
+    dataset_name: str,
+    term: str,
+    storage_path: str = "/s3-bucket/data/gift-eval",
+    output_root: str = "/s3-bucket/results",
+    force: bool = False,
+    registry: str = "default",
+) -> None:
+    _run_gift_eval_job(
+        model_key, dataset_name, term, storage_path, output_root, force, registry
+    )
+
+
+@app.function(image=image_py312, **_FUNCTION_OPTIONS)
+def run_gift_eval_modal_py312(
+    model_key: str,
+    dataset_name: str,
+    term: str,
+    storage_path: str = "/s3-bucket/data/gift-eval",
+    output_root: str = "/s3-bucket/results",
+    force: bool = False,
+    registry: str = "default",
+) -> None:
+    _run_gift_eval_job(
+        model_key, dataset_name, term, storage_path, output_root, force, registry
+    )
+
+
+_MODAL_FUNCTIONS = {
+    DEFAULT_PYTHON: run_gift_eval_modal,
+    "3.12": run_gift_eval_modal_py312,
+}
+
+
 def _job_tuples(jobs: list) -> list[tuple[str, str, str]]:
     return [(job.model_key, job.dataset_name, job.term) for job in jobs]
 
@@ -167,20 +212,28 @@ def _dispatch_jobs(
     if not jobs:
         logging.info("No jobs to run")
         return
-    args = [
-        (*job_tuple, storage_path, output_root, force, registry)
-        for job_tuple in _job_tuples(jobs)
-    ]
-    run_fn = run_gift_eval_modal
-    if max_containers is not None:
-        run_fn = run_gift_eval_modal.with_options(max_containers=max_containers)
-        logging.info("Modal max_containers=%s", max_containers)
-    results = list(
-        run_fn.starmap(
-            args,
-            return_exceptions=True,
+    from src.eval.models import model_python
+
+    args_by_python: dict[str, list[tuple]] = {}
+    for job_tuple in _job_tuples(jobs):
+        python_version = model_python(
+            job_tuple[0],
+            default=DEFAULT_PYTHON,
+            registry=registry,  # type: ignore[arg-type]
         )
-    )
+        args_by_python.setdefault(python_version, []).append(
+            (*job_tuple, storage_path, output_root, force, registry)
+        )
+    if max_containers is not None:
+        logging.info("Modal max_containers=%s", max_containers)
+    results = []
+    for python_version, args in args_by_python.items():
+        if python_version not in _MODAL_FUNCTIONS:
+            raise ValueError(f"No Modal image for Python {python_version!r}")
+        run_fn = _MODAL_FUNCTIONS[python_version]
+        if max_containers is not None:
+            run_fn = run_fn.with_options(max_containers=max_containers)
+        results.extend(run_fn.starmap(args, return_exceptions=True))
     errors = [result for result in results if isinstance(result, Exception)]
     if errors:
         for exc in errors[:10]:
