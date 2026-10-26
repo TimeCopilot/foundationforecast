@@ -37,7 +37,9 @@ uv run pytest tests/test_replication.py -n 0 -x
 
 ## Models and leaderboard replication
 
-`configs/models.yaml` lists every **native futr exog** wrapper that has a fev-bench results CSV: **Chronos-2**, **TimesFM-3**, **T0-beta**, **TiRex-2** (not TimeGPT — no official fev-bench row file).
+`configs/models.yaml` lists every **native futr exog** wrapper that has a fev-bench results CSV: **Chronos-2**, **TimesFM-3**, **T0-beta**, **T0-gamma**, **Timestral-209M**, **TiRex-2**, **TimeH2O-v1** (not TimeGPT — no official fev-bench row file).
+
+Modal jobs run on Python 3.11 unless a model entry sets `python` (e.g. `python: "3.12"` for TimeH2O, whose `h2ofm` dependency requires 3.12+); each version has its own image and Modal function.
 
 Modal CI runs **each** of those models on two known-only tasks:
 
