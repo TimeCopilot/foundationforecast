@@ -96,10 +96,57 @@ def test_timeh2o_native_futr_exog_aligns_covariates(mocker):
     fcst = model.forecast(df, h=h, freq="D", X_df=X_df)
 
     assert len(fcst) == h
-    (cov,) = backend.forecast_many.call_args.kwargs["future_covariates"]
-    assert cov.shape == (2, 20 + h)
-    np.testing.assert_array_equal(cov[0], np.arange(n - 20, n + h))
-    np.testing.assert_array_equal(cov[1], -np.arange(n - 20, n + h))
+    ((x1, x2),) = backend.forecast_many.call_args.kwargs["future_covariates"]
+    assert x1.dtype == np.float32
+    np.testing.assert_array_equal(x1, np.arange(n - 20, n + h))
+    np.testing.assert_array_equal(x2, -np.arange(n - 20, n + h))
+
+
+def test_timeh2o_native_futr_exog_keeps_categorical_rows(mocker):
+    model = TimeH2O(batch_size=2)
+    backend = _mock_model(mocker, model)
+    n, h = 10, 2
+    ds = pd.date_range("2020-01-01", periods=n, freq="D")
+    df = pd.DataFrame(
+        {
+            "unique_id": "A",
+            "ds": ds,
+            "y": np.arange(n, dtype=float),
+            "holiday": ["none"] * (n - 1) + ["xmas"],
+            "is_weekend": ds.dayofweek >= 5,
+        }
+    )
+    futr_ds = pd.date_range(ds[-1] + pd.Timedelta(days=1), periods=h, freq="D")
+    X_df = pd.DataFrame(
+        {
+            "unique_id": "A",
+            "ds": futr_ds,
+            "holiday": ["none", "new_year"],
+            "is_weekend": futr_ds.dayofweek >= 5,
+        }
+    )
+
+    model.forecast(df, h=h, freq="D", X_df=X_df)
+
+    ((holiday, is_weekend),) = backend.forecast_many.call_args.kwargs[
+        "future_covariates"
+    ]
+    assert holiday.dtype == object
+    assert list(holiday[-3:]) == ["xmas", "none", "new_year"]
+    assert is_weekend.dtype == bool
+    assert len(is_weekend) == n + h
+
+
+def test_timeh2o_passes_postprocessing_options(mocker):
+    model = TimeH2O(batch_size=2, clip_nonnegative=True, snap_integer=True)
+    backend = _mock_model(mocker, model)
+    df = generate_series(1, freq="D", min_length=20, max_length=20)
+
+    model.forecast(df, h=2, freq="D")
+
+    kwargs = backend.forecast_many.call_args.kwargs
+    assert kwargs["clip_nonnegative"] is True
+    assert kwargs["snap_integer"] is True
 
 
 def test_timeh2o_tiny_has_no_native_futr_exog():
