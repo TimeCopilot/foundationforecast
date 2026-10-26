@@ -36,6 +36,7 @@ nav:
           - PatchTST-FM: examples/patchtst-fm-family.ipynb
           - Timestral: examples/timestral-family.ipynb
           - T0: examples/t0-family.ipynb
+          - TimeH2O: examples/timeh2o-family.ipynb
       - Finetuning: examples/finetuning.ipynb
   - API Reference:
       - api/forecaster.md
