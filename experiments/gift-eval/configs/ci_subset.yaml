@@ -50,3 +50,6 @@ jobs:
   - model_key: h2oai--timeh2o-v1
     dataset_name: m4_weekly
     term: short
+  - model_key: paris-noah--Tabby
+    dataset_name: m4_weekly
+    term: short

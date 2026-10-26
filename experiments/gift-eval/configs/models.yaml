@@ -350,6 +350,16 @@ models:
       clip_nonnegative: true
       snap_integer: true
 
+  paris-noah--Tabby:
+    class: foundationforecast.models.tabby.Tabby
+    reference_slug: Tabby
+    kwargs:
+      repo_id: paris-noah/Tabby
+      alias: Tabby
+      context_length: 8096
+      batch_size: 64
+      precision: bf16
+
   thuml--sundial-base-128m:
     class: foundationforecast.models.sundial.Sundial
     reference_slug: sundial_base_128m

@@ -87,6 +87,7 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/ibm.png" width="28" alt="IBM"> | [PatchTST-FM](https://arxiv.org/abs/2602.06909) | ✓ | ✓ | ✓ | ✓ | | | CC-BY-NC-SA-4.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/thuml.png" width="28" alt="THUML"> | [Sundial](https://arxiv.org/abs/2502.00816) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/tfc.png" width="28" alt="The Forecasting Company"> | [T0](https://huggingface.co/theforecastingcompany/t0-alpha) | ✓ | ✓ | ✓ | ✓ | ✓ | | Apache-2.0† |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/huawei-noah.png" width="28" alt="Huawei Paris Noah's Ark Lab"> | [Tabby](https://arxiv.org/abs/2609.13956) | ✓ | ✓ | ✓ | ✓ | | | CC-BY-NC-4.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/priorlabs.png" width="28" alt="Prior Labs"> | [TabPFN](https://arxiv.org/abs/2501.02945) | ✓ | ✓ | ✓ | ✓ | | | TabPFN NC‡ |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/tafsut.png" width="28" alt="Tafsut"> | [Tafsut](https://github.com/Tafsut-FM/tafsut) | ✓ | ✓ | ✓ | ✓ | | | MIT |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/nx-ai.png" width="28" alt="NX-AI"> | [TiRex](https://arxiv.org/abs/2505.23719) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Community / Apache-2.0 |
@@ -103,7 +104,7 @@ Licenses verified against Hugging Face model cards. Check the model card for you
 <details><summary><strong>What this means for production</strong></summary>
 
 - **Apache-2.0**, **MIT**: generally fine for commercial production (retain notices; T0† is also gated on Hugging Face: accept terms and set `HF_TOKEN`).
-- **CC-BY-NC-4.0** (Moirai), **CC-BY-NC-SA-4.0** (PatchTST-FM r1 checkpoints): **non-commercial** only; not for revenue-generating production without a separate agreement from the rights holder.
+- **CC-BY-NC-4.0** (Moirai, Tabby), **CC-BY-NC-SA-4.0** (PatchTST-FM r1 checkpoints): **non-commercial** only; not for revenue-generating production without a separate agreement from the rights holder.
 - **Apache-2.0 / OpenMDW 1.0** (Granite PatchTST-FM r2): commercial-friendly; choose either license per the [model card](https://huggingface.co/ibm-granite/granite-timeseries-patchtst-fm-r2).
 - **TimesFM 3.0**: weights for `google/timesfm-3.0-pytorch` are [non-commercial](https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE); TimesFM 1.0–2.5 checkpoints remain Apache-2.0.
 - **TabPFN NC**‡: TabPFN-2.6+ and TabPFN-3 weights are non-commercial; production requires a [Prior Labs commercial license or API](https://docs.priorlabs.ai/models). First LOCAL use requires accepting terms at [ux.priorlabs.ai](https://ux.priorlabs.ai) (`TABPFN_TOKEN`). TabPFN-3 is LOCAL-only today.
@@ -126,6 +127,7 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 - **PatchTST-FM:** `ibm-research/patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r2` (r2 requires `granite-tsfm>=0.3.9`)
 - **Sundial:** `thuml/sundial-base-128m`
 - **T0:** `theforecastingcompany/t0-alpha`, `theforecastingcompany/t0-beta`, `theforecastingcompany/t0-gamma` (requires `tfc-t0[torch]>=0.6.0`)
+- **Tabby:** `paris-noah/Tabby` (requires `trust_remote_code`; CC-BY-NC-4.0)
 - **TabPFN:** default `tabpfn-v2-regressor-2noar4o2.ckpt`; TabPFN-3 via `model_path="tabpfn-v3-regressor-v3_20260506_timeseries.ckpt"` (LOCAL, `TABPFN_TOKEN`); or CLIENT mode with a Prior Labs API token
 - **Tafsut:** `Tafsut-FM/tafsut-univariate-base`
 - **TiRex:** `NX-AI/TiRex`, `NX-AI/TiRex-2`
@@ -145,6 +147,7 @@ Recent additions and checkpoints (newest first). See the [changelog](https://git
 
 | When | What | Checkpoint / detail |
 |------|------|---------------------|
+| Oct 2026 | [**Tabby**](https://huggingface.co/paris-noah/Tabby) | `paris-noah/Tabby` — 99 native quantiles; `trust_remote_code`; CC-BY-NC-4.0 |
 | Oct 2026 | [**TimeH2O**](https://huggingface.co/h2oai/timeh2o-v1) | `h2oai/timeh2o-v1`, `h2oai/timeh2o-v1-tiny` — requires `h2ofm>=0.43.0` (Python 3.12+); native `X_df`; GIFT-Eval and fev-bench CI ([v0.1.16](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.16.md)) |
 | Oct 2026 | [**Timestral**](https://huggingface.co/collections/mistralai/timestral) | `mistralai/Timestral-{5M,28M,123M,209M}` — requires `timecopilot-timestral>=0.1.0`; native `X_df`; GIFT-Eval and fev-bench CI ([v0.1.15](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.15.md)) |
 | Oct 2026 | [**T0 gamma**](https://huggingface.co/theforecastingcompany/t0-gamma) | `theforecastingcompany/t0-gamma` — requires `tfc-t0[torch]>=0.6.0`; GIFT-Eval and fev-bench CI ([v0.1.14](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.14.md)) |
