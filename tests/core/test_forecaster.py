@@ -4,7 +4,9 @@ import pytest
 
 from tests.helpers import (
     DummyModel,
+    ExogSpyModel,
     SeasonalNaiveModel,
+    generate_panel_with_futr_exog,
     generate_series,
     generate_series_with_anomalies,
 )
@@ -324,6 +326,90 @@ def test_detect_anomalies_short_series_error():
     )
     with pytest.raises(ValueError, match="Cannot perform anomaly detection"):
         model.detect_anomalies(df, h=5, freq="D")
+
+
+def _split_exog(df: pd.DataFrame, cols: list[str]):
+    return df.drop(columns=cols), df[["unique_id", "ds", *cols]]
+
+
+def test_detect_anomalies_passes_x_df_to_forecast():
+    h = 3
+    df, _, exog_cols = generate_panel_with_futr_exog(2, freq="D", h=h)
+    df_y, X_df = _split_exog(df, exog_cols)
+    model = ExogSpyModel()
+    result = model.detect_anomalies(df_y, h=h, freq="D", n_windows=2, X_df=X_df)
+    assert len(model.horizon_dfs) == 2
+    seen = pd.concat(model.horizon_dfs, ignore_index=True)
+    expected = seen[["unique_id", "ds"]].merge(X_df, on=["unique_id", "ds"])
+    pd.testing.assert_frame_equal(seen, expected)
+    assert len(result) == 2 * 2 * h
+    scored = result.merge(X_df, on=["unique_id", "ds"])
+    np.testing.assert_allclose(
+        scored[model.alias], scored["x1"] + scored["x2"], rtol=1e-12
+    )
+
+
+def test_detect_anomalies_x_df_matches_exog_columns_in_df():
+    h = 3
+    df, _, exog_cols = generate_panel_with_futr_exog(2, freq="D", h=h)
+    df_y, X_df = _split_exog(df, exog_cols)
+    from_df = ExogSpyModel().detect_anomalies(df, h=h, freq="D", n_windows=2)
+    from_x_df = ExogSpyModel().detect_anomalies(
+        df_y, h=h, freq="D", n_windows=2, X_df=X_df.sample(frac=1, random_state=0)
+    )
+    pd.testing.assert_frame_equal(from_df, from_x_df)
+
+
+def test_detect_anomalies_futr_exog_list_selects_x_df_columns():
+    h = 3
+    df, _, exog_cols = generate_panel_with_futr_exog(1, freq="D", h=h)
+    df_y, X_df = _split_exog(df, exog_cols)
+    model = ExogSpyModel()
+    model.detect_anomalies(
+        df_y, h=h, freq="D", n_windows=1, X_df=X_df, futr_exog_list=["x1"]
+    )
+    assert list(model.horizon_dfs[0].columns) == ["unique_id", "ds", "x1"]
+
+
+def test_detect_anomalies_exog_strategy_false_ignores_x_df():
+    h = 3
+    df, _, exog_cols = generate_panel_with_futr_exog(1, freq="D", h=h)
+    df_y, X_df = _split_exog(df, exog_cols)
+    model = ExogSpyModel(exog_strategy=False)
+    with_x_df = model.detect_anomalies(df_y, h=h, freq="D", n_windows=2, X_df=X_df)
+    without = model.detect_anomalies(df_y, h=h, freq="D", n_windows=2)
+    assert model.horizon_dfs == []
+    pd.testing.assert_frame_equal(with_x_df, without)
+
+
+@pytest.mark.parametrize(
+    "mutate,match",
+    [
+        (lambda X: X.iloc[:-1], "X_df is missing 1"),
+        (lambda X: pd.concat([X, X.iloc[[0]]]), "duplicate"),
+        (lambda X: X.drop(columns="ds"), "must include columns"),
+    ],
+    ids=["missing-row", "duplicate-row", "missing-ds"],
+)
+def test_detect_anomalies_rejects_invalid_x_df(mutate, match):
+    df, _, exog_cols = generate_panel_with_futr_exog(1, freq="D", h=3)
+    df_y, X_df = _split_exog(df, exog_cols)
+    with pytest.raises(ValueError, match=match):
+        ExogSpyModel().detect_anomalies(df_y, h=3, freq="D", X_df=mutate(X_df))
+
+
+def test_detect_anomalies_rejects_exog_in_both_df_and_x_df():
+    df, _, exog_cols = generate_panel_with_futr_exog(1, freq="D", h=3)
+    X_df = df[["unique_id", "ds", *exog_cols]]
+    with pytest.raises(ValueError, match="both df and X_df"):
+        ExogSpyModel().detect_anomalies(df, h=3, freq="D", X_df=X_df)
+
+
+def test_detect_anomalies_non_native_model_rejects_x_df():
+    df, _, exog_cols = generate_panel_with_futr_exog(1, freq="D", h=3)
+    df_y, X_df = _split_exog(df, exog_cols)
+    with pytest.raises(ValueError, match="does not support known-future"):
+        DummyModel().detect_anomalies(df_y, h=3, freq="D", X_df=X_df)
 
 
 def test_validate_input():

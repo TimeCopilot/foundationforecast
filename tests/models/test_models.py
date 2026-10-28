@@ -284,6 +284,41 @@ def test_exog_cross_validation_using_level(model):
 
 
 @pytest.mark.parametrize("model", models)
+def test_exog_detect_anomalies_with_X_df(model):
+    if not model.supports_native_futr_exog():
+        pytest.skip("known-future exog requires native checkpoint support")
+    h = 2
+    n_series = 2
+    df, _, futr_exog_list = generate_panel_with_futr_exog(
+        n_series,
+        freq="D",
+        h=h,
+        min_length=32,
+        max_length=32,
+    )
+    X_df = df[["unique_id", "ds", *futr_exog_list]]
+    anomalies_df = model.detect_anomalies(
+        df=df.drop(columns=futr_exog_list),
+        h=h,
+        freq="D",
+        n_windows=2,
+        level=95,
+        X_df=X_df,
+        futr_exog_list=futr_exog_list,
+    )
+    assert len(anomalies_df) == n_series * 2 * h
+    for col in (
+        model.alias,
+        f"{model.alias}-lo-95",
+        f"{model.alias}-hi-95",
+        f"{model.alias}-anomaly",
+    ):
+        assert col in anomalies_df.columns
+    assert anomalies_df[model.alias].notna().all()
+    assert anomalies_df[f"{model.alias}-anomaly"].dtype == bool
+
+
+@pytest.mark.parametrize("model", models)
 def test_passing_both_level_and_quantiles(model):
     df = generate_series(n_series=1, freq="D")
     with pytest.raises(ValueError):

@@ -52,6 +52,11 @@ When calling `detect_anomalies()` without `h`:
 anomalies_df = ff.detect_anomalies(df=df, freq="MS", level=99)
 ```
 
+`detect_anomalies()` also accepts known-future covariates, like `forecast()` and
+`cross_validation()`: keep exog columns in `df`, or pass them in `X_df` (with a row for
+every `(unique_id, ds)` in `df`) and optionally `futr_exog_list`. See
+[Exogenous variables](exogenous-variables.md#anomaly-detection).
+
 ## Choosing sensible values
 
 * **`freq`** must match your data's timestamp spacing. Irregular or gapped series may fail inference.

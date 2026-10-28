@@ -9,6 +9,7 @@ import pandas as pd
 from utilsforecast.data import generate_series as _generate_series
 from utilsforecast.processing import make_future_dataframe
 
+from foundationforecast.core.exog import ExogStrategyConfig
 from foundationforecast.core.forecaster import ExogCapableForecaster, QuantileConverter
 from foundationforecast.core.quantiles import quantile_column_name
 
@@ -99,8 +100,16 @@ def generate_series_with_anomalies(
 
 
 class DummyModel(ExogCapableForecaster):
-    def __init__(self, alias: str = "dummy", reuse_loaded_model: bool = True):
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+    def __init__(
+        self,
+        alias: str = "dummy",
+        reuse_loaded_model: bool = True,
+        exog_strategy: ExogStrategyConfig = "auto",
+    ):
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model,
+            exog_strategy=exog_strategy,
+        )
         self.alias = alias
 
     def _forecast_univariate(
@@ -122,6 +131,28 @@ class DummyModel(ExogCapableForecaster):
             for q in qc.quantiles:
                 fcst[quantile_column_name(self.alias, q)] = fcst[self.alias] + q
             fcst = qc.maybe_convert_quantiles_to_level(fcst, models=[self.alias])
+        return fcst
+
+
+class ExogSpyModel(DummyModel):
+    """Native-exog dummy that records horizon exog and forecasts their sum."""
+
+    def __init__(
+        self, alias: str = "ExogSpy", exog_strategy: ExogStrategyConfig = "auto"
+    ):
+        super().__init__(alias=alias, exog_strategy=exog_strategy)
+        self.horizon_dfs: list[pd.DataFrame] = []
+
+    def supports_native_futr_exog(self) -> bool:
+        return True
+
+    def _forecast_native_futr_exog(
+        self, df, h, freq, level, quantiles, panel, horizon_df, futr_exog_list
+    ):
+        _ = df, h, freq, level, quantiles, panel
+        self.horizon_dfs.append(horizon_df[["unique_id", "ds", *futr_exog_list]])
+        fcst = horizon_df[["unique_id", "ds"]].copy()
+        fcst[self.alias] = horizon_df[futr_exog_list].sum(axis=1).to_numpy()
         return fcst
 
 
