@@ -95,6 +95,46 @@ def resolve_exog_columns_from_df(
     return [c for c in df.columns if c not in META_COLS]
 
 
+def merge_insample_exog(
+    df: pd.DataFrame,
+    X_df: pd.DataFrame,
+    futr_exog_list: list[str] | None,
+) -> tuple[pd.DataFrame, list[str]]:
+    """Attach exog from ``X_df`` to every ``(unique_id, ds)`` row of ``df``.
+
+    Used by ``detect_anomalies()``, which scores in-sample cross-validation
+    windows: covariates must cover the history and every scored window, so
+    ``X_df`` needs a row for each timestamp in ``df`` (extra rows are ignored).
+    """
+    if ID_COL not in X_df.columns or TIME_COL not in X_df.columns:
+        raise ValueError(f"X_df must include columns '{ID_COL}' and '{TIME_COL}'.")
+    cols = resolve_futr_exog_list(X_df, futr_exog_list)
+    in_both = [c for c in cols if c in df.columns]
+    if in_both:
+        raise ValueError(
+            f"Exogenous columns {in_both} are present in both df and X_df. "
+            "Pass each covariate in only one of them."
+        )
+    if X_df.duplicated(subset=[ID_COL, TIME_COL]).any():
+        raise ValueError(
+            f"X_df must not contain duplicate ({ID_COL}, {TIME_COL}) rows."
+        )
+    exog = X_df[[ID_COL, TIME_COL, *cols]]
+    if not pd.api.types.is_datetime64_any_dtype(exog[TIME_COL]):
+        exog = exog.assign(**{TIME_COL: pd.to_datetime(exog[TIME_COL])})
+    indicator = "__exog_merge__"
+    merged = df.merge(exog, on=[ID_COL, TIME_COL], how="left", indicator=indicator)
+    missing = merged[indicator] == "left_only"
+    if missing.any():
+        first = merged.loc[missing, [ID_COL, TIME_COL]].iloc[0]
+        raise ValueError(
+            f"X_df is missing {int(missing.sum())} ({ID_COL}, {TIME_COL}) rows "
+            f"present in df, e.g. ({first[ID_COL]!r}, {first[TIME_COL]}). "
+            "For detect_anomalies, X_df must cover every timestamp in df."
+        )
+    return merged.drop(columns=indicator), cols
+
+
 def resolve_futr_exog_list(
     horizon_df: pd.DataFrame,
     futr_exog_list: list[str] | None,

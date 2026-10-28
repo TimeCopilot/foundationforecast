@@ -69,7 +69,9 @@ def _model_uses_horizon_exog(
             kwargs.get("futr_df"),  # type: ignore[arg-type]
         )
         return horizon_df is not None
-    if attr == "cross_validation":
+    if attr == "detect_anomalies" and kwargs.get("X_df") is not None:
+        return True
+    if attr in ("cross_validation", "detect_anomalies"):
         futr_exog_list = kwargs.get("futr_exog_list")
         cols = resolve_exog_columns_from_df(
             df,
@@ -294,20 +296,32 @@ class MultiModelForecasterMixin:
         freq: str | None = None,
         n_windows: int | None = None,
         level: int | float = 99,
+        X_df: pd.DataFrame | None = None,
+        *,
+        futr_exog_list: list[str] | None = None,
     ) -> pd.DataFrame:
         """Flag anomalies with every model.
 
         Each model backtests the history and marks values outside its `level`
-        prediction interval.
+        prediction interval. Exogenous variables are passed to every model;
+        set `exog_strategy=False` on models without native exog support so
+        they ignore them.
 
         Args:
-            df: Historical data with columns `unique_id`, `ds`, and `y`.
+            df: Historical data with columns `unique_id`, `ds`, and `y`. As in
+                `cross_validation`, any exogenous columns in `df` are used as
+                known-future covariates for each window.
             h: Forecast horizon for each window. Defaults to the seasonality
                 implied by `freq`.
             freq: Pandas frequency of `ds`. Inferred from `df` when omitted.
             n_windows: Number of windows. Defaults to as many as the shortest
                 series allows.
             level: Interval level in percent used as the anomaly threshold.
+            X_df: Exogenous values with `unique_id`, `ds`, and the exogenous
+                columns (no `y`), kept apart from `df`. Must have a row for
+                every `(unique_id, ds)` in `df`.
+            futr_exog_list: Exogenous column names to use. Inferred from `X_df`
+                (or from the non-target columns of `df`) when omitted.
 
         Returns:
             One row per series and checked timestamp, with `unique_id`, `ds`,
@@ -323,4 +337,6 @@ class MultiModelForecasterMixin:
             level=level,  # type: ignore[arg-type]
             quantiles=None,
             n_windows=n_windows,
+            X_df=X_df,
+            futr_exog_list=futr_exog_list,
         )

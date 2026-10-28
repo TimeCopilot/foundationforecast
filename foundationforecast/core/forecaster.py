@@ -473,6 +473,9 @@ class Forecaster:
         freq: str | None = None,
         n_windows: int | None = None,
         level: int | float = 99,
+        X_df: pd.DataFrame | None = None,
+        *,
+        futr_exog_list: list[str] | None = None,
     ) -> pd.DataFrame:
         """Flag observations that fall outside the model's prediction interval.
 
@@ -481,13 +484,21 @@ class Forecaster:
         the per-series residual standard deviation.
 
         Args:
-            df: Historical data with columns `unique_id`, `ds`, and `y`.
+            df: Historical data with columns `unique_id`, `ds`, and `y`. As in
+                `cross_validation`, any exogenous columns in `df` are used as
+                known-future covariates for each window.
             h: Forecast horizon for each window. Defaults to the seasonality
                 implied by `freq`.
             freq: Pandas frequency of `ds`. Inferred from `df` when omitted.
             n_windows: Number of windows. Defaults to as many as the shortest
                 series allows.
             level: Interval level in percent used as the anomaly threshold.
+            X_df: Exogenous values with `unique_id`, `ds`, and the exogenous
+                columns (no `y`), kept apart from `df`. Must have a row for
+                every `(unique_id, ds)` in `df`, since every window is scored
+                in-sample. See the Exogenous variables guide.
+            futr_exog_list: Exogenous column names to use. Inferred from `X_df`
+                (or from the non-target columns of `df`) when omitted.
 
         Returns:
             One row per series and checked timestamp, with `unique_id`, `ds`,
@@ -496,8 +507,16 @@ class Forecaster:
         """
         from scipy import stats
 
+        from .exog.covariates import exog_strategy_disabled, merge_insample_exog
+
         freq = self._maybe_infer_freq(df, freq)
         df = maybe_convert_col_to_datetime(df, "ds")
+        exog_kwargs: dict = {}
+        if not exog_strategy_disabled(self.exog_strategy):
+            if X_df is not None:
+                df, futr_exog_list = merge_insample_exog(df, X_df, futr_exog_list)
+            if futr_exog_list is not None:
+                exog_kwargs["futr_exog_list"] = futr_exog_list
         if h is None:
             h = self._maybe_get_seasonality(freq)
         min_series_length = counts_by_id(df, "unique_id")["counts"].min()
@@ -520,6 +539,7 @@ class Forecaster:
             freq=freq,
             n_windows=_n_windows,
             step_size=h,
+            **exog_kwargs,
         )
         cv_results["residuals"] = cv_results["y"] - cv_results[self.alias]
         residual_stats = grouped_std_by_id(
