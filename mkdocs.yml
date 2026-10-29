@@ -107,12 +107,18 @@ theme:
 extra_css:
   - stylesheets/extra.css
 
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
 markdown_extensions:
   - attr_list
   - admonition
   - pymdownx.details
   - footnotes
   - pymdownx.magiclink
+  - pymdownx.arithmatex:
+      generic: true
   - pymdownx.snippets:
       base_path: ["."]
       check_paths: true
