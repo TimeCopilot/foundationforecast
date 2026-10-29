@@ -8,6 +8,7 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModel
 
+from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
@@ -34,6 +35,7 @@ class Tabby(ExogCapableForecaster):
         alias: str = "Tabby",
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        prediction_intervals: ConformalIntervals | None = None,
         precision: Literal["bf16", "fp32"] = "bf16",
     ):
         """
@@ -50,6 +52,10 @@ class Tabby(ExogCapableForecaster):
             batch_size (int, optional): Batch size for inference. Defaults to 64.
             alias (str, optional): Name to use for the model in output DataFrames
                 and logs. Defaults to ``Tabby``.
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
             reuse_loaded_model (bool, optional): When True (default), reuse
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and
@@ -84,6 +90,7 @@ class Tabby(ExogCapableForecaster):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.repo_id = repo_id
         self.context_length = context_length

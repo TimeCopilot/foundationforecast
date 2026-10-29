@@ -6,6 +6,7 @@ import torch
 from timestral import TimestralForecaster
 from tqdm import tqdm
 
+from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
@@ -31,6 +32,7 @@ class Timestral(ExogCapableForecaster):
         alias: str = "Timestral",
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        prediction_intervals: ConformalIntervals | None = None,
         symmetric_averaging: bool = True,
         clip_nonnegative: bool = True,
     ):
@@ -45,6 +47,10 @@ class Timestral(ExogCapableForecaster):
                 Defaults to 64.
             alias (str, optional): Column prefix in output DataFrames.
                 Defaults to ``Timestral``.
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
             reuse_loaded_model (bool, optional): Reuse loaded weights across
                 calls via the process-wide cache. Defaults to True.
             exog_strategy (ExogStrategyConfig, optional): How ``X_df`` is
@@ -75,6 +81,7 @@ class Timestral(ExogCapableForecaster):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.repo_id = repo_id
         self.context_length = context_length
