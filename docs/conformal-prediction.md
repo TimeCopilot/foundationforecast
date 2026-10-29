@@ -8,7 +8,7 @@ FoundationForecast can calibrate **distribution-free prediction intervals** from
 - You want intervals from **empirical forecast errors** on your own history (per series), rather than the model’s built-in uncertainty.
 - You accept the extra compute: about **one point forecast per calibration window per series**, plus the final forecast.
 
-Native quantiles (default when `prediction_intervals` is unset) remain unchanged. **`detect_anomalies`** is unchanged and does not read `prediction_intervals`.
+Native quantiles (default when `prediction_intervals` is unset) remain unchanged. **`cross_validation()`** uses conformal intervals too: every window is recalibrated on the data before its cutoff, so backtests show the coverage you would get in production. **`detect_anomalies`** is unchanged and does not read `prediction_intervals`.
 
 ## API
 

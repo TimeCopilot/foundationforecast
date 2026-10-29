@@ -111,7 +111,9 @@ class Forecaster:
             prediction_intervals: When set, ``forecast()`` calibrates prediction
                 intervals from cross-validation absolute errors on the point
                 forecast instead of using native model quantiles. Requires
-                ``level`` or ``quantiles``. See conformal prediction docs.
+                ``level`` or ``quantiles``. ``cross_validation()`` recalibrates
+                at every cutoff using only data before it. See conformal
+                prediction docs.
         """
         self.reuse_loaded_model = reuse_loaded_model
         self.exog_strategy = normalize_exog_strategy(exog_strategy)
