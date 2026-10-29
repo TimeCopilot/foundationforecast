@@ -94,6 +94,21 @@ def test_conformal_forecast_through_foundation_forecast_matches_direct():
     )
 
 
+def test_cross_validation_recalibrates_conformal_intervals_per_window():
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=3),
+    )
+    df = _panel(n_series=2, length=60)
+    cv = model.cross_validation(df=df, h=3, freq="D", n_windows=2, level=[80])
+    for cutoff, window in cv.groupby("cutoff"):
+        expected = model.forecast(df[df["ds"] <= cutoff], h=3, freq="D", level=[80])
+        pd.testing.assert_frame_equal(
+            window[expected.columns].reset_index(drop=True),
+            expected.reset_index(drop=True),
+        )
+    assert cv.groupby("cutoff")["Mean-hi-80"].mean().nunique() == 2
+
+
 def test_conformal_forecast_with_integer_unique_ids():
     model = _MeanForecaster(
         prediction_intervals=ConformalIntervals(n_windows=2),
