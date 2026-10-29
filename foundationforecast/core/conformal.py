@@ -116,7 +116,7 @@ def _apply_conformal_method(
 def add_conformal_columns_to_forecast(
     fcst_df: pd.DataFrame,
     alias: str,
-    scores_by_id: dict[str, np.ndarray],
+    scores_by_id: dict[object, np.ndarray],
     level: list[int | float],
     method: str,
 ) -> pd.DataFrame:
@@ -160,15 +160,16 @@ def compute_panel_conformity_scores(
     freq: str,
     prediction_intervals: ConformalIntervals,
     *,
-    panel,
-    X_df: pd.DataFrame | None,
-    futr_df: pd.DataFrame | None,
-    futr_exog_list: list[str] | None,
     exog_cols: list[str],
-) -> dict[str, np.ndarray]:
+) -> dict[object, np.ndarray]:
+    """Absolute CV errors of the point forecast, keyed by ``unique_id``.
+
+    Each window is forecast from that series' training slice only, so callers
+    must not forward a precomputed panel or the forecast horizon ``X_df``.
+    """
     from .exog.covariates import exog_strategy_disabled, sort_exog_panel
 
-    scores: dict[str, np.ndarray] = {}
+    scores: dict[object, np.ndarray] = {}
     work_df = df
     if exog_cols and not exog_strategy_disabled(forecaster.exog_strategy):
         work_df = sort_exog_panel(df)
@@ -192,18 +193,18 @@ def compute_panel_conformity_scores(
                 freq,
                 None,
                 None,
-                panel,
-                horizon_x if horizon_x is not None else X_df,
-                futr_df,
-                exog_cols if exog_cols else futr_exog_list,
+                None,
+                horizon_x,
+                None,
+                exog_cols or None,
                 lambda: forecaster._forecast_univariate(
-                    train, h, freq, None, None, panel
+                    train, h, freq, None, None, None
                 ),
             )
             pred = pred.sort_values("ds")
             return pred[forecaster.alias].to_numpy(dtype=float)
 
-        scores[str(uid)] = conformity_scores_abs_errors(
+        scores[uid] = conformity_scores_abs_errors(
             y,
             h,
             prediction_intervals.n_windows,

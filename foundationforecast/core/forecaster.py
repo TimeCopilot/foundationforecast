@@ -636,10 +636,6 @@ class ExogCapableForecaster(Forecaster):
             h,
             freq,
             intervals,
-            panel=panel,
-            X_df=X_df,
-            futr_df=futr_df,
-            futr_exog_list=futr_exog_list,
             exog_cols=exog_cols,
         )
         fcst_df = add_conformal_columns_to_forecast(
