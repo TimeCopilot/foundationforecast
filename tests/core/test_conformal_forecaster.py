@@ -1,9 +1,12 @@
+import numpy as np
 import pandas as pd
 import pytest
 from utilsforecast.processing import make_future_dataframe
 
+from foundationforecast import FoundationForecast
 from foundationforecast.core.conformal import ConformalIntervals
 from foundationforecast.core.forecaster import ExogCapableForecaster
+from foundationforecast.core.utils import process_panel_from_df
 
 
 class _MeanForecaster(ExogCapableForecaster):
@@ -28,16 +31,17 @@ class _MeanForecaster(ExogCapableForecaster):
         panel,
     ) -> pd.DataFrame:
         freq = self._maybe_infer_freq(df, freq)
+        if panel is None:
+            panel = process_panel_from_df(df)
         futr = make_future_dataframe(
-            uids=df["unique_id"].unique(),
-            last_times=df.groupby("unique_id")["ds"].max(),
+            uids=panel.uids,
+            last_times=pd.to_datetime(panel.last_times),
             freq=freq,
             h=h,
             id_col="unique_id",
             time_col="ds",
         )
-        means = df.groupby("unique_id")["y"].mean()
-        futr[self.alias] = futr["unique_id"].map(means)
+        futr[self.alias] = np.repeat([arr.mean() for arr in panel.series_arrays], h)
         return futr
 
 
@@ -72,6 +76,32 @@ def test_conformal_forecast_adds_interval_columns():
     assert "Mean-lo-80" in fcst.columns
     assert "Mean-hi-90" in fcst.columns
     assert not any("-q-" in c for c in fcst.columns)
+
+
+def test_conformal_forecast_through_foundation_forecast_matches_direct():
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=2),
+    )
+    df = _panel(n_series=3, length=40)
+    direct = model.forecast(df=df, h=3, freq="D", level=[80])
+    via_ff = FoundationForecast(models=[model]).forecast(
+        df=df, h=3, freq="D", level=[80]
+    )
+    pd.testing.assert_frame_equal(
+        direct.reset_index(drop=True),
+        via_ff[direct.columns].reset_index(drop=True),
+    )
+
+
+def test_conformal_forecast_with_integer_unique_ids():
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=2),
+    )
+    df = _panel(length=40)
+    df["unique_id"] = df["unique_id"].astype(int)
+    fcst = model.forecast(df=df, h=3, freq="D", level=[80])
+    assert fcst["Mean-lo-80"].notna().all()
+    assert fcst["Mean-hi-80"].notna().all()
 
 
 def test_native_level_without_prediction_intervals():
