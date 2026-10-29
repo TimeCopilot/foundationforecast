@@ -15,6 +15,7 @@ from t0 import T0Forecaster
 from t0.torch import batch_series
 from tqdm import tqdm
 
+from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import (
@@ -56,6 +57,7 @@ class T0(ExogCapableForecaster):
         alias: str = "t0-alpha",
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        prediction_intervals: ConformalIntervals | None = None,
         trim_leading_missing: bool = False,
         symmetric_averaging: bool = False,
         clip_nonnegative: bool = False,
@@ -76,6 +78,10 @@ class T0(ExogCapableForecaster):
                 to 16. Adjust based on available memory.
             alias (str, optional): Name to use for the model in output DataFrames
                 and logs. Defaults to "t0-alpha".
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
             reuse_loaded_model (bool, optional): When True (default), reuse
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and
@@ -137,6 +143,7 @@ class T0(ExogCapableForecaster):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.repo_id = repo_id
         self.context_length = context_length
