@@ -15,17 +15,24 @@ Native quantiles (default when `prediction_intervals` is unset) remain unchanged
 Set [`ConformalIntervals`][foundationforecast.core.conformal.ConformalIntervals] on the model, then pass `level` or `quantiles` to [`forecast()`][foundationforecast.FoundationForecast.forecast]:
 
 ```python
-from foundationforecast import FoundationForecast
-from foundationforecast.core.conformal import ConformalIntervals
-from foundationforecast.models import Tafsut
+import pandas as pd
 
-model = Tafsut(
-    alias="Tafsut",
-    prediction_intervals=ConformalIntervals(n_windows=2, method="conformal_distribution"),
+from foundationforecast import ConformalIntervals, FoundationForecast
+from foundationforecast.models import Chronos
+
+df = pd.read_csv(
+    "https://timecopilot.s3.amazonaws.com/public/data/air_passengers.csv",
+    parse_dates=["ds"],
+)
+
+model = Chronos(repo_id="amazon/chronos-bolt-tiny", alias="Chronos-Bolt")
+model.prediction_intervals = ConformalIntervals(
+    n_windows=3,
+    method="conformal_distribution",
 )
 
 ff = FoundationForecast(models=[model])
-fcst = ff.forecast(df=df, h=24, level=[80, 90])
+fcst = ff.forecast(df=df, h=12, freq="MS", level=[80, 90])
 ```
 
 ### Parameters
