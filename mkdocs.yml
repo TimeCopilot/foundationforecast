@@ -43,6 +43,7 @@ nav:
       - Finetuning: examples/finetuning.ipynb
   - API Reference:
       - api/forecaster.md
+      - Conformal intervals: api/core/conformal.md
       - api/models/foundation/models.md
       - api/models/utils/forecaster.md
   - Experiments:

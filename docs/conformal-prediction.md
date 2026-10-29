@@ -12,7 +12,7 @@ Native quantiles (default when `prediction_intervals` is unset) remain unchanged
 
 ## API
 
-Set [`ConformalIntervals`][foundationforecast.core.conformal.ConformalIntervals] on the model, then pass `level` or `quantiles` to [`forecast()`][foundationforecast.core.forecaster.ExogCapableForecaster.forecast]:
+Set [`ConformalIntervals`][foundationforecast.core.conformal.ConformalIntervals] on the model, then pass `level` or `quantiles` to [`forecast()`][foundationforecast.FoundationForecast.forecast]:
 
 ```python
 from foundationforecast import FoundationForecast
