@@ -1,5 +1,6 @@
 import sys
 
+from foundationforecast.core.conformal import ConformalIntervals
 from foundationforecast.models.chronos import Chronos
 from foundationforecast.models.moirai import Moirai
 from foundationforecast.models.tabby import Tabby
@@ -146,3 +147,20 @@ if sys.version_info < (3, 13):
     tabpfn_model = TabPFN()
     tabpfn_model._get_model = lambda: _mock_get_model(tabpfn_model)  # type: ignore[method-assign, assignment]
     models.append(tabpfn_model)
+
+
+def _with_conformal(model):
+    model.prediction_intervals = ConformalIntervals(n_windows=2)
+    return model
+
+
+conformal_models = [
+    _with_conformal(Tafsut(context_length=512, batch_size=2, alias="Tafsut-CF")),
+    _with_conformal(
+        Chronos(
+            repo_id="amazon/chronos-bolt-tiny",
+            alias="Chronos-Bolt-CF",
+            batch_size=2,
+        )
+    ),
+]

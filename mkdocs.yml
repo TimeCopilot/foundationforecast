@@ -21,12 +21,14 @@ nav:
       - Exogenous variables: exogenous-variables.md
       - Forecasting Parameters: forecasting-parameters.md
       - Model Weight Cache: model-weight-cache.md
+      - Conformal prediction: conformal-prediction.md
   - Examples:
       - examples/index.md
       - Forecaster Quickstart: examples/forecaster-quickstart.ipynb
       - Anomaly Detection: examples/anomaly-detection-forecaster-quickstart.ipynb
       - Compare Foundation Models: examples/ts-foundation-models-comparison-quickstart.ipynb
       - Exogenous variables: examples/exogenous-variables.ipynb
+      - Conformal prediction: examples/conformal-prediction.ipynb
       - Family Guides:
           - Chronos: examples/chronos-family.ipynb
           - TimesFM: examples/timesfm-family.ipynb

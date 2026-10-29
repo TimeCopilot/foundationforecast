@@ -12,6 +12,7 @@ For model API details, see the [Model Hub](../model-hub.md).
 | [Anomaly Detection](anomaly-detection-forecaster-quickstart.ipynb) | Detect anomalies with Chronos and FlowState | Python 3.11+ for FlowState |
 | [Compare Foundation Models](ts-foundation-models-comparison-quickstart.ipynb) | Benchmark multiple foundation models side by side | Python 3.10+; GPU optional |
 | [Exogenous variables](exogenous-variables.ipynb) | Panel forecast with `X_df`, native exog, and `exog_strategy=False` for mixed models | Python 3.10+; GPU recommended for Chronos-2 |
+| [Conformal prediction](conformal-prediction.ipynb) | CV-calibrated intervals with `prediction_intervals` on electricity prices | Python 3.10+; GPU optional |
 
 ## Foundation Models
 

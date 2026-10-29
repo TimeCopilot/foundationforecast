@@ -26,6 +26,11 @@ from utilsforecast.processing import (
     vertical_concat,
 )
 
+from .conformal import (
+    ConformalIntervals,
+    add_conformal_columns_to_forecast,
+    compute_panel_conformity_scores,
+)
 from .exog.covariates import (
     ExogStrategyConfig,
     normalize_exog_strategy,
@@ -88,6 +93,7 @@ class Forecaster:
         *,
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        prediction_intervals: ConformalIntervals | None = None,
     ) -> None:
         """Initialize forecaster options.
 
@@ -102,9 +108,14 @@ class Forecaster:
                 if ``X_df`` is provided and native exog is unavailable. ``False``
                 ignores ``X_df`` / ``futr_exog_list`` and runs a univariate
                 forecast (including in cross-validation).
+            prediction_intervals: When set, ``forecast()`` calibrates prediction
+                intervals from cross-validation absolute errors on the point
+                forecast instead of using native model quantiles. Requires
+                ``level`` or ``quantiles``. See conformal prediction docs.
         """
         self.reuse_loaded_model = reuse_loaded_model
         self.exog_strategy = normalize_exog_strategy(exog_strategy)
+        self.prediction_intervals = prediction_intervals
 
     def _model_cache_prefix(self) -> str | None:
         repo_id = getattr(self, "repo_id", None)
@@ -555,6 +566,92 @@ class Forecaster:
 class ExogCapableForecaster(Forecaster):
     """Forecaster with optional known-future exogenous variables via ``X_df``."""
 
+    def _forecast_point_only(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None,
+        panel: PanelData | None,
+        X_df: pd.DataFrame | None,
+        futr_df: pd.DataFrame | None,
+        futr_exog_list: list[str] | None,
+    ) -> pd.DataFrame:
+        return self._forecast_with_exog(
+            df,
+            h,
+            freq,
+            None,
+            None,
+            panel,
+            X_df,
+            futr_df,
+            futr_exog_list,
+            lambda: self._forecast_univariate(df, h, freq, None, None, panel),
+        )
+
+    def _forecast_with_conformal_intervals(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None,
+        level: list[int | float] | None,
+        quantiles: list[float] | None,
+        panel: PanelData | None,
+        X_df: pd.DataFrame | None,
+        futr_df: pd.DataFrame | None,
+        futr_exog_list: list[str] | None,
+    ) -> pd.DataFrame:
+        from .exog.covariates import (
+            exog_strategy_disabled,
+            resolve_exog_columns_from_df,
+        )
+
+        assert self.prediction_intervals is not None
+        if level is None and quantiles is None:
+            raise ValueError(
+                "You must specify `level` or `quantiles` when using "
+                "`prediction_intervals`."
+            )
+        qc = QuantileConverter(level=level, quantiles=quantiles)
+        if qc.level is None:
+            raise ValueError(
+                "You must specify `level` or `quantiles` when using "
+                "`prediction_intervals`."
+            )
+        freq = self._maybe_infer_freq(df, freq)
+        intervals = ConformalIntervals(
+            n_windows=self.prediction_intervals.n_windows,
+            h=h,
+            method=self.prediction_intervals.method,
+        )
+        exog_cols: list[str] = []
+        if not exog_strategy_disabled(self.exog_strategy):
+            exog_cols = resolve_exog_columns_from_df(df, futr_exog_list)
+        point_fcst = self._forecast_point_only(
+            df, h, freq, panel, X_df, futr_df, futr_exog_list
+        )
+        scores = compute_panel_conformity_scores(
+            self,
+            df,
+            h,
+            freq,
+            intervals,
+            panel=panel,
+            X_df=X_df,
+            futr_df=futr_df,
+            futr_exog_list=futr_exog_list,
+            exog_cols=exog_cols,
+        )
+        fcst_df = add_conformal_columns_to_forecast(
+            point_fcst,
+            self.alias,
+            scores,
+            qc.level,
+            intervals.method,
+        )
+        fcst_df = qc.maybe_convert_level_to_quantiles(fcst_df, [self.alias])
+        return fcst_df
+
     def forecast(
         self,
         df: pd.DataFrame,
@@ -569,6 +666,18 @@ class ExogCapableForecaster(Forecaster):
         futr_exog_list: list[str] | None = None,
     ) -> pd.DataFrame:
         self.validate_input(df, h)
+        if self.prediction_intervals is not None:
+            return self._forecast_with_conformal_intervals(
+                df,
+                h,
+                freq,
+                level,
+                quantiles,
+                panel,
+                X_df,
+                futr_df,
+                futr_exog_list,
+            )
         return self._forecast_with_exog(
             df,
             h,
