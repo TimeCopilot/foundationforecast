@@ -149,18 +149,17 @@ if sys.version_info < (3, 13):
     models.append(tabpfn_model)
 
 
-def _with_conformal(model):
-    model.prediction_intervals = ConformalIntervals(n_windows=2)
-    return model
-
-
 conformal_models = [
-    _with_conformal(Tafsut(context_length=512, batch_size=2, alias="Tafsut-CF")),
-    _with_conformal(
-        Chronos(
-            repo_id="amazon/chronos-bolt-tiny",
-            alias="Chronos-Bolt-CF",
-            batch_size=2,
-        )
+    Tafsut(
+        context_length=512,
+        batch_size=2,
+        alias="Tafsut-CF",
+        prediction_intervals=ConformalIntervals(n_windows=2),
+    ),
+    Chronos(
+        repo_id="amazon/chronos-bolt-tiny",
+        alias="Chronos-Bolt-CF",
+        batch_size=2,
+        prediction_intervals=ConformalIntervals(n_windows=2),
     ),
 ]

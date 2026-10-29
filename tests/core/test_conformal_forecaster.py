@@ -3,9 +3,10 @@ import pandas as pd
 import pytest
 from utilsforecast.processing import make_future_dataframe
 
+import foundationforecast.models as ff_models
 from foundationforecast import FoundationForecast
 from foundationforecast.core.conformal import ConformalIntervals
-from foundationforecast.core.forecaster import ExogCapableForecaster
+from foundationforecast.core.forecaster import ExogCapableForecaster, Forecaster
 from foundationforecast.core.utils import process_panel_from_df
 
 
@@ -102,6 +103,21 @@ def test_conformal_forecast_with_integer_unique_ids():
     fcst = model.forecast(df=df, h=3, freq="D", level=[80])
     assert fcst["Mean-lo-80"].notna().all()
     assert fcst["Mean-hi-80"].notna().all()
+
+
+@pytest.mark.parametrize(
+    "model_cls",
+    [
+        getattr(ff_models, name)
+        for name in ff_models.__all__
+        if isinstance(getattr(ff_models, name), type)
+        and issubclass(getattr(ff_models, name), Forecaster)
+    ],
+)
+def test_model_constructors_accept_prediction_intervals(model_cls):
+    intervals = ConformalIntervals(n_windows=3)
+    model = model_cls(prediction_intervals=intervals)
+    assert model.prediction_intervals is intervals
 
 
 def test_native_level_without_prediction_intervals():
