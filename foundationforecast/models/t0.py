@@ -57,12 +57,12 @@ class T0(ExogCapableForecaster):
         alias: str = "t0-alpha",
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
-        prediction_intervals: ConformalIntervals | None = None,
         trim_leading_missing: bool = False,
         symmetric_averaging: bool = False,
         clip_nonnegative: bool = False,
         snap_integers: bool = False,
         cross_inference: int = 0,
+        prediction_intervals: ConformalIntervals | None = None,
     ):
         # ruff: noqa: E501
         """
@@ -78,10 +78,6 @@ class T0(ExogCapableForecaster):
                 to 16. Adjust based on available memory.
             alias (str, optional): Name to use for the model in output DataFrames
                 and logs. Defaults to "t0-alpha".
-            prediction_intervals (ConformalIntervals | None, optional): When set,
-                ``forecast()`` replaces native quantiles with conformal intervals
-                calibrated on cross-validation errors of the point forecast. See
-                the conformal prediction docs. Defaults to None.
             reuse_loaded_model (bool, optional): When True (default), reuse
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and
@@ -105,6 +101,10 @@ class T0(ExogCapableForecaster):
                 is at most ``batch_size``. ``0`` (default) forecasts each
                 series on its own. Ignored when known-future covariates are
                 passed natively.
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
 
         Notes:
             **Requirements:**

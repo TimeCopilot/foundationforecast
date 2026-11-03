@@ -35,9 +35,9 @@ class TimeH2O(ExogCapableForecaster):
         alias: str = "TimeH2O",
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
-        prediction_intervals: ConformalIntervals | None = None,
         clip_nonnegative: bool = False,
         snap_integer: bool = False,
+        prediction_intervals: ConformalIntervals | None = None,
     ):
         # ruff: noqa: E501
         """
@@ -53,10 +53,6 @@ class TimeH2O(ExogCapableForecaster):
                 covariate rows). Defaults to 256.
             alias (str, optional): Name to use for the model in output DataFrames
                 and logs. Defaults to "TimeH2O".
-            prediction_intervals (ConformalIntervals | None, optional): When set,
-                ``forecast()`` replaces native quantiles with conformal intervals
-                calibrated on cross-validation errors of the point forecast. See
-                the conformal prediction docs. Defaults to None.
             reuse_loaded_model (bool, optional): When True (default), reuse
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and
@@ -70,6 +66,10 @@ class TimeH2O(ExogCapableForecaster):
                 series whose history is nonnegative. Defaults to False.
             snap_integer (bool, optional): Round forecasts to integers for
                 series whose history is integer-valued. Defaults to False.
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
 
         Notes:
             **Requirements:**

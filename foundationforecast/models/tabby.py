@@ -35,8 +35,8 @@ class Tabby(ExogCapableForecaster):
         alias: str = "Tabby",
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
-        prediction_intervals: ConformalIntervals | None = None,
         precision: Literal["bf16", "fp32"] = "bf16",
+        prediction_intervals: ConformalIntervals | None = None,
     ):
         """
         Args:
@@ -52,10 +52,6 @@ class Tabby(ExogCapableForecaster):
             batch_size (int, optional): Batch size for inference. Defaults to 64.
             alias (str, optional): Name to use for the model in output DataFrames
                 and logs. Defaults to ``Tabby``.
-            prediction_intervals (ConformalIntervals | None, optional): When set,
-                ``forecast()`` replaces native quantiles with conformal intervals
-                calibrated on cross-validation errors of the point forecast. See
-                the conformal prediction docs. Defaults to None.
             reuse_loaded_model (bool, optional): When True (default), reuse
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and
@@ -64,6 +60,10 @@ class Tabby(ExogCapableForecaster):
                 pass under bfloat16 autocast on CUDA, as in the published
                 GIFT-Eval evaluation; ``"fp32"`` disables autocast. On CPU the
                 model always runs in float32.
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
 
         Notes:
             **Academic Reference:**

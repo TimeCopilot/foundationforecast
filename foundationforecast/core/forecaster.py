@@ -110,8 +110,9 @@ class Forecaster:
                 forecast (including in cross-validation).
             prediction_intervals: When set, ``forecast()`` calibrates prediction
                 intervals from cross-validation absolute errors on the point
-                forecast instead of using native model quantiles. Requires
-                ``level`` or ``quantiles``. ``cross_validation()`` recalibrates
+                forecast instead of using native model quantiles. Pass
+                ``level`` or ``quantiles`` to emit intervals; without them the
+                point forecast is returned. ``cross_validation()`` recalibrates
                 at every cutoff using only data before it. See conformal
                 prediction docs.
         """
@@ -604,18 +605,25 @@ class ExogCapableForecaster(Forecaster):
         futr_exog_list: list[str] | None,
     ) -> pd.DataFrame:
         assert self.prediction_intervals is not None
+        from .exog.futr_exog import prepare_futr_exog_context
+
+        freq = self._maybe_infer_freq(df, freq)
+        ctx = prepare_futr_exog_context(
+            self, df, h, X_df=X_df, futr_df=futr_df, futr_exog_list=futr_exog_list
+        )
+        futr_exog_list = ctx.futr_exog_list if ctx is not None else None
+        cv_df = df if ctx is not None else df[["unique_id", "ds", "y"]]
         if level is None and quantiles is None:
-            raise ValueError(
-                "You must specify `level` or `quantiles` when using "
-                "`prediction_intervals`."
+            return self._forecast_point_only(
+                df, h, freq, panel, X_df, futr_df, futr_exog_list
             )
         qc = QuantileConverter(level=level, quantiles=quantiles)
         if qc.level is None:
-            raise ValueError(
-                "You must specify `level` or `quantiles` when using "
-                "`prediction_intervals`."
+            point_fcst = self._forecast_point_only(
+                df, h, freq, panel, X_df, futr_df, futr_exog_list
             )
-        freq = self._maybe_infer_freq(df, freq)
+            point_fcst[quantile_column_name(self.alias, 0.5)] = point_fcst[self.alias]
+            return point_fcst
         n_windows = self.prediction_intervals.n_windows
         step_size = self.prediction_intervals.step_size or h
         min_size = int(counts_by_id(df, "unique_id")["counts"].min())
@@ -627,7 +635,7 @@ class ExogCapableForecaster(Forecaster):
         self.prediction_intervals = None
         try:
             cv = self.cross_validation(
-                df=df,
+                df=cv_df,
                 h=h,
                 freq=freq,
                 n_windows=n_windows,
@@ -638,7 +646,11 @@ class ExogCapableForecaster(Forecaster):
             self.prediction_intervals = intervals
         cs_df = cv[["unique_id", "ds", "cutoff", self.alias]].copy()
         cs_df[self.alias] = (cv[self.alias] - cv["y"]).abs()
-        cs_df = cs_df.sort_values(["cutoff", "unique_id", "ds"])
+        cs_df = cs_df.sort_values(["unique_id", "cutoff", "ds"])
+        cs_df["window"] = cs_df.groupby("unique_id", sort=False)["cutoff"].rank(
+            method="dense"
+        )
+        cs_df = cs_df.sort_values(["window", "unique_id", "ds"])
         point_fcst = point_fcst.sort_values(["unique_id", "ds"])
         n_series = int(point_fcst["unique_id"].nunique())
         conformal_method = get_conformal_method(intervals.method)

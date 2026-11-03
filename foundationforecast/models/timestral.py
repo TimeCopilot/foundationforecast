@@ -32,9 +32,9 @@ class Timestral(ExogCapableForecaster):
         alias: str = "Timestral",
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
-        prediction_intervals: ConformalIntervals | None = None,
         symmetric_averaging: bool = True,
         clip_nonnegative: bool = True,
+        prediction_intervals: ConformalIntervals | None = None,
     ):
         # ruff: noqa: E501
         """
@@ -47,10 +47,6 @@ class Timestral(ExogCapableForecaster):
                 Defaults to 64.
             alias (str, optional): Column prefix in output DataFrames.
                 Defaults to ``Timestral``.
-            prediction_intervals (ConformalIntervals | None, optional): When set,
-                ``forecast()`` replaces native quantiles with conformal intervals
-                calibrated on cross-validation errors of the point forecast. See
-                the conformal prediction docs. Defaults to None.
             reuse_loaded_model (bool, optional): Reuse loaded weights across
                 calls via the process-wide cache. Defaults to True.
             exog_strategy (ExogStrategyConfig, optional): How ``X_df`` is
@@ -61,6 +57,10 @@ class Timestral(ExogCapableForecaster):
             clip_nonnegative (bool, optional): After forecasting, clamp every
                 quantile to ≥ 0 when that series' observed history is entirely
                 non-negative. Defaults to True.
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
 
         Notes:
             **Requirements:** ``timecopilot-timestral>=0.1.0`` (Python 3.10+).
