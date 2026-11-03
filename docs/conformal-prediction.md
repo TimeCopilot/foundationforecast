@@ -86,6 +86,6 @@ This gives \(W\) calibration errors per series and horizon step, so later steps,
 
 The point forecast \(\hat{y}_{T+j}\) is never modified; only the interval columns change. When `quantiles` are requested, each quantile \(q \neq 0.5\) is mapped to the level \(L = |100 - 200\,q|\) and read from the matching lower or upper bound.
 
-**Coverage.** If recent forecast errors are representative of the next \(h\) steps, about \(L\)% of actuals fall inside the \(L\)% interval. With few windows the empirical quantiles are coarse (for example, with \(W = 2\) the 95% bound is essentially the largest observed error), so use more windows when you need high levels.
+**Coverage.** These methods use empirical quantiles without a finite-sample conformal correction, so the requested level is not a coverage guarantee. Even with independent calibration and future errors from the same continuous distribution, two calibration windows give at most two-thirds coverage because the interval radius never exceeds the largest calibration error. Use more calibration windows and measure achieved coverage on held-out backtests, especially when requesting high levels.
 
 See the [conformal prediction example notebook](examples/conformal-prediction.ipynb) on M4 Hourly.
