@@ -28,8 +28,8 @@ from utilsforecast.processing import (
 
 from .conformal import (
     ConformalIntervals,
-    add_conformal_columns_to_forecast,
-    compute_panel_conformity_scores,
+    get_conformal_method,
+    validate_conformal_samples,
 )
 from .exog.covariates import (
     ExogStrategyConfig,
@@ -603,11 +603,6 @@ class ExogCapableForecaster(Forecaster):
         futr_df: pd.DataFrame | None,
         futr_exog_list: list[str] | None,
     ) -> pd.DataFrame:
-        from .exog.covariates import (
-            exog_strategy_disabled,
-            resolve_exog_columns_from_df,
-        )
-
         assert self.prediction_intervals is not None
         if level is None and quantiles is None:
             raise ValueError(
@@ -621,34 +616,43 @@ class ExogCapableForecaster(Forecaster):
                 "`prediction_intervals`."
             )
         freq = self._maybe_infer_freq(df, freq)
-        intervals = ConformalIntervals(
-            n_windows=self.prediction_intervals.n_windows,
-            h=h,
-            method=self.prediction_intervals.method,
-        )
-        exog_cols: list[str] = []
-        if not exog_strategy_disabled(self.exog_strategy):
-            exog_cols = resolve_exog_columns_from_df(df, futr_exog_list)
+        n_windows = self.prediction_intervals.n_windows
+        step_size = self.prediction_intervals.step_size or h
+        min_size = int(counts_by_id(df, "unique_id")["counts"].min())
+        validate_conformal_samples(min_size, h, n_windows, step_size)
         point_fcst = self._forecast_point_only(
             df, h, freq, panel, X_df, futr_df, futr_exog_list
         )
-        scores = compute_panel_conformity_scores(
-            self,
-            df,
-            h,
-            freq,
-            intervals,
-            exog_cols=exog_cols,
-        )
-        fcst_df = add_conformal_columns_to_forecast(
+        intervals = self.prediction_intervals
+        self.prediction_intervals = None
+        try:
+            cv = self.cross_validation(
+                df=df,
+                h=h,
+                freq=freq,
+                n_windows=n_windows,
+                step_size=step_size,
+                futr_exog_list=futr_exog_list,
+            )
+        finally:
+            self.prediction_intervals = intervals
+        cs_df = cv[["unique_id", "ds", "cutoff", self.alias]].copy()
+        cs_df[self.alias] = (cv[self.alias] - cv["y"]).abs()
+        cs_df = cs_df.sort_values(["cutoff", "unique_id", "ds"])
+        point_fcst = point_fcst.sort_values(["unique_id", "ds"])
+        n_series = int(point_fcst["unique_id"].nunique())
+        conformal_method = get_conformal_method(intervals.method)
+        fcst_df = conformal_method(
             point_fcst,
-            self.alias,
-            scores,
-            qc.level,
-            intervals.method,
+            cs_df,
+            model_names=[self.alias],
+            level=sorted(qc.level),
+            cs_n_windows=n_windows,
+            cs_h=h,
+            n_series=n_series,
+            horizon=h,
         )
-        fcst_df = qc.maybe_convert_level_to_quantiles(fcst_df, [self.alias])
-        return fcst_df
+        return qc.maybe_convert_level_to_quantiles(fcst_df, [self.alias])
 
     def forecast(
         self,
