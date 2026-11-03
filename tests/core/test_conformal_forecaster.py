@@ -65,6 +65,19 @@ def _panel(n_series: int = 2, length: int = 30) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def test_conformal_calibration_keeps_prediction_intervals():
+    class _AssertingForecaster(_MeanForecaster):
+        def cross_validation(self, *args, **kwargs):
+            assert self.prediction_intervals is not None
+            return super().cross_validation(*args, **kwargs)
+
+    intervals = ConformalIntervals(n_windows=2)
+    model = _AssertingForecaster(prediction_intervals=intervals)
+    fcst = model.forecast(_panel(), h=3, freq="D", level=[80])
+    assert model.prediction_intervals is intervals
+    assert "Mean-lo-80" in fcst.columns
+
+
 def test_conformal_without_level_returns_point_forecast():
     model = _MeanForecaster(
         prediction_intervals=ConformalIntervals(n_windows=2),
