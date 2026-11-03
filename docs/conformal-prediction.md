@@ -88,4 +88,4 @@ The point forecast \(\hat{y}_{T+j}\) is never modified; only the interval column
 
 **Coverage.** If recent forecast errors are representative of the next \(h\) steps, about \(L\)% of actuals fall inside the \(L\)% interval. With few windows the empirical quantiles are coarse (for example, with \(W = 2\) the 95% bound is essentially the largest observed error), so use more windows when you need high levels.
 
-See the [conformal prediction example notebook](examples/conformal-prediction.ipynb) on electricity prices.
+See the [conformal prediction example notebook](examples/conformal-prediction.ipynb) on M4 Hourly.
