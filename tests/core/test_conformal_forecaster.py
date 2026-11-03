@@ -5,7 +5,10 @@ from utilsforecast.processing import make_future_dataframe
 
 import foundationforecast.models as ff_models
 from foundationforecast import FoundationForecast
-from foundationforecast.core.conformal import ConformalIntervals
+from foundationforecast.core.conformal import (
+    ConformalIntervals,
+    add_conformal_distribution_intervals,
+)
 from foundationforecast.core.forecaster import ExogCapableForecaster, Forecaster
 from foundationforecast.core.utils import process_panel_from_df
 
@@ -94,6 +97,36 @@ def test_conformal_forecast_through_foundation_forecast_matches_direct():
     )
 
 
+def test_conformal_forecast_matches_point_only_cross_validation():
+    df = _panel(n_series=2, length=40)
+    h, n_windows = 3, 2
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=n_windows),
+    )
+    fcst = model.forecast(df=df, h=h, freq="D", level=[80])
+    cv = _MeanForecaster().cross_validation(
+        df=df, h=h, freq="D", n_windows=n_windows, step_size=h
+    )
+    cs_df = cv[["unique_id", "ds", "cutoff", "Mean"]].copy()
+    cs_df["Mean"] = (cv["Mean"] - cv["y"]).abs()
+    cs_df = cs_df.sort_values(["cutoff", "unique_id", "ds"])
+    expected = add_conformal_distribution_intervals(
+        fcst[["unique_id", "ds", "Mean"]].sort_values(["unique_id", "ds"]),
+        cs_df,
+        model_names=["Mean"],
+        level=[80],
+        cs_n_windows=n_windows,
+        cs_h=h,
+        n_series=2,
+        horizon=h,
+    )
+    pd.testing.assert_frame_equal(
+        fcst.sort_values(["unique_id", "ds"]).reset_index(drop=True),
+        expected.reset_index(drop=True),
+        check_dtype=False,
+    )
+
+
 def test_cross_validation_recalibrates_conformal_intervals_per_window():
     model = _MeanForecaster(
         prediction_intervals=ConformalIntervals(n_windows=3),
@@ -118,6 +151,28 @@ def test_conformal_forecast_with_integer_unique_ids():
     fcst = model.forecast(df=df, h=3, freq="D", level=[80])
     assert fcst["Mean-lo-80"].notna().all()
     assert fcst["Mean-hi-80"].notna().all()
+
+
+def test_conformal_error_method_adds_columns():
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=2, method="conformal_error"),
+    )
+    fcst = model.forecast(_panel(length=40), h=3, freq="D", level=[80])
+    assert "Mean-lo-80" in fcst.columns
+    assert (fcst["Mean-hi-80"] >= fcst["Mean"]).all()
+
+
+def test_conformal_step_size_defaults_to_horizon():
+    df = _panel(length=40)
+    default = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=2),
+    ).forecast(df=df, h=3, freq="D", level=[80])
+    explicit = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=2, step_size=3),
+    ).forecast(df=df, h=3, freq="D", level=[80])
+    pd.testing.assert_frame_equal(
+        default.reset_index(drop=True), explicit.reset_index(drop=True)
+    )
 
 
 @pytest.mark.parametrize(

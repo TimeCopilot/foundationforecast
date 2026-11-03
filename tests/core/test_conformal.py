@@ -1,12 +1,12 @@
 import numpy as np
+import pandas as pd
 import pytest
 
 from foundationforecast.core.conformal import (
     ConformalIntervals,
     add_conformal_distribution_intervals,
     add_conformal_error_intervals,
-    conformity_scores_abs_errors,
-    effective_n_windows,
+    validate_conformal_samples,
 )
 
 
@@ -15,37 +15,48 @@ def test_conformal_intervals_validation():
         ConformalIntervals(n_windows=1)
     with pytest.raises(ValueError, match="method must be one of"):
         ConformalIntervals(method="invalid")
+    with pytest.raises(ValueError, match="step_size must be a positive integer"):
+        ConformalIntervals(step_size=0)
 
 
-def test_effective_n_windows_caps_by_length():
-    assert effective_n_windows(100, h=3, n_windows=10) == 10
-    assert effective_n_windows(10, h=3, n_windows=10) == 3
+def test_validate_conformal_samples():
+    validate_conformal_samples(7, h=3, n_windows=2, step_size=3)
+    with pytest.raises(ValueError, match="Minimum required samples"):
+        validate_conformal_samples(6, h=3, n_windows=2, step_size=3)
+    validate_conformal_samples(5, h=3, n_windows=2, step_size=1)
 
 
-def test_conformity_scores_abs_errors_constant_forecast():
-    y = np.arange(20, dtype=float)
-    h = 2
-    n_windows = 2
-
-    def forecast_values(train_end: int, _i_window: int) -> np.ndarray:
-        return np.full(h, float(train_end))
-
-    cs = conformity_scores_abs_errors(y, h, n_windows, forecast_values)
-    assert cs.shape == (2, 2)
-    assert np.all(cs >= 0)
+def _fcst_cs() -> tuple[pd.DataFrame, pd.DataFrame]:
+    fcst = pd.DataFrame(
+        {
+            "unique_id": ["a", "a"],
+            "ds": pd.to_datetime(["2020-01-03", "2020-01-04"]),
+            "M": [10.0, 20.0],
+        }
+    )
+    cs = pd.DataFrame(
+        {
+            "unique_id": ["a"] * 4,
+            "ds": pd.to_datetime(
+                ["2020-01-01", "2020-01-02", "2020-01-02", "2020-01-03"]
+            ),
+            "cutoff": pd.to_datetime(["2019-12-31"] * 2 + ["2020-01-01"] * 2),
+            "M": [1.0, 2.0, 3.0, 4.0],
+        }
+    )
+    return fcst, cs
 
 
 def test_add_conformal_error_intervals_symmetric():
-    mean = np.array([10.0, 20.0])
-    cs = np.array([[1.0, 2.0], [3.0, 4.0]])
-    bands = add_conformal_error_intervals(mean, cs, [90])
-    assert bands["lo-90"][0] == pytest.approx(10.0 - np.quantile(cs[:, 0], 0.9))
-    assert bands["hi-90"][1] == pytest.approx(20.0 + np.quantile(cs[:, 1], 0.9))
+    fcst, cs = _fcst_cs()
+    out = add_conformal_error_intervals(fcst, cs, ["M"], [90], 2, 2, 1, 2)
+    q = np.quantile(cs["M"].to_numpy().reshape(2, 2), 0.9, axis=0)
+    assert out["M-lo-90"].to_numpy() == pytest.approx([10.0, 20.0] - q)
+    assert out["M-hi-90"].to_numpy() == pytest.approx([10.0, 20.0] + q)
 
 
 def test_add_conformal_distribution_intervals_shape():
-    mean = np.array([5.0, 5.0])
-    cs = np.array([[1.0, 1.0], [2.0, 2.0]])
-    bands = add_conformal_distribution_intervals(mean, cs, [80, 90])
-    assert set(bands) == {"lo-90", "lo-80", "hi-80", "hi-90"}
-    assert len(bands["lo-80"]) == 2
+    fcst, cs = _fcst_cs()
+    out = add_conformal_distribution_intervals(fcst, cs, ["M"], [80, 90], 2, 2, 1, 2)
+    assert {"M-lo-90", "M-lo-80", "M-hi-80", "M-hi-90"} <= set(out.columns)
+    assert len(out["M-lo-80"]) == 2
