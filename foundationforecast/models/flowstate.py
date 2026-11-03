@@ -12,6 +12,7 @@ from tqdm import tqdm
 from tsfm_public import FlowStateForPrediction
 from tsfm_public.models.flowstate.utils.utils import get_fixed_factor
 
+from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter, _DataProcessor
 from ..core.quantiles import resolve_quantile_values
@@ -56,6 +57,7 @@ class FlowState(ExogCapableForecaster, _DataProcessor):
         alias: str = "FlowState",
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        prediction_intervals: ConformalIntervals | None = None,
     ):
         """
         Initialize FlowState time series foundation model.
@@ -80,6 +82,10 @@ class FlowState(ExogCapableForecaster, _DataProcessor):
                 can improve throughput but require more GPU memory.
             alias (str, optional): Name to use for the model in output DataFrames and
                 logs. Defaults to "FlowState".
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
             reuse_loaded_model (bool, optional): When True (default), reuse
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and
@@ -113,6 +119,7 @@ class FlowState(ExogCapableForecaster, _DataProcessor):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.repo_id = repo_id
         self.scale_factor = scale_factor

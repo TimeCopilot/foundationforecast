@@ -13,6 +13,7 @@ from timesfm3 import ModelConfig, TimesFM3Evaluator
 from timesfm_v1.timesfm_base import DEFAULT_QUANTILES as DEFAULT_QUANTILES_TFM
 from tqdm import tqdm
 
+from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import (
     ExogCapableForecaster,
@@ -39,10 +40,12 @@ class _TimesFMV1(ExogCapableForecaster):
         alias: str,
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        prediction_intervals: ConformalIntervals | None = None,
     ):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.repo_id = repo_id
         self.context_length = context_length
@@ -188,11 +191,13 @@ class _TimesFMV2_p5(ExogCapableForecaster):
         alias: str,
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        prediction_intervals: ConformalIntervals | None = None,
         **kwargs: Any,
     ):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.repo_id = repo_id
         self.context_length = context_length
@@ -316,11 +321,13 @@ class _TimesFMV3(ExogCapableForecaster):
         alias: str,
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        prediction_intervals: ConformalIntervals | None = None,
         **kwargs: Any,
     ):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.repo_id = repo_id
         self.context_length = context_length
@@ -560,6 +567,7 @@ class TimesFM(ExogCapableForecaster):
         alias: str = "TimesFM",
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        prediction_intervals: ConformalIntervals | None = None,
         **kwargs: Any,
     ):
         if "pytorch" not in repo_id and repo_id not in _GIFT_EVAL_LEGACY_REPOS:
@@ -577,6 +585,7 @@ class TimesFM(ExogCapableForecaster):
                 alias=alias,
                 reuse_loaded_model=reuse_loaded_model,
                 exog_strategy=exog_strategy,
+                prediction_intervals=prediction_intervals,
             )
         elif "2.5" in repo_id:
             return _TimesFMV2_p5(
@@ -586,6 +595,7 @@ class TimesFM(ExogCapableForecaster):
                 alias=alias,
                 reuse_loaded_model=reuse_loaded_model,
                 exog_strategy=exog_strategy,
+                prediction_intervals=prediction_intervals,
                 **kwargs,
             )
         elif "3.0" in repo_id:
@@ -596,6 +606,7 @@ class TimesFM(ExogCapableForecaster):
                 alias=alias,
                 reuse_loaded_model=reuse_loaded_model,
                 exog_strategy=exog_strategy,
+                prediction_intervals=prediction_intervals,
                 **kwargs,
             )
         else:
@@ -611,6 +622,7 @@ class TimesFM(ExogCapableForecaster):
         batch_size: int = 64,
         alias: str = "TimesFM",
         reuse_loaded_model: bool = True,
+        prediction_intervals: ConformalIntervals | None = None,
         **kwargs: Any,
     ):
         """
@@ -638,6 +650,10 @@ class TimesFM(ExogCapableForecaster):
                 logs. Defaults to `TimesFM`.
             **kwargs (Any): Extra keyword arguments forwarded to the backend
                 model config. Used for TimesFM 2.5 and 3.0 models.
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
             reuse_loaded_model (bool, optional): When True (default), reuse
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and

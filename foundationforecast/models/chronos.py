@@ -14,6 +14,7 @@ from chronos import (
 )
 from tqdm import tqdm
 
+from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import (
@@ -122,6 +123,7 @@ class Chronos(ExogCapableForecaster):
         finetuning_config: ChronosFinetuningConfig | None = None,
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        prediction_intervals: ConformalIntervals | None = None,
     ):
         # ruff: noqa: E501
         """
@@ -156,6 +158,10 @@ class Chronos(ExogCapableForecaster):
                 ChronosFinetuningConfig and the
                 [Chronos-2 quickstart](https://github.com/amazon-science/chronos-forecasting/blob/main/notebooks/chronos-2-quickstart.ipynb)
                 for parameter details.
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
             reuse_loaded_model (bool, optional): When True (default), reuse
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and
@@ -206,6 +212,7 @@ class Chronos(ExogCapableForecaster):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.finetuning_config = finetuning_config
 

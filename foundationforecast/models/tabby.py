@@ -8,6 +8,7 @@ import torch
 from tqdm import tqdm
 from transformers import AutoModel
 
+from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
@@ -35,6 +36,7 @@ class Tabby(ExogCapableForecaster):
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
         precision: Literal["bf16", "fp32"] = "bf16",
+        prediction_intervals: ConformalIntervals | None = None,
     ):
         """
         Args:
@@ -58,6 +60,10 @@ class Tabby(ExogCapableForecaster):
                 pass under bfloat16 autocast on CUDA, as in the published
                 GIFT-Eval evaluation; ``"fp32"`` disables autocast. On CPU the
                 model always runs in float32.
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
 
         Notes:
             **Academic Reference:**
@@ -84,6 +90,7 @@ class Tabby(ExogCapableForecaster):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.repo_id = repo_id
         self.context_length = context_length

@@ -26,6 +26,11 @@ from utilsforecast.processing import (
     vertical_concat,
 )
 
+from .conformal import (
+    ConformalIntervals,
+    get_conformal_method,
+    validate_conformal_samples,
+)
 from .exog.covariates import (
     ExogStrategyConfig,
     normalize_exog_strategy,
@@ -88,6 +93,7 @@ class Forecaster:
         *,
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        prediction_intervals: ConformalIntervals | None = None,
     ) -> None:
         """Initialize forecaster options.
 
@@ -102,9 +108,17 @@ class Forecaster:
                 if ``X_df`` is provided and native exog is unavailable. ``False``
                 ignores ``X_df`` / ``futr_exog_list`` and runs a univariate
                 forecast (including in cross-validation).
+            prediction_intervals: When set, ``forecast()`` calibrates prediction
+                intervals from cross-validation absolute errors on the point
+                forecast instead of using native model quantiles. Pass
+                ``level`` or ``quantiles`` to emit intervals; without them the
+                point forecast is returned. ``cross_validation()`` recalibrates
+                at every cutoff using only data before it. See conformal
+                prediction docs.
         """
         self.reuse_loaded_model = reuse_loaded_model
         self.exog_strategy = normalize_exog_strategy(exog_strategy)
+        self.prediction_intervals = prediction_intervals
 
     def _model_cache_prefix(self) -> str | None:
         repo_id = getattr(self, "repo_id", None)
@@ -555,6 +569,103 @@ class Forecaster:
 class ExogCapableForecaster(Forecaster):
     """Forecaster with optional known-future exogenous variables via ``X_df``."""
 
+    def _forecast_point_only(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None,
+        panel: PanelData | None,
+        X_df: pd.DataFrame | None,
+        futr_df: pd.DataFrame | None,
+        futr_exog_list: list[str] | None,
+    ) -> pd.DataFrame:
+        return self._forecast_with_exog(
+            df,
+            h,
+            freq,
+            None,
+            None,
+            panel,
+            X_df,
+            futr_df,
+            futr_exog_list,
+            lambda: self._forecast_univariate(df, h, freq, None, None, panel),
+        )
+
+    def _forecast_with_conformal_intervals(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None,
+        level: list[int | float] | None,
+        quantiles: list[float] | None,
+        panel: PanelData | None,
+        X_df: pd.DataFrame | None,
+        futr_df: pd.DataFrame | None,
+        futr_exog_list: list[str] | None,
+    ) -> pd.DataFrame:
+        assert self.prediction_intervals is not None
+        from .exog.futr_exog import prepare_futr_exog_context
+
+        freq = self._maybe_infer_freq(df, freq)
+        ctx = prepare_futr_exog_context(
+            self, df, h, X_df=X_df, futr_df=futr_df, futr_exog_list=futr_exog_list
+        )
+        futr_exog_list = ctx.futr_exog_list if ctx is not None else None
+        cv_df = df if ctx is not None else df[["unique_id", "ds", "y"]]
+        if level is None and quantiles is None:
+            return self._forecast_point_only(
+                df, h, freq, panel, X_df, futr_df, futr_exog_list
+            )
+        qc = QuantileConverter(level=level, quantiles=quantiles)
+        if qc.level is None:
+            point_fcst = self._forecast_point_only(
+                df, h, freq, panel, X_df, futr_df, futr_exog_list
+            )
+            point_fcst[quantile_column_name(self.alias, 0.5)] = point_fcst[self.alias]
+            return point_fcst
+        n_windows = self.prediction_intervals.n_windows
+        step_size = self.prediction_intervals.step_size or h
+        min_size = int(counts_by_id(df, "unique_id")["counts"].min())
+        validate_conformal_samples(min_size, h, n_windows, step_size)
+        point_fcst = self._forecast_point_only(
+            df, h, freq, panel, X_df, futr_df, futr_exog_list
+        )
+        intervals = self.prediction_intervals
+        self.prediction_intervals = None
+        try:
+            cv = self.cross_validation(
+                df=cv_df,
+                h=h,
+                freq=freq,
+                n_windows=n_windows,
+                step_size=step_size,
+                futr_exog_list=futr_exog_list,
+            )
+        finally:
+            self.prediction_intervals = intervals
+        cs_df = cv[["unique_id", "ds", "cutoff", self.alias]].copy()
+        cs_df[self.alias] = (cv[self.alias] - cv["y"]).abs()
+        cs_df = cs_df.sort_values(["unique_id", "cutoff", "ds"])
+        cs_df["window"] = cs_df.groupby("unique_id", sort=False)["cutoff"].rank(
+            method="dense"
+        )
+        cs_df = cs_df.sort_values(["window", "unique_id", "ds"])
+        point_fcst = point_fcst.sort_values(["unique_id", "ds"])
+        n_series = int(point_fcst["unique_id"].nunique())
+        conformal_method = get_conformal_method(intervals.method)
+        fcst_df = conformal_method(
+            point_fcst,
+            cs_df,
+            model_names=[self.alias],
+            level=sorted(qc.level),
+            cs_n_windows=n_windows,
+            cs_h=h,
+            n_series=n_series,
+            horizon=h,
+        )
+        return qc.maybe_convert_level_to_quantiles(fcst_df, [self.alias])
+
     def forecast(
         self,
         df: pd.DataFrame,
@@ -569,6 +680,18 @@ class ExogCapableForecaster(Forecaster):
         futr_exog_list: list[str] | None = None,
     ) -> pd.DataFrame:
         self.validate_input(df, h)
+        if self.prediction_intervals is not None:
+            return self._forecast_with_conformal_intervals(
+                df,
+                h,
+                freq,
+                level,
+                quantiles,
+                panel,
+                X_df,
+                futr_df,
+                futr_exog_list,
+            )
         return self._forecast_with_exog(
             df,
             h,

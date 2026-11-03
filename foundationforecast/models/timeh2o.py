@@ -11,6 +11,7 @@ from h2ofm import TimeH2O as H2OTimeH2O
 from pandas.api.types import is_bool_dtype, is_numeric_dtype
 from tqdm import tqdm
 
+from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.utils import PanelData, TimeSeriesDataset
@@ -36,6 +37,7 @@ class TimeH2O(ExogCapableForecaster):
         exog_strategy: ExogStrategyConfig = "auto",
         clip_nonnegative: bool = False,
         snap_integer: bool = False,
+        prediction_intervals: ConformalIntervals | None = None,
     ):
         # ruff: noqa: E501
         """
@@ -64,6 +66,10 @@ class TimeH2O(ExogCapableForecaster):
                 series whose history is nonnegative. Defaults to False.
             snap_integer (bool, optional): Round forecasts to integers for
                 series whose history is integer-valued. Defaults to False.
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
 
         Notes:
             **Requirements:**
@@ -101,6 +107,7 @@ class TimeH2O(ExogCapableForecaster):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.repo_id = repo_id
         self.context_length = context_length

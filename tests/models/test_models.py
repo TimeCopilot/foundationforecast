@@ -6,7 +6,7 @@ from tests.helpers import (
     generate_series,
     panel_with_futr_exog_horizon,
 )
-from .conftest import models
+from .conftest import conformal_models, models
 from foundationforecast.core.quantiles import quantile_column_name
 
 
@@ -346,4 +346,19 @@ def test_using_level(model):
     assert len(exp_lv_cols) == len(fcst_df.columns) - 3
     assert all(col in fcst_df.columns for col in exp_lv_cols)
     assert not any(("-q-" in col) for col in fcst_df.columns)
+    _assert_level_monotonicity(model, fcst_df, exp_lv_cols)
+
+
+@pytest.mark.models
+@pytest.mark.parametrize("model", conformal_models)
+def test_conformal_forecast_using_level(model):
+    h = 3
+    level = [80, 90]
+    df = generate_series(n_series=2, freq="D", min_length=40, max_length=40)
+    fcst_df = model.forecast(df=df, h=h, freq="D", level=level)
+    exp_lv_cols = []
+    for lv in level:
+        exp_lv_cols.extend([f"{model.alias}-lo-{lv}", f"{model.alias}-hi-{lv}"])
+    assert all(col in fcst_df.columns for col in exp_lv_cols)
+    assert not any("-q-" in col for col in fcst_df.columns)
     _assert_level_monotonicity(model, fcst_df, exp_lv_cols)

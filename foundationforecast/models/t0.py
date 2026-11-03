@@ -15,6 +15,7 @@ from t0 import T0Forecaster
 from t0.torch import batch_series
 from tqdm import tqdm
 
+from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import (
@@ -61,6 +62,7 @@ class T0(ExogCapableForecaster):
         clip_nonnegative: bool = False,
         snap_integers: bool = False,
         cross_inference: int = 0,
+        prediction_intervals: ConformalIntervals | None = None,
     ):
         # ruff: noqa: E501
         """
@@ -99,6 +101,10 @@ class T0(ExogCapableForecaster):
                 is at most ``batch_size``. ``0`` (default) forecasts each
                 series on its own. Ignored when known-future covariates are
                 passed natively.
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
 
         Notes:
             **Requirements:**
@@ -137,6 +143,7 @@ class T0(ExogCapableForecaster):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.repo_id = repo_id
         self.context_length = context_length

@@ -12,6 +12,7 @@ from gluonts.torch.model.predictor import PyTorchPredictor
 from huggingface_hub import hf_hub_download
 from utilsforecast.processing import make_future_dataframe
 
+from .conformal import ConformalIntervals
 from .exog.covariates import ExogStrategyConfig
 from .forecaster import ExogCapableForecaster, QuantileConverter
 from .quantiles import assert_unique_quantile_column_names, quantile_column_name
@@ -43,10 +44,12 @@ class GluonTSForecaster(ExogCapableForecaster):
         *,
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        prediction_intervals: ConformalIntervals | None = None,
     ):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.repo_id = repo_id
         self.filename = filename

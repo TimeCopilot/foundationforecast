@@ -6,6 +6,7 @@ import torch
 from timestral import TimestralForecaster
 from tqdm import tqdm
 
+from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
@@ -33,6 +34,7 @@ class Timestral(ExogCapableForecaster):
         exog_strategy: ExogStrategyConfig = "auto",
         symmetric_averaging: bool = True,
         clip_nonnegative: bool = True,
+        prediction_intervals: ConformalIntervals | None = None,
     ):
         # ruff: noqa: E501
         """
@@ -55,6 +57,10 @@ class Timestral(ExogCapableForecaster):
             clip_nonnegative (bool, optional): After forecasting, clamp every
                 quantile to ≥ 0 when that series' observed history is entirely
                 non-negative. Defaults to True.
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
 
         Notes:
             **Requirements:** ``timecopilot-timestral>=0.1.0`` (Python 3.10+).
@@ -75,6 +81,7 @@ class Timestral(ExogCapableForecaster):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.repo_id = repo_id
         self.context_length = context_length

@@ -40,6 +40,10 @@ ff = FoundationForecast(models=[Chronos()])
 fcst_df = ff.forecast(df=df, h=12, freq="MS")
 ```
 
+## Conformal prediction intervals
+
+When a model is constructed with [`ConformalIntervals`][foundationforecast.core.conformal.ConformalIntervals] (`prediction_intervals=...`), `forecast()` calibrates `level` / `quantiles` from cross-validation absolute errors on the point forecast instead of native model quantiles. See [Conformal prediction](conformal-prediction.md).
+
 ## Anomaly detection defaults
 
 When calling `detect_anomalies()` without `h`:

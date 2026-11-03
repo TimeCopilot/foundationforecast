@@ -1,6 +1,7 @@
 import sys
 
 from ._foundation_forecast import FoundationForecast
+from .core.conformal import ConformalIntervals
 from .core.model_weight_cache import set_max_cached_models
 from .models import (
     Chronos,
@@ -15,6 +16,7 @@ from .models import (
 )
 
 __all__ = [
+    "ConformalIntervals",
     "FoundationForecast",
     "set_max_cached_models",
     "Chronos",

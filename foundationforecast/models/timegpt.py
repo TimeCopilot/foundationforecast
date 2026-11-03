@@ -5,6 +5,7 @@ from typing import Literal
 import pandas as pd
 from nixtla import NixtlaClient
 
+from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster
 from ..core.utils import PanelData
@@ -58,6 +59,7 @@ class TimeGPT(ExogCapableForecaster):
         finetuning_config: TimeGPTFinetuningConfig | None = None,
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
+        prediction_intervals: ConformalIntervals | None = None,
     ):
         """
         Args:
@@ -78,6 +80,10 @@ class TimeGPT(ExogCapableForecaster):
                 data before predicting. See ``TimeGPTFinetuningConfig`` and
                 the [TimeGPT fine-tuning docs](https://docs.nixtla.io/forecasting/fine-tuning/steps)
                 for parameter details.
+            prediction_intervals (ConformalIntervals | None, optional): When set,
+                ``forecast()`` replaces native quantiles with conformal intervals
+                calibrated on cross-validation errors of the point forecast. See
+                the conformal prediction docs. Defaults to None.
             reuse_loaded_model (bool, optional): Accepted for API consistency
                 with other forecasters. TimeGPT does not load local weights, so
                 this flag has no effect. Defaults to True.
@@ -104,6 +110,7 @@ class TimeGPT(ExogCapableForecaster):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
+            prediction_intervals=prediction_intervals,
         )
         self.api_key = api_key
         self.base_url = base_url
