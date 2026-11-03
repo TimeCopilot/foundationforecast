@@ -1,3 +1,5 @@
+import inspect
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -63,12 +65,71 @@ def _panel(n_series: int = 2, length: int = 30) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def test_conformal_forecast_requires_level():
+def test_conformal_without_level_returns_point_forecast():
     model = _MeanForecaster(
         prediction_intervals=ConformalIntervals(n_windows=2),
     )
-    with pytest.raises(ValueError, match="level` or `quantiles`"):
-        model.forecast(_panel(), h=3, freq="D")
+    fcst = model.forecast(_panel(), h=3, freq="D")
+    assert list(fcst.columns) == ["unique_id", "ds", "Mean"]
+
+
+def test_conformal_median_only_quantiles_skip_calibration():
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=2),
+    )
+    fcst = model.forecast(_panel(length=10), h=3, freq="D", quantiles=[0.5])
+    assert "Mean-q-50" in fcst.columns
+    assert (fcst["Mean-q-50"] == fcst["Mean"]).all()
+    assert not any("-lo-" in c or "-hi-" in c for c in fcst.columns)
+
+
+def test_detect_anomalies_with_prediction_intervals():
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=2),
+    )
+    result = model.detect_anomalies(_panel(length=40), h=3, freq="D")
+    assert "Mean-anomaly" in result.columns
+
+
+def test_conformal_ignores_history_only_exog_columns():
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=2),
+    )
+    df = _panel(length=40)
+    df["noise"] = 1.0
+    fcst = model.forecast(df=df, h=3, freq="D", level=[80])
+    assert "Mean-lo-80" in fcst.columns
+
+
+def test_conformal_staggered_cutoffs_match_per_series():
+    rows = []
+    for uid, start, length in (("a", 0, 30), ("b", 20, 30)):
+        for t in range(length):
+            rows.append(
+                {
+                    "unique_id": uid,
+                    "ds": pd.Timestamp("2020-01-01") + pd.Timedelta(days=start + t),
+                    "y": float(t % 5),
+                }
+            )
+    df = pd.DataFrame(rows)
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=2),
+    )
+    joint = model.forecast(df=df, h=3, freq="D", level=[80])
+    per_series = pd.concat(
+        [
+            model.forecast(df=sdf, h=3, freq="D", level=[80])
+            for _, sdf in df.groupby("unique_id")
+        ],
+        ignore_index=True,
+    )
+    cols = ["unique_id", "ds", "Mean", "Mean-lo-80", "Mean-hi-80"]
+    pd.testing.assert_frame_equal(
+        joint[cols].sort_values(["unique_id", "ds"]).reset_index(drop=True),
+        per_series[cols].sort_values(["unique_id", "ds"]).reset_index(drop=True),
+        check_dtype=False,
+    )
 
 
 def test_conformal_forecast_adds_interval_columns():
@@ -109,7 +170,11 @@ def test_conformal_forecast_matches_point_only_cross_validation():
     )
     cs_df = cv[["unique_id", "ds", "cutoff", "Mean"]].copy()
     cs_df["Mean"] = (cv["Mean"] - cv["y"]).abs()
-    cs_df = cs_df.sort_values(["cutoff", "unique_id", "ds"])
+    cs_df = cs_df.sort_values(["unique_id", "cutoff", "ds"])
+    cs_df["window"] = cs_df.groupby("unique_id", sort=False)["cutoff"].rank(
+        method="dense"
+    )
+    cs_df = cs_df.sort_values(["window", "unique_id", "ds"])
     expected = add_conformal_distribution_intervals(
         fcst[["unique_id", "ds", "Mean"]].sort_values(["unique_id", "ds"]),
         cs_df,
@@ -188,6 +253,19 @@ def test_model_constructors_accept_prediction_intervals(model_cls):
     intervals = ConformalIntervals(n_windows=3)
     model = model_cls(prediction_intervals=intervals)
     assert model.prediction_intervals is intervals
+
+
+@pytest.mark.parametrize(
+    "model_cls",
+    [
+        cls
+        for name in ("T0", "Tabby", "TimeH2O", "Timestral")
+        if (cls := getattr(ff_models, name, None)) is not None
+    ],
+)
+def test_prediction_intervals_appended_after_model_options(model_cls):
+    params = list(inspect.signature(model_cls.__init__).parameters)
+    assert params[-1] == "prediction_intervals"
 
 
 def test_native_level_without_prediction_intervals():
