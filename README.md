@@ -66,6 +66,7 @@ Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results
 
 ## Highlights
 
+- 📐 **Conformal prediction intervals.** Pass [`ConformalIntervals`](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/conformal-prediction.md) as `prediction_intervals=` on any model to calibrate `level` / `quantiles` from cross-validation errors on the point forecast (coverage is not limited by native quantile knots). See the [guide](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/conformal-prediction.md) and [example notebook](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/examples/conformal-prediction.ipynb).
 - 📈 **Exogenous variables (covariates).** Pass known-future features with **`X_df`** on `forecast()` (and exog columns in `df` for `cross_validation()`). Native support on Chronos-2, TimesFM-3, TimeGPT, T0, TimeH2O, TiRex-2, and Timestral; see [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md) and the [example notebook](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/examples/exogenous-variables.ipynb).
 - 💸 **Full GIFT-Eval replication for $37.** 16 models, 97 dataset configurations each, in about 34 GPU-hours, every model with an official submission within 2% of its leaderboard MASE/CRPS. TimesFM 3 is the most accurate, for under $8. Read the [writeup](https://github.com/TimeCopilot/foundationforecast/blob/main/experiments/gift-eval/README.md).
 - 🎯 **Benchmark replication in CI.** Wrappers are regression-tested against official leaderboard submissions: [`experiments/gift-eval`](https://github.com/TimeCopilot/foundationforecast/tree/main/experiments/gift-eval) (GIFT-Eval MASE/CRPS on Modal GPU) and [`experiments/fev-bench`](https://github.com/TimeCopilot/foundationforecast/tree/main/experiments/fev-bench) (fev-bench `test_error` on known-dynamic tasks). [CI](https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml) re-runs these checks on every change.
@@ -143,10 +144,11 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 
 ## News
 
-Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.17.md) for full release notes.
+Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.18.md) for full release notes.
 
 | When | What | Checkpoint / detail |
 |------|------|---------------------|
+| Nov 2026 | **Conformal prediction** | `ConformalIntervals` / `prediction_intervals=` — CV-calibrated `level` / `quantiles` from point-forecast errors; works on every model ([v0.1.18](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.18.md)) |
 | Oct 2026 | [**Tabby**](https://huggingface.co/paris-noah/Tabby) | `paris-noah/Tabby` — 99 native quantiles; `trust_remote_code`; CC-BY-NC-4.0; GIFT-Eval CI ([v0.1.17](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.17.md)) |
 | Oct 2026 | [**TimeH2O**](https://huggingface.co/h2oai/timeh2o-v1) | `h2oai/timeh2o-v1`, `h2oai/timeh2o-v1-tiny` — requires `h2ofm>=0.43.0` (Python 3.12+); native `X_df`; GIFT-Eval and fev-bench CI ([v0.1.16](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.16.md)) |
 | Oct 2026 | [**Timestral**](https://huggingface.co/collections/mistralai/timestral) | `mistralai/Timestral-{5M,28M,123M,209M}` — requires `timecopilot-timestral>=0.1.0`; native `X_df`; GIFT-Eval and fev-bench CI ([v0.1.15](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.15.md)) |

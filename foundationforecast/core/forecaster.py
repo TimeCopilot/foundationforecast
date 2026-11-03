@@ -631,19 +631,14 @@ class ExogCapableForecaster(Forecaster):
         point_fcst = self._forecast_point_only(
             df, h, freq, panel, X_df, futr_df, futr_exog_list
         )
-        intervals = self.prediction_intervals
-        self.prediction_intervals = None
-        try:
-            cv = self.cross_validation(
-                df=cv_df,
-                h=h,
-                freq=freq,
-                n_windows=n_windows,
-                step_size=step_size,
-                futr_exog_list=futr_exog_list,
-            )
-        finally:
-            self.prediction_intervals = intervals
+        cv = self.cross_validation(
+            df=cv_df,
+            h=h,
+            freq=freq,
+            n_windows=n_windows,
+            step_size=step_size,
+            futr_exog_list=futr_exog_list,
+        )
         cs_df = cv[["unique_id", "ds", "cutoff", self.alias]].copy()
         cs_df[self.alias] = (cv[self.alias] - cv["y"]).abs()
         cs_df = cs_df.sort_values(["unique_id", "cutoff", "ds"])
@@ -653,7 +648,7 @@ class ExogCapableForecaster(Forecaster):
         cs_df = cs_df.sort_values(["window", "unique_id", "ds"])
         point_fcst = point_fcst.sort_values(["unique_id", "ds"])
         n_series = int(point_fcst["unique_id"].nunique())
-        conformal_method = get_conformal_method(intervals.method)
+        conformal_method = get_conformal_method(self.prediction_intervals.method)
         fcst_df = conformal_method(
             point_fcst,
             cs_df,
