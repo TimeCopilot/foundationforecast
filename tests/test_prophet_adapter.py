@@ -465,6 +465,38 @@ def test_deepcopy_and_pickle_keep_the_model():
         assert type(clone)(interval_width=0.9).model is clone.model
 
 
+def test_rebinding_a_bound_class_to_another_model():
+    m, model = fitted()
+    other_model = NaiveForecaster()
+    other = type(m)(model=other_model)
+    assert other.model is other_model
+    # clones of `other` use `other_model`, not the model `m` was bound to
+    assert type(other)(interval_width=0.9).model is other_model
+    assert type(m)(interval_width=0.9).model is model
+    assert type(other).__name__ == "FoundationProphet"
+
+
+def test_integer_dates_raise():
+    df = make_df(30).assign(ds=np.arange(30))
+    with pytest.raises(ValueError, match="must contain dates"):
+        FoundationProphet(model=NaiveForecaster()).fit(df)
+    m, _ = fitted()
+    with pytest.raises(ValueError, match="must contain dates"):
+        m.predict(pd.DataFrame({"ds": [60, 61]}))
+
+
+def test_numeric_string_targets_are_converted():
+    from prophet.diagnostics import cross_validation, performance_metrics
+
+    df = make_df(n=90).assign(y=lambda d: d["y"].astype(str))
+    m, _ = fitted(df, insample="none")
+    assert pd.api.types.is_float_dtype(m.history["y"])
+    df_cv = cross_validation(
+        m, horizon="7 days", period="14 days", initial="45 days", disable_tqdm=True
+    )
+    assert "mae" in performance_metrics(df_cv)
+
+
 def test_bound_class_keeps_public_name():
     m, _ = fitted()
     assert type(m).__name__ == "FoundationProphet"
