@@ -26,6 +26,14 @@ Requires **Python 3.10 or later**.
     pip install "foundationforecast[plot]"
     ```
 
+=== "prophet"
+
+    For the [Prophet adapter](../prophet-adapter.md):
+
+    ```bash
+    pip install "foundationforecast[prophet]"
+    ```
+
 ## Python version and model availability
 
 Some models are gated by Python version:
