@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -8,6 +9,7 @@ from tests.helpers import (
 )
 from .conftest import conformal_models, models
 from foundationforecast.core.quantiles import quantile_column_name
+from foundationforecast.core.shap import ShapExplanations
 
 
 @pytest.mark.parametrize("model", models)
@@ -362,3 +364,63 @@ def test_conformal_forecast_using_level(model):
     assert all(col in fcst_df.columns for col in exp_lv_cols)
     assert not any("-q-" in col for col in fcst_df.columns)
     _assert_level_monotonicity(model, fcst_df, exp_lv_cols)
+
+
+def _shap_cols(out: pd.DataFrame, alias: str) -> list[str]:
+    return [c for c in out.columns if c.startswith(f"{alias}-shap-")]
+
+
+@pytest.mark.parametrize("model", models)
+def test_explain_history_is_additive(model):
+    h = 3
+    df = generate_series(n_series=2, freq="D", min_length=40, max_length=40)
+    cfg = ShapExplanations(history=[14, 28], method="exact")
+    out = model.explain(df=df, h=h, freq="D", explanations=cfg)
+    alias = model.alias
+    assert out.shape[0] == 2 * h
+    assert out[alias].notna().all()
+    assert _shap_cols(out, alias) == [
+        f"{alias}-shap-base",
+        f"{alias}-shap-hist-14",
+        f"{alias}-shap-hist-14-28",
+        f"{alias}-shap-hist-older",
+    ]
+    total = out[_shap_cols(out, alias)].sum(axis=1)
+    np.testing.assert_allclose(total, out[alias], rtol=1e-4, atol=1e-4)
+    assert not any("-q-" in c or "-lo-" in c for c in out.columns)
+
+
+@pytest.mark.parametrize("model", models)
+def test_explain_with_exog_players(model):
+    if not model.supports_native_futr_exog():
+        pytest.skip("known-future exog requires native checkpoint support")
+    h = 3
+    df, X_df, futr_exog_list = generate_panel_with_futr_exog(
+        2, freq="D", h=h, min_length=40, max_length=40
+    )
+    cfg = ShapExplanations(history=[14], exog=["x1"], method="exact")
+    out = model.explain(
+        df=df,
+        h=h,
+        freq="D",
+        X_df=X_df,
+        futr_exog_list=futr_exog_list,
+        explanations=cfg,
+    )
+    alias = model.alias
+    assert f"{alias}-shap-x1" in out.columns
+    assert f"{alias}-shap-x2" not in out.columns
+    total = out[_shap_cols(out, alias)].sum(axis=1)
+    np.testing.assert_allclose(total, out[alias], rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.parametrize("model", models)
+def test_explain_exog_unsupported_raises(model):
+    if model.supports_native_futr_exog():
+        pytest.skip("model supports native exog")
+    h = 2
+    df, X_df, futr_exog_list = generate_panel_with_futr_exog(
+        2, freq="D", h=h, min_length=40, max_length=40
+    )
+    with pytest.raises(ValueError, match="exog"):
+        model.explain(df=df, h=h, freq="D", X_df=X_df, futr_exog_list=futr_exog_list)
