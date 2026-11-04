@@ -36,6 +36,17 @@ _DEFAULT_INSAMPLE_WINDOWS = 10
 _MIN_INSAMPLE_CONTEXT = 10
 
 
+def _interval_level(interval_width: float) -> int:
+    """Convert Prophet's `interval_width` to the whole-percent `level`."""
+    level = round(100 * interval_width, 6)
+    if not 0 < level < 100 or not float(level).is_integer():
+        raise ValueError(
+            "`interval_width` must be between 0 and 1 and a whole percent "
+            f"(e.g. 0.8 or 0.95), got {interval_width!r}."
+        )
+    return int(level)
+
+
 def _bind_model(cls: type, model: Forecaster) -> type:
     """Return a subclass of `cls` that remembers `model`.
 
@@ -108,8 +119,9 @@ class FoundationProphet(Prophet):
     compatibility but have no effect. `plot_components` and the posterior
     sampling methods are not available.
 
-    The history must be on a regular grid: its frequency is inferred from `ds`
-    and the dates requested in `predict` must lie on that grid.
+    The history must be on a regular grid with no gaps (rows with a null `y`
+    are dropped, so an interior one counts as a gap): its frequency is inferred
+    from `ds` and the dates requested in `predict` must lie on that grid.
     """
 
     history: Any
@@ -161,14 +173,8 @@ class FoundationProphet(Prophet):
         ):
             if value is not None and (not isinstance(value, int) or value < 1):
                 raise ValueError(f"`{name}` must be a positive integer.")
-        level = round(100 * interval_width, 6)
-        if not 0 < level < 100 or not float(level).is_integer():
-            raise ValueError(
-                "`interval_width` must be between 0 and 1 and a whole percent "
-                f"(e.g. 0.8 or 0.95), got {interval_width!r}."
-            )
+        _interval_level(interval_width)
         super().__init__(interval_width=interval_width, **prophet_kwargs)
-        self._level = int(level)
         self.model = model
         self.insample = insample
         self.insample_h = insample_h
@@ -181,6 +187,11 @@ class FoundationProphet(Prophet):
     def __reduce__(self) -> tuple[Any, ...]:
         base = type(self)._unbound_class or type(self)
         return (_restore, (base, self.model), self.__dict__.copy())
+
+    @property
+    def _level(self) -> int:
+        # read on every call: Prophet lets users change `interval_width` later
+        return _interval_level(self.interval_width)
 
     @property
     def _regressors(self) -> list[str]:
@@ -228,7 +239,9 @@ class FoundationProphet(Prophet):
         self.history_dates = pd.to_datetime(
             pd.Series(df["ds"].unique(), name="ds")
         ).sort_values()
-        self.history = history[["ds", "y", *self._regressors]]
+        # Keep every column (e.g. `cap`, `floor`, condition columns): Prophet's
+        # diagnostics select them from `history` even though models ignore them.
+        self.history = history
         self.fit_kwargs = {}
         return self
 
@@ -338,22 +351,21 @@ class FoundationProphet(Prophet):
 
     @staticmethod
     def _infer_freq(ds: pd.Series) -> str:
-        freq = None
-        for candidate in (ds, ds.tail(5)):
-            try:
-                freq = pd.infer_freq(candidate)
-            except ValueError:
-                continue
-            if freq is not None:
-                return freq
-        raise ValueError(
-            "Unable to infer the frequency of `ds`. The history must be on a "
-            "regular grid with at least 3 dates."
-        )
+        try:
+            freq = pd.infer_freq(ds)
+        except ValueError:  # fewer than 3 dates
+            freq = None
+        if freq is None:
+            raise ValueError(
+                "The history must be on a regular grid (no missing periods; rows "
+                "with a null `y` are dropped) with at least 3 dates, so its "
+                "frequency can be inferred. Fill or remove the gaps before `fit`."
+            )
+        return freq
 
     def _panel_history(self) -> pd.DataFrame:
         assert self.history is not None
-        panel = self.history.copy()
+        panel = self.history[["ds", "y", *self._regressors]].copy()
         panel.insert(0, "unique_id", _UNIQUE_ID)
         return panel
 
@@ -406,7 +418,13 @@ class FoundationProphet(Prophet):
         h = self.insample_h or h_future
         if not h:
             h = max(1, int(self.model._maybe_get_seasonality(self._freq)))
-        max_windows = (len(self.history) - _MIN_INSAMPLE_CONTEXT) // h
+        min_context = _MIN_INSAMPLE_CONTEXT
+        conformal = getattr(self.model, "prediction_intervals", None)
+        if conformal is not None:
+            # every backtest window calibrates its own conformal intervals
+            step = conformal.step_size or h
+            min_context = max(min_context, h + (conformal.n_windows - 1) * step + 1)
+        max_windows = (len(self.history) - min_context) // h
         n_windows = min(
             self.insample_n_windows or _DEFAULT_INSAMPLE_WINDOWS, max_windows
         )
