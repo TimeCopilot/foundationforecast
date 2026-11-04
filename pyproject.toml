@@ -15,6 +15,7 @@ dev = [
   "pytest>=8.0",
   "python-dotenv>=1.0",
   "ruff>=0.12",
+  "shap>=0.46",
 ]
 docs = [
   "griffe-inherited-docstrings>=1.1",
@@ -78,6 +79,9 @@ requires-python = ">=3.10"
 version = "0.1.18"
 
 [project.optional-dependencies]
+explain = [
+  "shap>=0.46",
+]
 plot = [
   "matplotlib>=3.10.6",
   "plotly>=6.3.1",
