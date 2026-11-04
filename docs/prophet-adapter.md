@@ -1,12 +1,16 @@
 # Prophet adapter
 
-[`FoundationProphet`][foundationforecast.prophet.FoundationProphet] lets you use any foundation model inside an existing [Prophet](https://facebook.github.io/prophet/) pipeline. It is a `prophet.Prophet` subclass, so `fit`, `make_future_dataframe`, `predict` and `plot` keep working, but the forecasts come from the model you pass.
+[`FoundationProphet`][foundationforecast.prophet.FoundationProphet] lets you use any foundation model inside an existing [Prophet](https://github.com/facebook/prophet) pipeline. It is a `prophet.Prophet` subclass, so `fit`, `make_future_dataframe`, `predict` and `plot` keep working, but the forecasts come from the model you pass.
+
+![Swap Prophet for a foundation model: the same pipeline with Prophet() and with FoundationProphet(model=Chronos(...))](assets/prophet-adapter-before-after.gif)
 
 ## Installation
 
 Prophet is an optional dependency:
 
 ```bash
+uv add "foundationforecast[prophet]"
+# or
 pip install "foundationforecast[prophet]"
 ```
 
@@ -63,22 +67,23 @@ assert forecast["yhat"].notna().sum() == 3 * 12 + 12
 
 ## Regressors
 
-Columns added with `add_regressor` are passed to the model as known-future exogenous variables, so the model must support them (see [Exogenous variables](exogenous-variables.md)). The `future` dataframe needs a value for every future period:
+Columns added with `add_regressor` are passed to the model as known-future exogenous variables, so the model must support them (see [Exogenous variables](exogenous-variables.md)). The `future` dataframe needs a value for every future period. This example forecasts the next 24 hours of an electricity price using two covariates that are known in advance:
 
 ```python
-import numpy as np
+base = "https://timecopilot.s3.amazonaws.com/public/data/electricity_price/"
+history = pd.read_parquet(base + "train.parquet").query("unique_id == 'BE'")
+future = pd.read_parquet(base + "futr_exog.parquet").query("unique_id == 'BE'")
+# columns: ds, y, ex_1, ex_2 (history) and ds, ex_1, ex_2 (next 24 hours)
 
-df_x = df.assign(x=np.arange(len(df)) % 12)
 m = FoundationProphet(
     model=Chronos(repo_id="amazon/chronos-2", alias="Chronos-2"),
     insample="none",
 )
-m.add_regressor("x")
-m.fit(df_x)
+m.add_regressor("ex_1")
+m.add_regressor("ex_2")
+m.fit(history.tail(24 * 28).drop(columns="unique_id"))
 
-future = m.make_future_dataframe(periods=12, freq="MS", include_history=False)
-future["x"] = np.arange(len(df), len(df) + 12) % 12
-forecast = m.predict(future)
+forecast = m.predict(future.drop(columns="unique_id"))
 ```
 
 ## Prophet's diagnostics

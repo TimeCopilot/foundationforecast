@@ -31,6 +31,8 @@ Requires **Python 3.10 or later**.
     For the [Prophet adapter](../prophet-adapter.md):
 
     ```bash
+    uv add "foundationforecast[prophet]"
+    # or
     pip install "foundationforecast[prophet]"
     ```
 
