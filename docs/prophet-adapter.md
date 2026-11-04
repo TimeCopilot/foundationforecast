@@ -89,5 +89,5 @@ forecast = m.predict(future)
 
 - `growth`, `holidays`, seasonalities, changepoints and the other Prophet arguments are accepted so existing code keeps running, but they do not affect a foundation model.
 - `plot_components` and the posterior sampling methods raise `NotImplementedError`, as there are no trend or seasonality components.
-- The history must be on a regular grid. Its frequency is inferred from `ds`, and dates after the history must continue it, as `make_future_dataframe` does.
+- The history must be on a regular grid with no gaps. Rows with a null `y` are dropped, so an interior one counts as a gap and `fit` raises; fill or remove them first. The frequency is inferred from `ds`, and dates after the history must continue it, as `make_future_dataframe` does.
 - Any model works, as long as it is a foundationforecast model. A future ensemble model can be passed the same way.
