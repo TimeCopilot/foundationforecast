@@ -9,6 +9,7 @@ import pytest
 
 pytest.importorskip("prophet")
 
+from foundationforecast.core.conformal import ConformalIntervals  # noqa: E402
 from foundationforecast.core.forecaster import Forecaster  # noqa: E402
 from foundationforecast.prophet import FoundationProphet  # noqa: E402
 
@@ -285,19 +286,100 @@ def test_fit_validation():
             "y": np.arange(5, dtype=float),
         }
     )
-    with pytest.raises(ValueError, match="Unable to infer the frequency"):
+    with pytest.raises(ValueError, match="regular grid"):
         FoundationProphet(model=model).fit(irregular)
 
 
-def test_fit_ignores_null_y_rows_and_fits_once():
+def test_fit_drops_trailing_null_y_and_fits_once():
     df = make_df(30)
-    df.loc[5, "y"] = np.nan
-    m = FoundationProphet(model=NaiveForecaster())
+    df.loc[29, "y"] = np.nan
+    model = NaiveForecaster()
+    m = FoundationProphet(model=model, insample="none")
     m.fit(df)
     assert len(m.history) == 29
     assert len(m.history_dates) == 30
+    # the dropped last period is part of the horizon, as in Prophet
+    future = m.make_future_dataframe(periods=3, include_history=False)
+    assert future["ds"].iloc[0] == pd.Timestamp("2024-01-31")
+    fcst = m.predict(future)
+    assert model.forecast_calls[0]["h"] == 4
+    assert fcst["yhat"].notna().all()
     with pytest.raises(Exception, match="only be fit once"):
         m.fit(df)
+
+
+def test_fit_rejects_gaps_in_history():
+    gap = make_df(30).drop(index=[10, 11])
+    with pytest.raises(ValueError, match="regular grid"):
+        FoundationProphet(model=NaiveForecaster()).fit(gap)
+    # an interior null `y` is dropped, which leaves a gap
+    null = make_df(30)
+    null.loc[5, "y"] = np.nan
+    with pytest.raises(ValueError, match="regular grid"):
+        FoundationProphet(model=NaiveForecaster()).fit(null)
+
+
+def test_history_keeps_extra_columns_but_model_does_not_see_them():
+    model = NaiveForecaster()
+    df = make_df().assign(cap=100.0, extra="a")
+    m = FoundationProphet(model=model, insample="none")
+    m.fit(df)
+    assert {"cap", "extra"} <= set(m.history)
+    m.predict(m.make_future_dataframe(periods=3, include_history=False))
+    assert list(m._panel_history().columns) == ["unique_id", "ds", "y"]
+
+
+def test_diagnostics_with_logistic_growth():
+    from prophet.diagnostics import cross_validation
+
+    m, _ = fitted(make_df(n=90).assign(cap=1000.0), growth="logistic", insample="none")
+    df_cv = cross_validation(
+        m, horizon="7 days", period="14 days", initial="45 days", disable_tqdm=True
+    )
+    assert df_cv["yhat"].notna().all()
+
+
+def test_interval_width_can_change_after_construction():
+    m, model = fitted()
+    m.interval_width = 0.95
+    m.predict(m.make_future_dataframe(periods=3, include_history=False))
+    assert model.forecast_calls[-1]["level"] == [95]
+    m.interval_width = 0.7
+    m.predict(m.make_future_dataframe(periods=3, include_history=False))
+    assert model.forecast_calls[-1]["level"] == [70]
+    m.interval_width = 0.975
+    with pytest.raises(ValueError, match="interval_width"):
+        m.predict(m.make_future_dataframe(periods=3, include_history=False))
+
+
+def test_interval_width_applies_to_insample_backtest():
+    m, model = fitted(insample_n_windows=2)
+    m.interval_width = 0.9
+    m.predict(m.make_future_dataframe(periods=7))
+    assert {tuple(c["level"]) for c in model.forecast_calls} == {(90,)}
+
+
+def test_insample_windows_reserve_conformal_calibration_samples(caplog):
+    model = NaiveForecaster()
+    model.prediction_intervals = ConformalIntervals(n_windows=2)
+    m = FoundationProphet(model=model)
+    m.fit(make_df(n=120))
+    m.predict(m.make_future_dataframe(periods=14))
+    # conformal needs 14 + 14 + 1 = 29 samples: (120 - 29) // 14 = 6 windows
+    assert len(model.forecast_calls) == 1 + 6
+    first_cutoff_train = 120 - 6 * 14
+    assert first_cutoff_train >= 29
+
+    short = NaiveForecaster()
+    short.prediction_intervals = ConformalIntervals(n_windows=2)
+    m = FoundationProphet(model=short)
+    m.fit(make_df(n=40))
+    caplog.clear()
+    with caplog.at_level(logging.WARNING, logger="foundationforecast.prophet"):
+        fcst = m.predict(m.make_future_dataframe(periods=14))
+    assert "too short" in caplog.records[0].getMessage()
+    assert fcst["yhat"].iloc[:40].isna().all()
+    assert fcst["yhat"].iloc[40:].notna().all()
 
 
 def test_predict_before_fit():
