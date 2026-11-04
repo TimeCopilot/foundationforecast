@@ -22,6 +22,7 @@ nav:
       - Forecasting Parameters: forecasting-parameters.md
       - Model Weight Cache: model-weight-cache.md
       - Conformal prediction: conformal-prediction.md
+      - Explainability: explainability.md
   - Examples:
       - examples/index.md
       - Forecaster Quickstart: examples/forecaster-quickstart.ipynb
@@ -44,6 +45,7 @@ nav:
   - API Reference:
       - api/forecaster.md
       - Conformal intervals: api/core/conformal.md
+      - Explanations: api/core/shap.md
       - api/models/foundation/models.md
       - api/models/utils/forecaster.md
   - Experiments:

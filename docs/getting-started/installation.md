@@ -26,6 +26,14 @@ Requires **Python 3.10 or later**.
     pip install "foundationforecast[plot]"
     ```
 
+=== "explain"
+
+    For Shapley attributions with `explain()` (`method="exact"` and `"permutation"`; see [Explainability](../explainability.md)):
+
+    ```bash
+    pip install "foundationforecast[explain]"
+    ```
+
 ## Python version and model availability
 
 Some models are gated by Python version:

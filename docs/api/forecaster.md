@@ -8,6 +8,7 @@
         members:
             - forecast
             - cross_validation
+            - explain
             - detect_anomalies
             - plot
             - clear_model_cache
