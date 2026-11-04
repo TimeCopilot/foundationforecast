@@ -43,6 +43,7 @@ from .quantiles import (
     validate_levels,
     validate_quantiles,
 )
+from .shap import ShapExplanations, explain_forecaster
 from .utils import PanelData, TimeSeriesDataset, grouped_std_by_id
 
 T = TypeVar("T")
@@ -87,6 +88,8 @@ def maybe_convert_col_to_datetime(df: pd.DataFrame, col_name: str) -> pd.DataFra
 class Forecaster:
     alias: str
     reuse_loaded_model: bool = True
+    supports_nan_target: bool = False
+    explanations: ShapExplanations | None = None
 
     def __init__(
         self,
@@ -94,6 +97,7 @@ class Forecaster:
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
         prediction_intervals: ConformalIntervals | None = None,
+        explanations: ShapExplanations | None = None,
     ) -> None:
         """Initialize forecaster options.
 
@@ -115,10 +119,14 @@ class Forecaster:
                 point forecast is returned. ``cross_validation()`` recalibrates
                 at every cutoff using only data before it. See conformal
                 prediction docs.
+            explanations: Default settings for ``explain()``. ``forecast()``
+                never computes attributions, so this has no effect on its
+                output or cost. See the explainability guide.
         """
         self.reuse_loaded_model = reuse_loaded_model
         self.exog_strategy = normalize_exog_strategy(exog_strategy)
         self.prediction_intervals = prediction_intervals
+        self.explanations = explanations
 
     def _model_cache_prefix(self) -> str | None:
         repo_id = getattr(self, "repo_id", None)
@@ -383,6 +391,62 @@ class Forecaster:
             quantiles,
             panel,
             univariate_forecast,
+        )
+
+    def explain(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None = None,
+        X_df: pd.DataFrame | None = None,
+        *,
+        ids: list | None = None,
+        explanations: ShapExplanations | None = None,
+        futr_df: pd.DataFrame | None = None,
+        futr_exog_list: list[str] | None = None,
+    ) -> pd.DataFrame:
+        """Forecast and split each prediction into additive Shapley contributions.
+
+        Players are windows of the target history and, when `X_df` is given,
+        known-future exogenous columns. Each player is switched off by masking
+        its inputs and the model is re-run on the masked inputs, so no
+        background data is sampled. The forecast equals the baseline plus the
+        contributions of every player. Needs `pip install
+        'foundationforecast[explain]'` for `method="exact"` and
+        `"permutation"`. See the explainability guide.
+
+        Args:
+            df: Historical data with columns `unique_id`, `ds`, and `y`, plus any
+                exogenous columns.
+            h: Forecast horizon, in steps of `freq`.
+            freq: Pandas frequency of `ds`. Inferred from `df` when omitted.
+            X_df: Known-future exogenous values for the next `h` steps, with
+                `unique_id`, `ds`, and the exogenous columns (no `y`).
+            ids: Explain only these `unique_id` values. Cost grows with the
+                number of series, so subset large panels.
+            explanations: Settings for this call. Defaults to the model's
+                `explanations`, or `ShapExplanations()` when unset.
+            futr_df: Alias for `X_df`.
+            futr_exog_list: Exogenous column names to use. Inferred from `X_df`
+                when omitted.
+
+        Returns:
+            One row per series and future timestamp, with `unique_id`, `ds`, the
+                forecast in the model alias column, `{alias}-shap-base` (the
+                baseline), one `{alias}-shap-hist-{window}` column per history
+                window, and one `{alias}-shap-{col}` column per exogenous
+                player. `method="loo"` adds `{alias}-shap-residual`.
+        """
+        return explain_forecaster(
+            self,
+            df,
+            h,
+            freq,
+            X_df,
+            ids=ids,
+            explanations=explanations,
+            futr_df=futr_df,
+            futr_exog_list=futr_exog_list,
         )
 
     def cross_validation(
