@@ -22,6 +22,7 @@ from ..core.quantiles import (
     backend_quantile_levels,
     select_clipped_quantile_values,
 )
+from ..core.shap import ShapExplanations
 from ..core.utils import PanelData, TimeSeriesDataset, process_panel_from_df
 
 
@@ -124,6 +125,7 @@ class Chronos(ExogCapableForecaster):
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
         prediction_intervals: ConformalIntervals | None = None,
+        explanations: ShapExplanations | None = None,
     ):
         # ruff: noqa: E501
         """
@@ -162,6 +164,9 @@ class Chronos(ExogCapableForecaster):
                 ``forecast()`` replaces native quantiles with conformal intervals
                 calibrated on cross-validation errors of the point forecast. See
                 the conformal prediction docs. Defaults to None.
+            explanations (ShapExplanations | None, optional): Default settings
+                for ``explain()``. ``forecast()`` never computes attributions.
+                See the explainability guide. Defaults to None.
             reuse_loaded_model (bool, optional): When True (default), reuse
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and
@@ -213,8 +218,11 @@ class Chronos(ExogCapableForecaster):
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
             prediction_intervals=prediction_intervals,
+            explanations=explanations,
         )
         self.finetuning_config = finetuning_config
+
+    supports_nan_target = True
 
     def supports_native_futr_exog(self) -> bool:
         return "chronos-2" in self.repo_id.lower()

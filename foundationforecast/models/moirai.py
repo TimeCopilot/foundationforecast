@@ -8,6 +8,7 @@ from uni2ts.model.moirai_moe import MoiraiMoEForecast, MoiraiMoEModule
 from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.gluonts_forecaster import GluonTSForecaster
+from ..core.shap import ShapExplanations
 
 
 class Moirai(GluonTSForecaster):
@@ -38,6 +39,7 @@ class Moirai(GluonTSForecaster):
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
         prediction_intervals: ConformalIntervals | None = None,
+        explanations: ShapExplanations | None = None,
     ):
         """
         Args:
@@ -74,6 +76,9 @@ class Moirai(GluonTSForecaster):
                 ``forecast()`` replaces native quantiles with conformal intervals
                 calibrated on cross-validation errors of the point forecast. See
                 the conformal prediction docs. Defaults to None.
+            explanations (ShapExplanations | None, optional): Default settings
+                for ``explain()``. ``forecast()`` never computes attributions.
+                See the explainability guide. Defaults to None.
             reuse_loaded_model (bool, optional): When True (default), reuse
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and
@@ -102,7 +107,9 @@ class Moirai(GluonTSForecaster):
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
             prediction_intervals=prediction_intervals,
+            explanations=explanations,
         )
+        self.supports_nan_target = "moirai-2" in repo_id.lower()
         self.context_length = context_length
         self.patch_size = patch_size
         self.target_dim = target_dim

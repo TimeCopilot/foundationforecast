@@ -19,6 +19,7 @@ from ..core.quantiles import (
     PATCHTST_FM_QUANTILE_RANGE,
     resolve_quantile_values,
 )
+from ..core.shap import ShapExplanations
 from ..core.utils import PanelData, TimeSeriesDataset
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,7 @@ class PatchTSTFM(ExogCapableForecaster, _DataProcessor):
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
         prediction_intervals: ConformalIntervals | None = None,
+        explanations: ShapExplanations | None = None,
     ):
         """
         Initialize PatchTSTFM time series foundation model.
@@ -76,6 +78,9 @@ class PatchTSTFM(ExogCapableForecaster, _DataProcessor):
                 ``forecast()`` replaces native quantiles with conformal intervals
                 calibrated on cross-validation errors of the point forecast. See
                 the conformal prediction docs. Defaults to None.
+            explanations (ShapExplanations | None, optional): Default settings
+                for ``explain()``. ``forecast()`` never computes attributions.
+                See the explainability guide. Defaults to None.
             reuse_loaded_model (bool, optional): When True (default), reuse
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and
@@ -111,6 +116,7 @@ class PatchTSTFM(ExogCapableForecaster, _DataProcessor):
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
             prediction_intervals=prediction_intervals,
+            explanations=explanations,
         )
         self.repo_id = repo_id
         # self.scale_factor = scale_factor

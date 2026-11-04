@@ -16,6 +16,7 @@ from .conformal import ConformalIntervals
 from .exog.covariates import ExogStrategyConfig
 from .forecaster import ExogCapableForecaster, QuantileConverter
 from .quantiles import assert_unique_quantile_column_names, quantile_column_name
+from .shap import ShapExplanations
 from .utils import PanelData, process_panel_from_df
 
 T = TypeVar("T")
@@ -45,11 +46,13 @@ class GluonTSForecaster(ExogCapableForecaster):
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
         prediction_intervals: ConformalIntervals | None = None,
+        explanations: ShapExplanations | None = None,
     ):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
             prediction_intervals=prediction_intervals,
+            explanations=explanations,
         )
         self.repo_id = repo_id
         self.filename = filename

@@ -14,6 +14,7 @@ from tqdm import tqdm
 from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
+from ..core.shap import ShapExplanations
 from ..core.utils import PanelData, TimeSeriesDataset
 
 
@@ -38,6 +39,7 @@ class TimeH2O(ExogCapableForecaster):
         clip_nonnegative: bool = False,
         snap_integer: bool = False,
         prediction_intervals: ConformalIntervals | None = None,
+        explanations: ShapExplanations | None = None,
     ):
         # ruff: noqa: E501
         """
@@ -70,6 +72,9 @@ class TimeH2O(ExogCapableForecaster):
                 ``forecast()`` replaces native quantiles with conformal intervals
                 calibrated on cross-validation errors of the point forecast. See
                 the conformal prediction docs. Defaults to None.
+            explanations (ShapExplanations | None, optional): Default settings
+                for ``explain()``. ``forecast()`` never computes attributions.
+                See the explainability guide. Defaults to None.
 
         Notes:
             **Requirements:**
@@ -108,6 +113,7 @@ class TimeH2O(ExogCapableForecaster):
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
             prediction_intervals=prediction_intervals,
+            explanations=explanations,
         )
         self.repo_id = repo_id
         self.context_length = context_length
