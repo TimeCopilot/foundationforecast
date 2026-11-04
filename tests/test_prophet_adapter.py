@@ -121,10 +121,12 @@ def test_predict_defaults_to_history_dates():
 
 @pytest.mark.parametrize("freq", ["MS", "h", "W-MON"])
 def test_other_frequencies(freq):
-    m, model = fitted(make_df(n=48, freq=freq))
+    df = make_df(n=48, freq=freq)
+    m, model = fitted(df)
     future = m.make_future_dataframe(periods=5, freq=freq, include_history=False)
     fcst = m.predict(future)
-    assert model.forecast_calls[0]["freq"] == freq
+    # pandas aliases differ across versions (e.g. "H" vs "h"), so compare to inference
+    assert model.forecast_calls[0]["freq"] == pd.infer_freq(df["ds"])
     assert fcst["yhat"].notna().all()
     pd.testing.assert_series_equal(fcst["ds"], future["ds"])
 
