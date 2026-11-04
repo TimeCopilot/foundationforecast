@@ -3,6 +3,8 @@
 Requires the optional `prophet` dependency:
 
 ```bash
+uv add "foundationforecast[prophet]"
+# or
 pip install "foundationforecast[prophet]"
 ```
 """
@@ -20,10 +22,11 @@ try:
 except ModuleNotFoundError as e:  # pragma: no cover
     raise ModuleNotFoundError(
         f"{e}. To use `foundationforecast.prophet` install the optional "
-        'dependency: `pip install "foundationforecast[prophet]"`.'
+        'dependency: `uv add "foundationforecast[prophet]"` or '
+        '`pip install "foundationforecast[prophet]"`.'
     ) from e
 
-from .core.forecaster import Forecaster
+from .core.forecaster import Forecaster, maybe_infer_freq
 
 __all__ = ["FoundationProphet"]
 
@@ -181,8 +184,11 @@ class FoundationProphet(Prophet):
         self.insample_n_windows = insample_n_windows
         self._freq: str | None = None
         self._insample_logged = False
-        if type(self)._bound_model is None:
-            self.__class__ = _bind_model(type(self), model)
+        if type(self)._bound_model is not model:
+            # (re)bind from the unbound base so clones made by Prophet's
+            # diagnostics (`type(m)(**kwargs)`) reuse this exact model
+            base = type(self)._unbound_class or type(self)
+            self.__class__ = _bind_model(base, model)
 
     def __reduce__(self) -> tuple[Any, ...]:
         base = type(self)._unbound_class or type(self)
@@ -226,7 +232,9 @@ class FoundationProphet(Prophet):
                 'Dataframe must have columns "ds" and "y" with the dates and '
                 "values respectively."
             )
-        history = df[df["y"].notnull()].copy()
+        history = df.copy()
+        history["y"] = pd.to_numeric(history["y"])
+        history = history[history["y"].notnull()].copy()
         if history.shape[0] < 2:
             raise ValueError("Dataframe has less than 2 non-NaN rows.")
         history["ds"] = self._check_ds(history["ds"])
@@ -332,6 +340,11 @@ class FoundationProphet(Prophet):
 
     @staticmethod
     def _check_ds(ds: pd.Series) -> pd.Series:
+        if pd.api.types.is_numeric_dtype(ds):
+            raise ValueError(
+                "Column 'ds' must contain dates, not numbers: integers would be "
+                "read as nanoseconds since 1970. Convert them with `pd.to_datetime`."
+            )
         ds = pd.to_datetime(ds)
         if ds.isnull().any():
             raise ValueError("Found NaN in column 'ds'.")
@@ -351,17 +364,15 @@ class FoundationProphet(Prophet):
 
     @staticmethod
     def _infer_freq(ds: pd.Series) -> str:
+        panel = pd.DataFrame({"unique_id": _UNIQUE_ID, "ds": ds})
         try:
-            freq = pd.infer_freq(ds)
-        except ValueError:  # fewer than 3 dates
-            freq = None
-        if freq is None:
+            return maybe_infer_freq(panel, None)
+        except (RuntimeError, ValueError) as e:  # gaps, or fewer than 3 dates
             raise ValueError(
                 "The history must be on a regular grid (no missing periods; rows "
                 "with a null `y` are dropped) with at least 3 dates, so its "
                 "frequency can be inferred. Fill or remove the gaps before `fit`."
-            )
-        return freq
+            ) from e
 
     def _panel_history(self) -> pd.DataFrame:
         assert self.history is not None
