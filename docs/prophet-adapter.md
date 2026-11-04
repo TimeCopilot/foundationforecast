@@ -2,7 +2,7 @@
 
 [`FoundationProphet`][foundationforecast.prophet.FoundationProphet] lets you use any foundation model inside an existing [Prophet](https://github.com/facebook/prophet) pipeline. It is a `prophet.Prophet` subclass, so `fit`, `make_future_dataframe`, `predict` and `plot` keep working, but the forecasts come from the model you pass.
 
-![Swap Prophet for a foundation model: the same Prophet pipeline with Prophet() and with FoundationProphet(model=...), then switching between Chronos, Timestral and TimesFM](https://timecopilot.s3.amazonaws.com/public/data/images/prophet_adapter_before_after.gif)
+![Swap Prophet for a foundation model: the same Prophet pipeline with Prophet() and with FoundationProphet(model=...), then switching between Timestral, Chronos-2 and TimesFM](https://timecopilot.s3.amazonaws.com/public/data/images/prophet_adapter_before_after.gif)
 
 ## Installation
 
