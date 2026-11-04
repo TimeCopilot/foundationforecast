@@ -73,6 +73,9 @@ Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results
 - 🚀 **GPU-native**. Automatically runs on GPU when available, without model-specific device configuration.
 - 🔮 **Prophet adapter.** Swap `Prophet()` for `FoundationProphet(model=Chronos())` in existing Prophet pipelines: `fit`, `make_future_dataframe`, `predict`, `plot` and Prophet's diagnostics keep working, with any foundation model underneath. Install with `foundationforecast[prophet]`; see the [guide](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/prophet-adapter.md) and [example notebook](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/examples/prophet-adapter.ipynb).
 
+  <p align="center"><img src="https://timecopilot.s3.amazonaws.com/public/data/images/prophet_adapter_before_after.gif" alt="Swap Prophet for a foundation model: the same Prophet pipeline with Prophet() and with FoundationProphet(model=...), then switching between Chronos, Timestral and TimesFM" width="800"></p>
+
+
 ---
 
 ## Supported models
