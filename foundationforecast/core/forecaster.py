@@ -400,10 +400,10 @@ class Forecaster:
         freq: str | None = None,
         X_df: pd.DataFrame | None = None,
         *,
-        ids: list | None = None,
         explanations: ShapExplanations | None = None,
         futr_df: pd.DataFrame | None = None,
         futr_exog_list: list[str] | None = None,
+        ids: list | None = None,
     ) -> pd.DataFrame:
         """Forecast and split each prediction into additive Shapley contributions.
 
@@ -411,9 +411,9 @@ class Forecaster:
         known-future exogenous columns. Each player is switched off by masking
         its inputs and the model is re-run on the masked inputs, so no
         background data is sampled. The forecast equals the baseline plus the
-        contributions of every player. Needs `pip install
-        'foundationforecast[explain]'` for `method="exact"` and
-        `"permutation"`. See the explainability guide.
+        contributions of every player. Needs `uv add
+        'foundationforecast[explain]'` (or `pip install`) for `method="exact"`
+        and `"permutation"`. See the explainability guide.
 
         Args:
             df: Historical data with columns `unique_id`, `ds`, and `y`, plus any
@@ -422,13 +422,14 @@ class Forecaster:
             freq: Pandas frequency of `ds`. Inferred from `df` when omitted.
             X_df: Known-future exogenous values for the next `h` steps, with
                 `unique_id`, `ds`, and the exogenous columns (no `y`).
-            ids: Explain only these `unique_id` values. Cost grows with the
-                number of series, so subset large panels.
             explanations: Settings for this call. Defaults to the model's
                 `explanations`, or `ShapExplanations()` when unset.
             futr_df: Alias for `X_df`.
             futr_exog_list: Exogenous column names to use. Inferred from `X_df`
                 when omitted.
+            ids: Explain only these `unique_id` values (same name as in
+                `plot`). Cost grows with the number of series, so subset large
+                panels.
 
         Returns:
             One row per series and future timestamp, with `unique_id`, `ds`, the
@@ -443,10 +444,10 @@ class Forecaster:
             h,
             freq,
             X_df,
-            ids=ids,
             explanations=explanations,
             futr_df=futr_df,
             futr_exog_list=futr_exog_list,
+            ids=ids,
         )
 
     def cross_validation(

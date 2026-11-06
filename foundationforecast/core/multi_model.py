@@ -296,10 +296,10 @@ class MultiModelForecasterMixin:
         freq: str | None = None,
         X_df: pd.DataFrame | None = None,
         *,
-        ids: list | None = None,
         explanations: ShapExplanations | None = None,
         futr_df: pd.DataFrame | None = None,
         futr_exog_list: list[str] | None = None,
+        ids: list | None = None,
     ) -> pd.DataFrame:
         """Forecast and explain every model with additive Shapley contributions.
 
@@ -315,11 +315,11 @@ class MultiModelForecasterMixin:
             freq: Pandas frequency of `ds`. Inferred from `df` when omitted.
             X_df: Known-future exogenous values for the next `h` steps, with
                 `unique_id`, `ds`, and the exogenous columns (no `y`).
-            ids: Explain only these `unique_id` values.
             explanations: Settings applied to every model for this call.
             futr_df: Alias for `X_df`.
             futr_exog_list: Exogenous column names to use. Inferred from `X_df`
                 when omitted.
+            ids: Explain only these `unique_id` values.
 
         Returns:
             One row per series and future timestamp, with `unique_id`, `ds`, and

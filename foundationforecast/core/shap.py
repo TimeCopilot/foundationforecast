@@ -130,8 +130,9 @@ def _import_shap():
     except ImportError as e:
         raise ImportError(
             "Shapley explanations with method='exact' or 'permutation' need the "
-            "`shap` package. Install it with `pip install "
-            "'foundationforecast[explain]'` or use method='loo'."
+            "`shap` package. Install it with `uv add "
+            "'foundationforecast[explain]'` (or `pip install "
+            "'foundationforecast[explain]'`) or use method='loo'."
         ) from e
     return shap
 
@@ -423,10 +424,10 @@ def explain_forecaster(
     freq: str | None = None,
     X_df: pd.DataFrame | None = None,
     *,
-    ids: Sequence[object] | None = None,
     explanations: ShapExplanations | None = None,
     futr_df: pd.DataFrame | None = None,
     futr_exog_list: list[str] | None = None,
+    ids: Sequence[object] | None = None,
 ) -> pd.DataFrame:
     """Shapley decomposition of ``forecaster.forecast`` (see ``Forecaster.explain``)."""
     from .exog.covariates import resolve_horizon_exog_df
