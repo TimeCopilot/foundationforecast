@@ -11,7 +11,9 @@ pip install "foundationforecast[prophet]"
 
 from __future__ import annotations
 
+import inspect
 import logging
+import warnings
 from typing import Any, Literal
 
 import numpy as np
@@ -37,6 +39,32 @@ logger = logging.getLogger(__name__)
 _UNIQUE_ID = "uid_0"
 _DEFAULT_INSAMPLE_WINDOWS = 10
 _MIN_INSAMPLE_CONTEXT = 10
+
+# Prophet arguments with no effect on a foundation model, with Prophet's defaults.
+# `interval_width` is excluded: it is mapped to the model's `level`.
+_IGNORED_PROPHET_DEFAULTS = {
+    name: param.default
+    for name, param in inspect.signature(Prophet.__init__).parameters.items()
+    if name not in ("self", "interval_width")
+}
+
+
+def _differs_from_default(value: Any, default: Any) -> bool:
+    if value is None or default is None:
+        return value is not default
+    if isinstance(value, pd.DataFrame | pd.Series | np.ndarray):
+        return True
+    return bool(value != default)
+
+
+def _warn_ignored(what: str) -> None:
+    warnings.warn(
+        f"FoundationProphet ignores {what}: the foundation model handles trend, "
+        "seasonality and holidays itself, so it has no effect on the forecast. "
+        "Only regressors added with `add_regressor` are passed to the model.",
+        UserWarning,
+        stacklevel=3,
+    )
 
 
 def _interval_level(interval_width: float) -> int:
@@ -119,8 +147,8 @@ class FoundationProphet(Prophet):
     known-future exogenous variables, so the wrapped model must support them
     (see the exogenous variables guide). Prophet-specific options (`growth`,
     `holidays`, seasonalities, changepoints, ...) are accepted for
-    compatibility but have no effect. `plot_components` and the posterior
-    sampling methods are not available.
+    compatibility but have no effect, and a `UserWarning` says so.
+    `plot_components` and the posterior sampling methods are not available.
 
     The history must be on a regular grid with no gaps (rows with a null `y`
     are dropped, so an interior one counts as a gap): its frequency is inferred
@@ -160,6 +188,9 @@ class FoundationProphet(Prophet):
             **prophet_kwargs: Remaining `prophet.Prophet` arguments. They are
                 forwarded to Prophet but do not affect the foundation model.
         """
+        # Prophet's diagnostics clone the model with `type(m)(**resolved_kwargs)`
+        # and no `model`: those calls must not warn again.
+        is_clone = model is None and type(self)._bound_model is not None
         if model is None:
             model = type(self)._bound_model
         if model is None:
@@ -177,6 +208,15 @@ class FoundationProphet(Prophet):
             if value is not None and (not isinstance(value, int) or value < 1):
                 raise ValueError(f"`{name}` must be a positive integer.")
         _interval_level(interval_width)
+        ignored = sorted(
+            name
+            for name, value in prophet_kwargs.items()
+            if name in _IGNORED_PROPHET_DEFAULTS
+            and _differs_from_default(value, _IGNORED_PROPHET_DEFAULTS[name])
+        )
+        if ignored and not is_clone:
+            names = ", ".join(f"`{n}`" for n in ignored)
+            _warn_ignored(f"the Prophet arguments {names}")
         super().__init__(interval_width=interval_width, **prophet_kwargs)
         self.model = model
         self.insample = insample
@@ -211,6 +251,18 @@ class FoundationProphet(Prophet):
                 "must be provided in the dataframe given to `predict`."
             )
         return super().add_regressor(name, *args, **kwargs)
+
+    def add_seasonality(
+        self, name: str, *args: Any, **kwargs: Any
+    ) -> FoundationProphet:
+        """Accepted for compatibility; warns because it has no effect."""
+        _warn_ignored(f"`add_seasonality({name!r}, ...)`")
+        return super().add_seasonality(name, *args, **kwargs)
+
+    def add_country_holidays(self, country_name: str) -> FoundationProphet:
+        """Accepted for compatibility; warns because it has no effect."""
+        _warn_ignored(f"`add_country_holidays({country_name!r})`")
+        return super().add_country_holidays(country_name)
 
     def fit(self, df: pd.DataFrame, **kwargs: Any) -> FoundationProphet:
         """Store the history; foundation models need no training.
