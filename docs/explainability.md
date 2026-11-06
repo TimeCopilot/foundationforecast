@@ -2,9 +2,21 @@
 
 `explain()` splits each point forecast into **additive contributions** from the parts of the input the model saw: windows of the target history and known-future exogenous columns. It uses [Shapley values](https://en.wikipedia.org/wiki/Shapley_value) computed by the [`shap`](https://github.com/shap/shap) package, and it works on every model without touching its internals: a part of the input is "switched off" by masking it, and the model is simply run again.
 
-```bash
-pip install 'foundationforecast[explain]'
-```
+=== "pip"
+
+    ```bash
+    pip install "foundationforecast[explain]"
+    ```
+
+=== "uv"
+
+    ```bash
+    uv add "foundationforecast[explain]"
+    ```
+
+!!! warning "Attributions are not causal effects"
+
+    Shapley values describe how **the model's forecast** reacts when part of its input is masked. They do not say that a window or a covariate **causes** the series to move. Masked inputs can also look unlike anything the model saw in training. Missing a feature you need? [Open an issue](https://github.com/TimeCopilot/foundationforecast/issues/new) and tell us what you would like `explain()` to cover.
 
 ## When to use it
 
@@ -40,7 +52,17 @@ fcst = ff.forecast(df=df, h=3, freq="MS")  # no attribution columns
 attr = ff.explain(df=df, h=3, freq="MS")  # forecast + attributions
 ```
 
-`explanations` on the model constructor only stores **defaults for `explain()`**. Pass `explanations=` to `explain()` to override them for one call; on `FoundationForecast` that override applies to every model.
+`explanations` on the model constructor only stores **defaults for `explain()`**. Pass `explanations=` to `explain()` to override them for one call; on `FoundationForecast` that override applies to every model:
+
+```python
+# This call only: other windows and the cheaper leave-one-out method.
+attr = ff.explain(
+    df=df,
+    h=3,
+    freq="MS",
+    explanations=ShapExplanations(history=[6], method="loo"),
+)
+```
 
 ## Output
 
@@ -81,7 +103,7 @@ where \(b\) is the baseline and \(\phi_{p,j}\) the contribution of player \(p\) 
 | yearly | 3 steps |
 | business daily | 5, 20 steps |
 
-**Exogenous columns.** When you pass `X_df`, every exogenous column is a player by default (`exog=True`). Use `exog=["temp"]` to explain only some columns, or `exog=False` for none. Columns that are not players are always given to the model. Exog players need a model with native known-future exog support (see [Exogenous variables](exogenous-variables.md)); other models raise the same error as `forecast()`.
+**Exogenous columns.** When you pass `X_df`, every exogenous column is a player by default (`exog=True`). Set `ShapExplanations(exog=["temp"])` to explain only some columns, or `ShapExplanations(exog=False)` for none. Columns that are not players are always given to the model. Exog players need a model with native known-future exog support (see [Exogenous variables](exogenous-variables.md)); other models raise the same error as `forecast()`.
 
 ```python
 import pandas as pd
@@ -135,7 +157,7 @@ Here \(n\) is the number of players. With the default `n_samples=10`, `"auto"` p
 
 `explain()` re-runs the model once per coalition, for every explained series. Nothing is capped. Instead, a `UserWarning` is raised when the estimated number of series forecasts exceeds `warn_model_calls` (default 2,000), and the run continues. Ways to reduce cost:
 
-- `ids=[...]` explains only some series.
+- `ids=[...]` explains only some series (the same argument name as in `plot`).
 - Fewer or coarser `history` windows, or `exog=False`.
 - `method="permutation"` with a small `n_samples`, or `method="loo"`.
 - `max_batch_series` bounds how many series are sent to the model at once, to limit memory.
@@ -144,8 +166,9 @@ Only an unusable request is refused: `method="exact"` with more than 20 players 
 
 ## Things to keep in mind
 
-- Attributions describe **this model's behavior on masked inputs**. Masked inputs (a gap, a shortened context) can be unlike anything the model saw in training, and the explanation is not a causal statement about your data.
+- Attributions describe **this model's behavior on masked inputs**, not causal effects (see the warning above). Masked inputs (a gap, a shortened context) can be unlike anything the model saw in training.
 - The baseline is a constant (the series mean), not a model run, so large `base` values are normal. Set `base_window` to use only recent history.
+- **Windows the model cannot see get zero attribution.** If a boundary reaches past a series (a window with no observations) or past the model's `context_length`, that window cannot change the model input. It is reported as zero and `explain()` warns. Boundaries such as `history=[1, 30]` with `context_length=20` still explain the part of the second window the model reads.
 - A shortened context must still be long enough for the model. If masking leaves too little history for a checkpoint, the model raises its usual error; use fewer or longer windows.
 - Models that sample (for example, Moirai 1.x) add noise to the differences between coalitions. Contributions are still additive for the runs that were evaluated, but small contributions may be noise.
 - `explain()` explains the point forecast. It does not take `level` or `quantiles`.
