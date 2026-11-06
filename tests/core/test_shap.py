@@ -495,3 +495,38 @@ def test_forecast_is_not_affected_by_explanations():
     b = configured.forecast(data, H, freq="h")
     pd.testing.assert_frame_equal(a, b)
     assert len(configured.calls) == 1
+
+
+def test_empty_history_window_gets_no_credit():
+    df, _ = make_data(1)
+    short = df.tail(40)
+    model = FakeForecaster()
+    cfg = ShapExplanations(history=[30, 60], exog=False, method="exact")
+    out = model.explain(short, H, freq="h", explanations=cfg)
+
+    assert shap_cols(out) == [
+        "Fake-shap-base",
+        "Fake-shap-hist-30",
+        "Fake-shap-hist-30-60",
+        "Fake-shap-hist-older",
+    ]
+    np.testing.assert_allclose(out["Fake-shap-hist-older"], 0.0, atol=1e-10)
+    np.testing.assert_allclose(out[shap_cols(out)].sum(axis=1), out["Fake"])
+    assert not any(c["y"].isna().all() for c in model.calls)
+
+
+def test_window_empty_for_only_some_series_gets_no_credit_there():
+    df, _ = make_data(2)
+    df = pd.concat(
+        [df[df["unique_id"] == "s0"], df[df["unique_id"] == "s1"].tail(20)],
+        ignore_index=True,
+    )
+    model = FakeForecaster()
+    cfg = ShapExplanations(history=[6, 24], exog=False, method="exact")
+    out = model.explain(df, H, freq="h", explanations=cfg)
+
+    short = out[out["unique_id"] == "s1"]
+    np.testing.assert_allclose(short["Fake-shap-hist-older"], 0.0, atol=1e-10)
+    long = out[out["unique_id"] == "s0"]
+    assert (long["Fake-shap-hist-older"].abs() > 1e-6).any()
+    np.testing.assert_allclose(out[shap_cols(out)].sum(axis=1), out["Fake"])
