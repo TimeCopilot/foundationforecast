@@ -130,6 +130,16 @@ attr = model.explain(
 
 The result has `Chronos-2-shap-hist-1D`, `-hist-1D-7D`, `-hist-older`, `-ex_1`, and `-ex_2`.
 
+!!! warning "History windows larger than the model's context"
+
+    A history window is only useful if the model can read it. **Expected behavior:**
+
+    - A window that has no observations (a boundary past the start of a series), or that lies entirely beyond the model's `context_length`, cannot change what the model reads. It gets **zero attribution** and `explain()` raises a `UserWarning` naming the window. It does not cost extra model runs.
+    - A window the model reads only in part stays a player. With `history=[1, 30]` and `context_length=20`, the window `1-30` is explained from the 19 steps the model sees.
+    - The check is per series, so in a panel with series of different lengths a window can be empty for some series and not for others.
+
+    **Limit:** only a `context_length` that the model wrapper exposes is detected. A checkpoint with a hidden internal cap is not, and a window beyond that cap can still pick up credit that is not real: a coalition in which only that window is on masks everything the model actually reads. Set `context_length` on the model, or keep `history` boundaries within what the checkpoint reads.
+
 ## How a player is switched off
 
 Each coalition of players that stay on becomes a masked copy of your data, and the model forecasts it.
@@ -168,10 +178,13 @@ Only an unusable request is refused: `method="exact"` with more than 20 players 
 
 - Attributions describe **this model's behavior on masked inputs**, not causal effects (see the warning above). Masked inputs (a gap, a shortened context) can be unlike anything the model saw in training.
 - The baseline is a constant (the series mean), not a model run, so large `base` values are normal. Set `base_window` to use only recent history.
-- **Windows the model cannot see get zero attribution.** If a boundary reaches past a series (a window with no observations) or past the model's `context_length`, that window cannot change the model input. It is reported as zero and `explain()` warns. Boundaries such as `history=[1, 30]` with `context_length=20` still explain the part of the second window the model reads.
 - A shortened context must still be long enough for the model. If masking leaves too little history for a checkpoint, the model raises its usual error; use fewer or longer windows.
 - Models that sample (for example, Moirai 1.x) add noise to the differences between coalitions. Contributions are still additive for the runs that were evaluated, but small contributions may be noise.
 - `explain()` explains the point forecast. It does not take `level` or `quantiles`.
+
+## Example notebook
+
+See the [explainability example notebook](examples/explainability.ipynb) for a single-model walk-through with a planted-signal check, several models at once, `nan` vs `fill` masking, and the context limit above.
 
 ## Settings
 

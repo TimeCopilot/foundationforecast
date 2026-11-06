@@ -30,6 +30,7 @@ nav:
       - Compare Foundation Models: examples/ts-foundation-models-comparison-quickstart.ipynb
       - Exogenous variables: examples/exogenous-variables.ipynb
       - Conformal prediction: examples/conformal-prediction.ipynb
+      - Explainability: examples/explainability.ipynb
       - Family Guides:
           - Chronos: examples/chronos-family.ipynb
           - TimesFM: examples/timesfm-family.ipynb
