@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import partial
+from math import ceil
 
 import numpy as np
 import pandas as pd
@@ -17,7 +19,12 @@ class ConformalIntervals:
             Must be at least 2.
         method: ``conformal_distribution`` builds bounds from mean ± error
             paths; ``conformal_error`` uses quantiles of absolute errors per
-            horizon step.
+            horizon step. ``conformal_error_finite_sample`` selects the
+            ceil((n_windows + 1) * level / 100)-th smallest absolute error,
+            without interpolation. If the rank exceeds ``n_windows``, the
+            bounds are infinite. The usual marginal coverage lower bound
+            requires exchangeable calibration and future errors; rolling
+            backtests do not establish that assumption.
         step_size: Gap between consecutive calibration cutoffs. ``None``
             (default) uses the forecast horizon (non-overlapping windows).
     """
@@ -31,7 +38,11 @@ class ConformalIntervals:
             raise ValueError(
                 "You need at least two windows to compute conformal intervals"
             )
-        allowed = ("conformal_distribution", "conformal_error")
+        allowed = (
+            "conformal_distribution",
+            "conformal_error",
+            "conformal_error_finite_sample",
+        )
         if self.method not in allowed:
             raise ValueError(f"method must be one of {allowed}")
         if self.step_size is not None and self.step_size < 1:
@@ -87,15 +98,34 @@ def add_conformal_error_intervals(
     cs_h: int,
     n_series: int,
     horizon: int,
+    *,
+    finite_sample: bool = False,
 ) -> pd.DataFrame:
-    """Add intervals from quantiles of absolute errors."""
+    """Add absolute-error intervals, optionally using corrected order statistics."""
     fcst_df = ufp.copy_if_pandas(fcst_df, deep=False)
     cuts = [lv / 100 for lv in level]
+    if finite_sample:
+        if any(not 0 <= cut <= 1 for cut in cuts):
+            raise ValueError("Quantiles must be in the range [0, 1]")
+        # Select exact ranks rather than interpolating between calibration errors.
+        # A level of zero can arise internally when converting near-median quantiles.
+        ranks = [max(1, ceil((cs_n_windows + 1) * lv / 100)) for lv in level]
     for model in model_names:
         mean = fcst_df[model].to_numpy().ravel()
         scores = cs_df[model].to_numpy().reshape(cs_n_windows, n_series, cs_h)
         scores = scores[:, :, :horizon]
-        quantiles = np.quantile(scores, cuts, axis=0)
+        if finite_sample:
+            if not np.isfinite(scores).all():
+                raise ValueError(
+                    "Finite-sample conformal requires finite calibration errors"
+                )
+            ordered = np.concatenate(
+                [np.sort(scores, axis=0), np.full((1, n_series, horizon), np.inf)],
+                axis=0,
+            )
+            quantiles = ordered[np.asarray(ranks) - 1]
+        else:
+            quantiles = np.quantile(scores, cuts, axis=0)
         quantiles = quantiles.reshape(len(cuts), -1)
         lo_cols = [f"{model}-lo-{lv}" for lv in reversed(level)]
         hi_cols = [f"{model}-hi-{lv}" for lv in level]
@@ -105,9 +135,12 @@ def add_conformal_error_intervals(
 
 
 def get_conformal_method(method: str) -> Callable[..., pd.DataFrame]:
-    available = {
+    available: dict[str, Callable[..., pd.DataFrame]] = {
         "conformal_distribution": add_conformal_distribution_intervals,
         "conformal_error": add_conformal_error_intervals,
+        "conformal_error_finite_sample": partial(
+            add_conformal_error_intervals, finite_sample=True
+        ),
     }
     if method not in available:
         raise ValueError(
