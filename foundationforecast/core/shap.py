@@ -223,6 +223,7 @@ class CoalitionEvaluator:
         baseline: np.ndarray,
         use_nan: bool,
         max_batch_series: int,
+        context_length: int | None = None,
     ) -> None:
         self.forecaster = forecaster
         self.h = h
@@ -232,14 +233,27 @@ class CoalitionEvaluator:
         self.windows = windows
         self.n_hist = n_hist
         self.codes = codes
-        # (series, window) pairs that hold at least one observation; an empty
-        # window cannot change the model input, so it never counts as "on".
+        # (series, window) pairs the model can see: the window holds at least
+        # one observation and, when the model caps its context, at least one of
+        # them falls inside it. A window the model cannot see never counts as
+        # "on": switching it on or off cannot change the model input.
+        pos_from_end = pd.Series(codes).groupby(codes).cumcount(ascending=False)
+        visible = (
+            np.ones(len(codes), dtype=bool)
+            if context_length is None
+            else pos_from_end.to_numpy() < context_length
+        )
+        n_series = len(series_index)
         self.nonempty = (
-            np.bincount(codes * n_hist + windows, minlength=len(series_index) * n_hist)
-            .reshape(len(series_index), n_hist)
+            np.bincount(
+                codes[visible] * n_hist + windows[visible],
+                minlength=n_series * n_hist,
+            )
+            .reshape(n_series, n_hist)
             .astype(bool)
         )
-        self.n_series = len(series_index)
+        self.always_dead = ~self.nonempty.any(axis=0)
+        self.n_series = n_series
         self.baseline = baseline
         self.use_nan = use_nan
         self.max_batch_series = max_batch_series
@@ -371,6 +385,10 @@ class CoalitionEvaluator:
 
     def __call__(self, masks: np.ndarray) -> np.ndarray:
         masks = np.atleast_2d(np.asarray(masks)) > 0.5
+        masks = masks.copy()
+        # Windows no series can see are equivalent to "off": canonicalise so
+        # coalitions that differ only in them share one model run.
+        masks[:, : self.n_hist] &= ~self.always_dead
         keys = [row.tobytes() for row in masks]
         todo: dict[bytes, int] = {}
         for i, (row, key) in enumerate(zip(masks, keys, strict=True)):
@@ -388,6 +406,14 @@ class CoalitionEvaluator:
             for value, i in zip(values, rows, strict=True):
                 self._cache[keys[i]] = value
         return np.stack([self._cache[k] for k in keys])
+
+
+def _context_limit(forecaster: Forecaster) -> int | None:
+    """Number of trailing observations the model reads, when it exposes a cap."""
+    limit = getattr(forecaster, "context_length", None)
+    if isinstance(limit, int | np.integer) and not isinstance(limit, bool):
+        return int(limit) if limit > 0 else None
+    return None
 
 
 def explain_forecaster(
@@ -556,7 +582,17 @@ def explain_forecaster(
         baseline=baseline,
         use_nan=use_nan,
         max_batch_series=cfg.max_batch_series,
+        context_length=_context_limit(forecaster),
     )
+    unseen = [hist_labels[i] for i in np.flatnonzero(evaluator.always_dead)]
+    if unseen:
+        warnings.warn(
+            f"History window(s) {unseen} hold no observations the model can see "
+            "(they are empty or lie beyond the model's `context_length`), so "
+            "they get zero attribution. Use smaller history boundaries.",
+            UserWarning,
+            stacklevel=3,
+        )
     ones = np.ones((1, n_players))
     full = evaluator(ones)[0]
     base_flat = evaluator.base_flat
