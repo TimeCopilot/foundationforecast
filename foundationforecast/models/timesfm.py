@@ -21,6 +21,7 @@ from ..core.forecaster import (
     maybe_convert_col_to_datetime,
 )
 from ..core.quantiles import quantile_column_name, resolve_quantile_values
+from ..core.shap import ShapExplanations
 from ..core.utils import PanelData, TimeSeriesDataset
 
 # Legacy HF repo IDs from GIFT-Eval submissions without "pytorch" in the name.
@@ -41,11 +42,13 @@ class _TimesFMV1(ExogCapableForecaster):
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
         prediction_intervals: ConformalIntervals | None = None,
+        explanations: ShapExplanations | None = None,
     ):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
             prediction_intervals=prediction_intervals,
+            explanations=explanations,
         )
         self.repo_id = repo_id
         self.context_length = context_length
@@ -192,12 +195,14 @@ class _TimesFMV2_p5(ExogCapableForecaster):
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
         prediction_intervals: ConformalIntervals | None = None,
+        explanations: ShapExplanations | None = None,
         **kwargs: Any,
     ):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
             prediction_intervals=prediction_intervals,
+            explanations=explanations,
         )
         self.repo_id = repo_id
         self.context_length = context_length
@@ -322,12 +327,14 @@ class _TimesFMV3(ExogCapableForecaster):
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
         prediction_intervals: ConformalIntervals | None = None,
+        explanations: ShapExplanations | None = None,
         **kwargs: Any,
     ):
         super().__init__(
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
             prediction_intervals=prediction_intervals,
+            explanations=explanations,
         )
         self.repo_id = repo_id
         self.context_length = context_length
@@ -568,6 +575,7 @@ class TimesFM(ExogCapableForecaster):
         reuse_loaded_model: bool = True,
         exog_strategy: ExogStrategyConfig = "auto",
         prediction_intervals: ConformalIntervals | None = None,
+        explanations: ShapExplanations | None = None,
         **kwargs: Any,
     ):
         if "pytorch" not in repo_id and repo_id not in _GIFT_EVAL_LEGACY_REPOS:
@@ -586,6 +594,7 @@ class TimesFM(ExogCapableForecaster):
                 reuse_loaded_model=reuse_loaded_model,
                 exog_strategy=exog_strategy,
                 prediction_intervals=prediction_intervals,
+                explanations=explanations,
             )
         elif "2.5" in repo_id:
             return _TimesFMV2_p5(
@@ -596,6 +605,7 @@ class TimesFM(ExogCapableForecaster):
                 reuse_loaded_model=reuse_loaded_model,
                 exog_strategy=exog_strategy,
                 prediction_intervals=prediction_intervals,
+                explanations=explanations,
                 **kwargs,
             )
         elif "3.0" in repo_id:
@@ -607,6 +617,7 @@ class TimesFM(ExogCapableForecaster):
                 reuse_loaded_model=reuse_loaded_model,
                 exog_strategy=exog_strategy,
                 prediction_intervals=prediction_intervals,
+                explanations=explanations,
                 **kwargs,
             )
         else:
@@ -623,6 +634,7 @@ class TimesFM(ExogCapableForecaster):
         alias: str = "TimesFM",
         reuse_loaded_model: bool = True,
         prediction_intervals: ConformalIntervals | None = None,
+        explanations: ShapExplanations | None = None,
         **kwargs: Any,
     ):
         """
@@ -654,6 +666,9 @@ class TimesFM(ExogCapableForecaster):
                 ``forecast()`` replaces native quantiles with conformal intervals
                 calibrated on cross-validation errors of the point forecast. See
                 the conformal prediction docs. Defaults to None.
+            explanations (ShapExplanations | None, optional): Default settings
+                for ``explain()``. ``forecast()`` never computes attributions.
+                See the explainability guide. Defaults to None.
             reuse_loaded_model (bool, optional): When True (default), reuse
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and

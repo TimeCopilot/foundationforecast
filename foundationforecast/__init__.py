@@ -3,6 +3,7 @@ import sys
 from ._foundation_forecast import FoundationForecast
 from .core.conformal import ConformalIntervals
 from .core.model_weight_cache import set_max_cached_models
+from .core.shap import ShapExplanations
 from .models import (
     Chronos,
     ChronosFinetuningConfig,
@@ -18,6 +19,7 @@ from .models import (
 __all__ = [
     "ConformalIntervals",
     "FoundationForecast",
+    "ShapExplanations",
     "set_max_cached_models",
     "Chronos",
     "ChronosFinetuningConfig",

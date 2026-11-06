@@ -23,6 +23,7 @@ from ..core.quantiles import (
     backend_quantile_levels,
     select_clipped_quantile_values,
 )
+from ..core.shap import ShapExplanations
 from ..core.utils import PanelData
 
 
@@ -63,6 +64,7 @@ class T0(ExogCapableForecaster):
         snap_integers: bool = False,
         cross_inference: int = 0,
         prediction_intervals: ConformalIntervals | None = None,
+        explanations: ShapExplanations | None = None,
     ):
         # ruff: noqa: E501
         """
@@ -105,6 +107,9 @@ class T0(ExogCapableForecaster):
                 ``forecast()`` replaces native quantiles with conformal intervals
                 calibrated on cross-validation errors of the point forecast. See
                 the conformal prediction docs. Defaults to None.
+            explanations (ShapExplanations | None, optional): Default settings
+                for ``explain()``. ``forecast()`` never computes attributions.
+                See the explainability guide. Defaults to None.
 
         Notes:
             **Requirements:**
@@ -144,6 +149,7 @@ class T0(ExogCapableForecaster):
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
             prediction_intervals=prediction_intervals,
+            explanations=explanations,
         )
         self.repo_id = repo_id
         self.context_length = context_length

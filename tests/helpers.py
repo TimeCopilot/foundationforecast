@@ -99,8 +99,15 @@ def generate_series_with_anomalies(
 
 
 class DummyModel(ExogCapableForecaster):
-    def __init__(self, alias: str = "dummy", reuse_loaded_model: bool = True):
-        super().__init__(reuse_loaded_model=reuse_loaded_model)
+    def __init__(
+        self,
+        alias: str = "dummy",
+        reuse_loaded_model: bool = True,
+        explanations=None,
+    ):
+        super().__init__(
+            reuse_loaded_model=reuse_loaded_model, explanations=explanations
+        )
         self.alias = alias
 
     def _forecast_univariate(

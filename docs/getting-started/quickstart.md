@@ -2,9 +2,17 @@
 
 ## Installation
 
-```bash
-pip install foundationforecast
-```
+=== "pip"
+
+    ```bash
+    pip install foundationforecast
+    ```
+
+=== "uv"
+
+    ```bash
+    uv add foundationforecast
+    ```
 
 Requires Python 3.10 or later. See [Installation](installation.md) for version-specific model notes.
 
@@ -35,9 +43,17 @@ Your DataFrame must include:
 
 Install plotting extras:
 
-```bash
-pip install "foundationforecast[plot]"
-```
+=== "pip"
+
+    ```bash
+    pip install "foundationforecast[plot]"
+    ```
+
+=== "uv"
+
+    ```bash
+    uv add "foundationforecast[plot]"
+    ```
 
 ```python
 from foundationforecast.core.forecaster import Forecaster

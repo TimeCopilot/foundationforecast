@@ -28,6 +28,7 @@ from ..core.conformal import ConformalIntervals
 from ..core.exog.covariates import ExogStrategyConfig
 from ..core.forecaster import ExogCapableForecaster, QuantileConverter
 from ..core.quantiles import resolve_quantile_values
+from ..core.shap import ShapExplanations
 from ..core.utils import PanelData
 
 TABPFN_V2_MODEL = "tabpfn-v2-regressor-2noar4o2.ckpt"
@@ -55,6 +56,7 @@ class TabPFN(ExogCapableForecaster):
         model_path: str = TABPFN_V2_MODEL,
         exog_strategy: ExogStrategyConfig = "auto",
         prediction_intervals: ConformalIntervals | None = None,
+        explanations: ShapExplanations | None = None,
     ):
         """
         Args:
@@ -86,6 +88,9 @@ class TabPFN(ExogCapableForecaster):
                 ``forecast()`` replaces native quantiles with conformal intervals
                 calibrated on cross-validation errors of the point forecast. See
                 the conformal prediction docs. Defaults to None.
+            explanations (ShapExplanations | None, optional): Default settings
+                for ``explain()``. ``forecast()`` never computes attributions.
+                See the explainability guide. Defaults to None.
             reuse_loaded_model (bool, optional): When True (default), reuse
                 loaded checkpoint weights across repeated ``forecast()`` calls
                 via the process-wide LRU cache. Set to False to load and
@@ -120,6 +125,7 @@ class TabPFN(ExogCapableForecaster):
             reuse_loaded_model=reuse_loaded_model,
             exog_strategy=exog_strategy,
             prediction_intervals=prediction_intervals,
+            explanations=explanations,
         )
         if features is None:
             features = [

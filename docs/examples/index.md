@@ -13,6 +13,7 @@ For model API details, see the [Model Hub](../model-hub.md).
 | [Compare Foundation Models](ts-foundation-models-comparison-quickstart.ipynb) | Benchmark multiple foundation models side by side | Python 3.10+; GPU optional |
 | [Exogenous variables](exogenous-variables.ipynb) | Panel forecast with `X_df`, native exog, and `exog_strategy=False` for mixed models | Python 3.10+; GPU recommended for Chronos-2 |
 | [Conformal prediction](conformal-prediction.ipynb) | CV-calibrated intervals with `prediction_intervals` on M4 Hourly | Python 3.10+; GPU optional |
+| [Explainability](explainability.ipynb) | Shapley attributions with `explain()`: one model, several models, `nan` vs `fill` masking | Python 3.10+; `explain` extra; GPU optional |
 
 ## Foundation Models
 

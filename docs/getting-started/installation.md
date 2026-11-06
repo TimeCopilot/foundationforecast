@@ -22,9 +22,33 @@ Requires **Python 3.10 or later**.
 
     For notebook-style plotting helpers:
 
-    ```bash
-    pip install "foundationforecast[plot]"
-    ```
+    === "pip"
+
+        ```bash
+        pip install "foundationforecast[plot]"
+        ```
+
+    === "uv"
+
+        ```bash
+        uv add "foundationforecast[plot]"
+        ```
+
+=== "explain"
+
+    For Shapley attributions with `explain()` (`method="exact"` and `"permutation"`; see [Explainability](../explainability.md)):
+
+    === "pip"
+
+        ```bash
+        pip install "foundationforecast[explain]"
+        ```
+
+    === "uv"
+
+        ```bash
+        uv add "foundationforecast[explain]"
+        ```
 
 ## Python version and model availability
 

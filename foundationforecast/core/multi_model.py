@@ -14,6 +14,7 @@ from .exog.covariates import (
 )
 from .exog.futr_exog import futr_exog_unsupported_message
 from .forecaster import Forecaster, maybe_infer_freq
+from .shap import ShapExplanations
 from .utils import PanelData, process_panel_from_df
 
 
@@ -63,7 +64,7 @@ def _model_uses_horizon_exog(
     strategy = normalize_exog_strategy(getattr(model, "exog_strategy", "auto"))
     if exog_strategy_disabled(strategy):
         return False
-    if attr == "forecast":
+    if attr in ("forecast", "explain"):
         horizon_df = resolve_horizon_exog_df(
             kwargs.get("X_df"),  # type: ignore[arg-type]
             kwargs.get("futr_df"),  # type: ignore[arg-type]
@@ -156,9 +157,10 @@ class MultiModelForecasterMixin:
                 "df": df,
                 "h": h,
                 "freq": freq,
-                "level": level,
             }
-            if attr != "detect_anomalies":
+            if attr != "explain":
+                known_kwargs["level"] = level
+            if attr not in ("detect_anomalies", "explain"):
                 known_kwargs["quantiles"] = quantiles
             fn = getattr(model, attr)
             exog_kwargs = _optional_exog_kwargs(kwargs)
@@ -285,6 +287,58 @@ class MultiModelForecasterMixin:
             n_windows=n_windows,
             step_size=step_size,
             futr_exog_list=futr_exog_list,
+        )
+
+    def explain(
+        self,
+        df: pd.DataFrame,
+        h: int,
+        freq: str | None = None,
+        X_df: pd.DataFrame | None = None,
+        *,
+        explanations: ShapExplanations | None = None,
+        futr_df: pd.DataFrame | None = None,
+        futr_exog_list: list[str] | None = None,
+        ids: list | None = None,
+    ) -> pd.DataFrame:
+        """Forecast and explain every model with additive Shapley contributions.
+
+        Each model runs its own `explain` and the columns are merged on
+        `unique_id` and `ds`. A model uses its own `explanations` unless
+        `explanations` is passed here, which overrides them for every model.
+        `forecast` never computes attributions. See the explainability guide.
+
+        Args:
+            df: Historical data with columns `unique_id`, `ds`, and `y`, plus any
+                exogenous columns.
+            h: Forecast horizon, in steps of `freq`.
+            freq: Pandas frequency of `ds`. Inferred from `df` when omitted.
+            X_df: Known-future exogenous values for the next `h` steps, with
+                `unique_id`, `ds`, and the exogenous columns (no `y`).
+            explanations: Settings applied to every model for this call.
+            futr_df: Alias for `X_df`.
+            futr_exog_list: Exogenous column names to use. Inferred from `X_df`
+                when omitted.
+            ids: Explain only these `unique_id` values.
+
+        Returns:
+            One row per series and future timestamp, with `unique_id`, `ds`, and
+                for each model alias the forecast, `{alias}-shap-base`, and one
+                `{alias}-shap-*` column per player.
+        """
+        return self._call_models(
+            "explain",
+            merge_on=["unique_id", "ds"],
+            df=df,
+            h=h,
+            freq=freq,
+            level=None,
+            quantiles=None,
+            X_df=X_df,
+            futr_df=futr_df,
+            futr_exog_list=futr_exog_list,
+            ids=ids,
+            explanations=explanations,
         )
 
     def detect_anomalies(
