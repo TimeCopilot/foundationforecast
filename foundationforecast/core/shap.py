@@ -232,6 +232,13 @@ class CoalitionEvaluator:
         self.windows = windows
         self.n_hist = n_hist
         self.codes = codes
+        # (series, window) pairs that hold at least one observation; an empty
+        # window cannot change the model input, so it never counts as "on".
+        self.nonempty = (
+            np.bincount(codes * n_hist + windows, minlength=len(series_index) * n_hist)
+            .reshape(len(series_index), n_hist)
+            .astype(bool)
+        )
         self.n_series = len(series_index)
         self.baseline = baseline
         self.use_nan = use_nan
@@ -264,10 +271,21 @@ class CoalitionEvaluator:
         hist_on: np.ndarray,
         cols: tuple[str, ...],
         labels: np.ndarray,
-    ) -> dict[str, np.ndarray]:
-        oldest_on = int(np.flatnonzero(hist_on).max())
-        keep = self.windows <= oldest_on
-        masked = keep & ~hist_on[self.windows]
+    ) -> tuple[dict[str, np.ndarray], np.ndarray]:
+        """Masked panel for one coalition and the series that fall back to base.
+
+        Empty windows are ignored per series. A series whose non-empty windows
+        are all off is explained by the baseline, so it is sent through the
+        model with its newest window unmasked and its forecast is replaced by
+        the baseline afterwards.
+        """
+        eff_on = self.nonempty & hist_on[None, :]
+        dead = ~eff_on.any(axis=1)
+        eff_on[dead, 0] = True
+        positions = np.arange(self.n_hist)
+        oldest_on = np.where(eff_on, positions[None, :], -1).max(axis=1)
+        keep = self.windows <= oldest_on[self.codes]
+        masked = keep & ~eff_on[self.codes, self.windows]
         y = self._y.copy()
         if self.use_nan:
             y[masked] = np.nan
@@ -281,7 +299,7 @@ class CoalitionEvaluator:
         }
         for c in cols:
             out[c] = self._exog_hist[c][idx]
-        return out
+        return out, dead
 
     def _stacked_horizon(
         self,
@@ -311,6 +329,7 @@ class CoalitionEvaluator:
             label_to_pos: dict[str, int] = {}
             hist_parts = []
             horizon_parts = []
+            dead_rows = []
             for j, row in enumerate(chunk):
                 labels = np.array(
                     [f"c{j}:{s}" for s in range(self.n_series)], dtype=object
@@ -318,7 +337,9 @@ class CoalitionEvaluator:
                 for s, label in enumerate(labels):
                     label_to_pos[label] = j * self.n_series + s
                 hist_on = masks[row, : self.n_hist]
-                hist_parts.append(self._masked_history(hist_on, cols, labels))
+                part, dead = self._masked_history(hist_on, cols, labels)
+                hist_parts.append(part)
+                dead_rows.append(dead)
                 if cols:
                     horizon_parts.append(self._stacked_horizon(cols, labels))
             hist_df = pd.DataFrame(
@@ -339,7 +360,10 @@ class CoalitionEvaluator:
                 )
             order = np.lexsort((fcst["ds"].to_numpy(), pos.to_numpy()))
             vals = fcst[alias].to_numpy(dtype=float)[order]
-            result[start : start + len(chunk)] = vals.reshape(len(chunk), self.n_out)
+            block = vals.reshape(len(chunk), self.n_series, self.h).copy()
+            for j, dead in enumerate(dead_rows):
+                block[j, dead] = self.baseline[dead, None]
+            result[start : start + len(chunk)] = block.reshape(len(chunk), self.n_out)
             if self.future_ds is None:
                 ds_sorted = fcst["ds"].to_numpy()[order]
                 self.future_ds = ds_sorted.reshape(len(chunk), self.n_series, self.h)[0]
