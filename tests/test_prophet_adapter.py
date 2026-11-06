@@ -2,6 +2,7 @@ import copy
 import logging
 import pickle
 import sys
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -403,16 +404,49 @@ def test_constructor_validation():
         FoundationProphet(model=NaiveForecaster(), insample_h=0)
 
 
-def test_prophet_arguments_are_accepted():
-    m = FoundationProphet(
-        model=NaiveForecaster(),
-        growth="linear",
-        yearly_seasonality=False,
-        seasonality_mode="multiplicative",
-        n_changepoints=5,
-    )
+def test_prophet_arguments_are_accepted_with_a_warning():
+    with pytest.warns(UserWarning, match="ignores") as record:
+        m = FoundationProphet(
+            model=NaiveForecaster(),
+            growth="linear",
+            yearly_seasonality=False,
+            seasonality_mode="multiplicative",
+            n_changepoints=5,
+        )
     assert m.seasonality_mode == "multiplicative"
     assert m.n_changepoints == 5
+    message = str(record[0].message)
+    # only the arguments that differ from Prophet's defaults are listed
+    assert "`yearly_seasonality`" in message
+    assert "`seasonality_mode`" in message
+    assert "`n_changepoints`" in message
+    assert "`growth`" not in message
+
+
+def test_ignored_holidays_dataframe_warns():
+    holidays = pd.DataFrame({"holiday": ["x"], "ds": pd.to_datetime(["2024-01-05"])})
+    with pytest.warns(UserWarning, match="`holidays`"):
+        FoundationProphet(model=NaiveForecaster(), holidays=holidays)
+
+
+def test_no_warning_for_default_and_supported_arguments():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        FoundationProphet(
+            model=NaiveForecaster(),
+            interval_width=0.9,
+            insample="none",
+            growth="linear",
+            seasonality_mode="additive",
+        )
+
+
+def test_add_seasonality_and_country_holidays_warn():
+    m = FoundationProphet(model=NaiveForecaster())
+    with pytest.warns(UserWarning, match="add_seasonality"):
+        m.add_seasonality("monthly", period=30.5, fourier_order=3)
+    with pytest.warns(UserWarning, match="add_country_holidays"):
+        m.add_country_holidays("US")
 
 
 def test_unsupported_methods_raise():
