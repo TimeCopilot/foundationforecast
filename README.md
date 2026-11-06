@@ -71,6 +71,10 @@ Your DataFrame needs three columns: `unique_id`, `ds`, and `y`. For best results
 - 💸 **Full GIFT-Eval replication for $37.** 16 models, 97 dataset configurations each, in about 34 GPU-hours, every model with an official submission within 2% of its leaderboard MASE/CRPS. TimesFM 3 is the most accurate, for under $8. Read the [writeup](https://github.com/TimeCopilot/foundationforecast/blob/main/experiments/gift-eval/README.md).
 - 🎯 **Benchmark replication in CI.** Wrappers are regression-tested against official leaderboard submissions: [`experiments/gift-eval`](https://github.com/TimeCopilot/foundationforecast/tree/main/experiments/gift-eval) (GIFT-Eval MASE/CRPS on Modal GPU) and [`experiments/fev-bench`](https://github.com/TimeCopilot/foundationforecast/tree/main/experiments/fev-bench) (fev-bench `test_error` on known-dynamic tasks). [CI](https://github.com/TimeCopilot/foundationforecast/actions/workflows/ci.yaml) re-runs these checks on every change.
 - 🚀 **GPU-native**. Automatically runs on GPU when available, without model-specific device configuration.
+- 🔮 **Prophet adapter.** Swap `Prophet()` for `FoundationProphet(model=Chronos())` in existing Prophet pipelines: `fit`, `make_future_dataframe`, `predict`, `plot` and Prophet's diagnostics keep working, with any foundation model underneath. Install with `foundationforecast[prophet]`; see the [guide](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/prophet-adapter.md) and [example notebook](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/examples/prophet-adapter.ipynb).
+
+  <p align="center"><img src="https://timecopilot.s3.amazonaws.com/public/data/images/prophet_adapter_before_after.gif" alt="Swap Prophet for a foundation model: the same Prophet pipeline with Prophet() and with FoundationProphet(model=...), then switching between Timestral, Chronos-2 and TimesFM" width="800"></p>
+
 
 ---
 
@@ -186,6 +190,13 @@ Optional plotting support:
 ```bash
 uv add "foundationforecast[plot]"
 # or: pip install "foundationforecast[plot]"
+```
+
+Optional [Prophet adapter](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/prophet-adapter.md):
+
+```bash
+uv add "foundationforecast[prophet]"
+# or: pip install "foundationforecast[prophet]"
 ```
 
 ---

@@ -22,6 +22,7 @@ nav:
       - Forecasting Parameters: forecasting-parameters.md
       - Model Weight Cache: model-weight-cache.md
       - Conformal prediction: conformal-prediction.md
+      - Prophet adapter: prophet-adapter.md
   - Examples:
       - examples/index.md
       - Forecaster Quickstart: examples/forecaster-quickstart.ipynb
@@ -29,6 +30,7 @@ nav:
       - Compare Foundation Models: examples/ts-foundation-models-comparison-quickstart.ipynb
       - Exogenous variables: examples/exogenous-variables.ipynb
       - Conformal prediction: examples/conformal-prediction.ipynb
+      - Prophet adapter: examples/prophet-adapter.ipynb
       - Family Guides:
           - Chronos: examples/chronos-family.ipynb
           - TimesFM: examples/timesfm-family.ipynb
@@ -44,6 +46,7 @@ nav:
   - API Reference:
       - api/forecaster.md
       - Conformal intervals: api/core/conformal.md
+      - Prophet adapter: api/prophet.md
       - api/models/foundation/models.md
       - api/models/utils/forecaster.md
   - Experiments:
