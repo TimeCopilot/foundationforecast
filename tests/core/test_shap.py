@@ -23,8 +23,15 @@ class FakeForecaster(Forecaster):
 
     alias = "Fake"
 
-    def __init__(self, nan_ok: bool = True, exog: bool = True, **kwargs) -> None:
+    def __init__(
+        self,
+        nan_ok: bool = True,
+        exog: bool = True,
+        context_length: int | None = None,
+        **kwargs,
+    ) -> None:
         super().__init__(**kwargs)
+        self.context_length = context_length
         self.supports_nan_target = nan_ok
         self._exog = exog
         self.calls: list[pd.DataFrame] = []
@@ -53,6 +60,8 @@ class FakeForecaster(Forecaster):
             "unique_id", sort=False
         ):
             y = g["y"].to_numpy(dtype=float)
+            if self.context_length:
+                y = y[-self.context_length :]
             if not self.supports_nan_target:
                 assert not np.isnan(y).any(), "model received NaN targets"
             recent = np.nanmean(y[-6:]) if not np.isnan(y[-6:]).all() else 0.0
@@ -502,7 +511,8 @@ def test_empty_history_window_gets_no_credit():
     short = df.tail(40)
     model = FakeForecaster()
     cfg = ShapExplanations(history=[30, 60], exog=False, method="exact")
-    out = model.explain(short, H, freq="h", explanations=cfg)
+    with pytest.warns(UserWarning, match="hist.*older|older"):
+        out = model.explain(short, H, freq="h", explanations=cfg)
 
     assert shap_cols(out) == [
         "Fake-shap-base",
@@ -530,3 +540,36 @@ def test_window_empty_for_only_some_series_gets_no_credit_there():
     long = out[out["unique_id"] == "s0"]
     assert (long["Fake-shap-hist-older"].abs() > 1e-6).any()
     np.testing.assert_allclose(out[shap_cols(out)].sum(axis=1), out["Fake"])
+
+
+@pytest.mark.parametrize("nan_ok", [True, False])
+def test_window_beyond_model_context_gets_no_credit_and_warns(nan_ok):
+    df, _ = make_data(1)
+    cfg = ShapExplanations(history=[1, 30], exog=False, method="exact")
+    model = FakeForecaster(nan_ok=nan_ok, context_length=20)
+    with pytest.warns(UserWarning, match="older"):
+        out = model.explain(df, H, freq="h", explanations=cfg)
+
+    np.testing.assert_allclose(out["Fake-shap-hist-older"], 0.0, atol=1e-10)
+    np.testing.assert_allclose(out[shap_cols(out)].sum(axis=1), out["Fake"])
+    # the visible windows still carry the attribution
+    assert (out["Fake-shap-hist-1-30"].abs() > 1e-6).any()
+
+
+def test_partially_visible_window_is_still_a_player():
+    df, _ = make_data(1)
+    cfg = ShapExplanations(history=[1, 30], exog=False, method="exact")
+    model = FakeForecaster(context_length=20)
+    with pytest.warns(UserWarning):
+        out = model.explain(df, H, freq="h", explanations=cfg)
+    assert out["Fake-shap-hist-1-30"].abs().max() > 1e-6
+
+
+def test_no_warning_when_all_windows_are_visible():
+    import warnings
+
+    df, _ = make_data(1)
+    cfg = ShapExplanations(history=[6, 24], exog=False, method="exact")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        FakeForecaster(context_length=10_000).explain(df, H, freq="h", explanations=cfg)
