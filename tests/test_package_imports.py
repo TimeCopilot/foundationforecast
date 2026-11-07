@@ -13,6 +13,7 @@ def test_core_exports_import():
         Moirai,
         TimeGPT,
         TimesFM,
+        Timestral,
         Toto,
     )
 
