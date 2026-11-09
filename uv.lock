@@ -1459,6 +1459,7 @@ dependencies = [
     { name = "tafsut" },
     { name = "tfc-t0", extra = ["torch"], marker = "python_full_version >= '3.11' and python_full_version < '3.14'" },
     { name = "timecopilot-chronos-forecasting" },
+    { name = "timecopilot-kumo-forecast" },
     { name = "timecopilot-timesfm" },
     { name = "timecopilot-timestral" },
     { name = "timecopilot-tirex", marker = "python_full_version >= '3.11'" },
@@ -1524,6 +1525,7 @@ requires-dist = [
     { name = "tafsut", specifier = ">=0.1.0" },
     { name = "tfc-t0", extras = ["torch"], marker = "python_full_version >= '3.11' and python_full_version < '3.14'", specifier = ">=0.6.0" },
     { name = "timecopilot-chronos-forecasting", specifier = ">=0.2.2" },
+    { name = "timecopilot-kumo-forecast", specifier = ">=0.1.0" },
     { name = "timecopilot-timesfm", specifier = ">=0.4.1" },
     { name = "timecopilot-timestral", specifier = ">=0.1.0" },
     { name = "timecopilot-tirex", marker = "python_full_version >= '3.11'", specifier = ">=0.1.1" },
@@ -6289,6 +6291,24 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b3/90/465f1d79e76698549679dab143d98730de947f3a8366cdde55d9e6bbeab0/timecopilot_dd_unit_scaling-0.1.0.tar.gz", hash = "sha256:249a126ca734ead5a7a7a9c48adf494d6d7e2f481c65efb9f7bd9140051fb44b", size = 15148, upload-time = "2026-06-03T17:49:03.119Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fb/57/04e5e2ecf3932dfc50008c59e296c240c0f51b6bc13761ac9bb009273d20/timecopilot_dd_unit_scaling-0.1.0-py3-none-any.whl", hash = "sha256:fd703cec2c07c02bf183e61908b0b8d5386d9bd5c6678bfe49ff162bff9180f5", size = 14990, upload-time = "2026-06-03T17:49:02.018Z" },
+]
+
+[[package]]
+name = "timecopilot-kumo-forecast"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "huggingface-hub" },
+    { name = "joblib" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and python_full_version < '3.14'" },
+    { name = "torch", version = "2.13.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or python_full_version >= '3.14'" },
+    { name = "transformers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2a/22/8cd247d191e4061a051acfc8f5c8524e283f493ffd1db4b44bb0f7f552e9/timecopilot_kumo_forecast-0.1.0.tar.gz", hash = "sha256:c66ebe7d9be0fe9ee4f8dcfbb0b8a2ba0df6be844b6b3c7add7ac128575efb7c", size = 137607, upload-time = "2026-11-09T19:36:39.367Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d1/ed/4345fde5b055df13e0b5a0a2beed831dbd5f05fdebab4abfdd3a5c2ce88b/timecopilot_kumo_forecast-0.1.0-py3-none-any.whl", hash = "sha256:6f8f7482723481773a52be215b6daf597edbdafd6fff253495f526267089684e", size = 17526, upload-time = "2026-11-09T19:36:38.107Z" },
 ]
 
 [[package]]

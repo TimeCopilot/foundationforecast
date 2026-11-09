@@ -88,6 +88,7 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 | :-: | --- | :-: | :-: | :-: | :-: | :-: | :-: | --- |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/amazon.png" width="28" alt="Amazon"> | [Chronos](https://arxiv.org/abs/2403.07815) | ✓ | ✓ | ✓ | ✓ | ✓¶ | ✓ | Apache-2.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/ibm.png" width="28" alt="IBM"> | [FlowState](https://arxiv.org/abs/2508.05287) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
+| <img src="https://cdn-avatars.huggingface.co/v1/production/uploads/65df9200dc3292a8983e5017/Vs5FPVCH-VZBipV3qKTuy.png" width="28" alt="NVIDIA"> | [Kumo-Forecast](https://github.com/NVIDIA/Kumo-TS) | ✓ | ✓ | ✓ | ✓‡‡ | | | Apache-2.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/salesforce.png" width="28" alt="Salesforce"> | [Moirai](https://arxiv.org/abs/2402.02592) | ✓ | ✓ | ✓ | ✓ | | | CC-BY-NC-4.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/ibm.png" width="28" alt="IBM"> | [PatchTST-FM](https://arxiv.org/abs/2602.06909) | ✓ | ✓ | ✓ | ✓ | | | CC-BY-NC-SA-4.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/thuml.png" width="28" alt="THUML"> | [Sundial](https://arxiv.org/abs/2502.00816) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
@@ -101,6 +102,8 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/google.png" width="28" alt="Google"> | [TimesFM](https://arxiv.org/abs/2310.10688) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Apache-2.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/mistral.png" width="28" alt="Mistral"> | [Timestral](https://huggingface.co/collections/mistralai/timestral) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Modified MIT∥ |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/datadog.png" width="28" alt="Datadog"> | [Toto](https://arxiv.org/abs/2505.14766) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
+
+‡‡ **Intervals (conformal only):** **Kumo** is a point forecaster; `level` / `quantiles` require `prediction_intervals=ConformalIntervals(...)` and otherwise raise a `ValueError`. See [Conformal prediction](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/conformal-prediction.md).
 
 Licenses verified against Hugging Face model cards. Check the model card for your `repo_id` when in doubt.
 
@@ -128,6 +131,7 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 
 - **Chronos:** `amazon/chronos-t5-{tiny,mini,small,base,large}`, `amazon/chronos-bolt-{tiny,mini,small,base}`, `amazon/chronos-2`
 - **FlowState:** `ibm-research/flowstate`, `ibm-granite/granite-timeseries-flowstate-r1`
+- **Kumo:** `nvidia/Kumo-Forecast` (point forecasts; requires `timecopilot-kumo-forecast>=0.1.0`)
 - **Moirai:** `Salesforce/moirai-{1.0,1.1,2.0}-R-{small,base,large}`, `Salesforce/moirai-moe-1.0-R-*`
 - **PatchTST-FM:** `ibm-research/patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r2` (r2 requires `granite-tsfm>=0.3.9`)
 - **Sundial:** `thuml/sundial-base-128m`

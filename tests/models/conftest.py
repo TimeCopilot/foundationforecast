@@ -2,6 +2,7 @@ import sys
 
 from foundationforecast.core.conformal import ConformalIntervals
 from foundationforecast.models.chronos import Chronos
+from foundationforecast.models.kumo import Kumo
 from foundationforecast.models.moirai import Moirai
 from foundationforecast.models.tabby import Tabby
 from foundationforecast.models.tafsut import Tafsut
@@ -43,6 +44,7 @@ models = [
         repo_id="Salesforce/moirai-2.0-R-small",
     ),
     Tafsut(context_length=512, batch_size=2),
+    Kumo(context_length=256, batch_size=2),
     Tabby(context_length=512, batch_size=2),
     Timestral(
         repo_id="mistralai/Timestral-5M",
@@ -154,6 +156,12 @@ conformal_models = [
         context_length=512,
         batch_size=2,
         alias="Tafsut-CF",
+        prediction_intervals=ConformalIntervals(n_windows=2),
+    ),
+    Kumo(
+        context_length=256,
+        batch_size=2,
+        alias="Kumo-CF",
         prediction_intervals=ConformalIntervals(n_windows=2),
     ),
     Chronos(

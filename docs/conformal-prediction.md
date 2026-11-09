@@ -5,6 +5,7 @@ FoundationForecast can calibrate **distribution-free prediction intervals** from
 ## When to use it
 
 - You need **wide levels** (e.g. 95%) from a model whose quantile head stops at fixed knots. Tafsut and Chronos-Bolt predict quantiles 0.1 to 0.9 only, so their native 95% interval is clamped to the 80% one; conformal intervals are not bound by those knots.
+- The model produces **only point forecasts** and is not natively probabilistic, e.g. Kumo-Forecast. Without `prediction_intervals`, `level` / `quantiles` raise a `ValueError`; with it you get calibrated intervals.
 - You want intervals from **empirical forecast errors** on your own history (per series), rather than the model’s built-in uncertainty.
 - You accept the extra compute: about **one panel point forecast per calibration window**, plus the final forecast.
 

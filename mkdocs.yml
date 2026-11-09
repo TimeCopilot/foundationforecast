@@ -37,6 +37,7 @@ nav:
           - TiRex: examples/tirex-family.ipynb
           - Tabby: examples/tabby-family.ipynb
           - TabPFN: examples/tabpfn-family.ipynb
+          - Kumo: examples/kumo-family.ipynb
           - Toto: examples/toto-family.ipynb
           - PatchTST-FM: examples/patchtst-fm-family.ipynb
           - Timestral: examples/timestral-family.ipynb

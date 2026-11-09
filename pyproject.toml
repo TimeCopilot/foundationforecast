@@ -59,6 +59,7 @@ dependencies = [
   "tafsut>=0.1.0",
   "tfc-t0[torch]>=0.6.0 ; python_full_version >= '3.11' and python_full_version < '3.14'",
   "timecopilot-chronos-forecasting>=0.2.2",
+  "timecopilot-kumo-forecast>=0.1.0",
   "timecopilot-timesfm>=0.4.1",
   "timecopilot-timestral>=0.1.0",
   "timecopilot-tirex2>=0.1.0 ; python_full_version >= '3.11'",
