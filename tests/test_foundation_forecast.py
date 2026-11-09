@@ -315,38 +315,30 @@ def test_foundation_forecast_validates_exog_before_fallback():
         forecaster.forecast(df=df, h=3, freq="D", X_df=X_df)
 
 
-def test_foundation_forecast_detect_anomalies_with_x_df_mixed_models():
+def test_foundation_forecast_detect_anomalies_exog_mixed_models():
     h = 3
     df, _, exog_cols = generate_panel_with_futr_exog(n_series=2, freq="D", h=h)
-    df_y, X_df = df.drop(columns=exog_cols), df[["unique_id", "ds", *exog_cols]]
     spy = ExogSpyModel()
     forecaster = FoundationForecast(
         models=[spy, DummyModel(alias="Univariate", exog_strategy=False)]
     )
-    result = forecaster.detect_anomalies(df=df_y, h=h, freq="D", n_windows=2, X_df=X_df)
+    result = forecaster.detect_anomalies(df=df, h=h, freq="D", n_windows=2)
     assert len(spy.horizon_dfs) == 2
     assert len(result) == 2 * 2 * h
     for alias in ("ExogSpy", "Univariate"):
         assert f"{alias}-anomaly" in result.columns
-    scored = result.merge(X_df, on=["unique_id", "ds"])
+    scored = result.merge(df[["unique_id", "ds", *exog_cols]], on=["unique_id", "ds"])
     pd.testing.assert_series_equal(
         scored["ExogSpy"], scored["x1"] + scored["x2"], check_names=False
     )
     assert (result["Univariate"] == 1.0).all()
 
 
-@pytest.mark.parametrize("pass_x_df", [True, False])
-def test_foundation_forecast_detect_anomalies_validates_exog_before_fallback(
-    pass_x_df,
-):
+def test_foundation_forecast_detect_anomalies_validates_exog_before_fallback():
     df, _, exog_cols = generate_panel_with_futr_exog(n_series=1, freq="D", h=3)
     forecaster = FoundationForecast(
         models=[DummyModel(alias="NonNative")],
         fallback_model=ExogSpyModel(alias="Fallback"),
     )
-    kwargs = {}
-    if pass_x_df:
-        kwargs["X_df"] = df[["unique_id", "ds", *exog_cols]]
-        df = df.drop(columns=exog_cols)
     with pytest.raises(ValueError, match="does not support known-future"):
-        forecaster.detect_anomalies(df=df, h=3, freq="D", **kwargs)
+        forecaster.detect_anomalies(df=df, h=3, freq="D")

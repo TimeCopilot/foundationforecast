@@ -284,7 +284,7 @@ def test_exog_cross_validation_using_level(model):
 
 
 @pytest.mark.parametrize("model", models)
-def test_exog_detect_anomalies_with_X_df(model):
+def test_exog_detect_anomalies(model):
     if not model.supports_native_futr_exog():
         pytest.skip("known-future exog requires native checkpoint support")
     h = 2
@@ -296,14 +296,12 @@ def test_exog_detect_anomalies_with_X_df(model):
         min_length=32,
         max_length=32,
     )
-    X_df = df[["unique_id", "ds", *futr_exog_list]]
     anomalies_df = model.detect_anomalies(
-        df=df.drop(columns=futr_exog_list),
+        df=df,
         h=h,
         freq="D",
         n_windows=2,
         level=95,
-        X_df=X_df,
         futr_exog_list=futr_exog_list,
     )
     assert len(anomalies_df) == n_series * 2 * h

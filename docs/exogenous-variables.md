@@ -9,16 +9,12 @@ horizon. Iteration 1 supports **future-known dynamic** covariates only.
   the observed period. For **`cross_validation()`** and **`detect_anomalies()`**, also
   include exog (and `y`) through the end of each fold so horizon covariates are read
   from `df`.
-- **`X_df`**: `unique_id`, `ds`, exog columns (no `y`).
-    - On **`forecast()`**: values for the **next `h` steps**.
-    - On **`detect_anomalies()`**: optional alternative to exog columns in `df`, with a
-      row for **every** `(unique_id, ds)` in `df` (extra rows are ignored). See
-      [Anomaly detection](#anomaly-detection).
+- **`X_df`**: `unique_id`, `ds`, exog columns for the **next `h` steps** (no `y`). Used by
+  **`forecast()`** only.
 - Alias: **`futr_df`** = same as **`X_df`** on **`forecast()`**.
 - **`futr_exog_list`** (optional): exog column names only (not `unique_id`, `ds`, or `y`).
-  On **`forecast()`**, infer from `X_df` if omitted. On **`cross_validation()`**, infer
-  from non-target columns in `df` if omitted. On **`detect_anomalies()`**, infer from
-  `X_df` when passed, otherwise from non-target columns in `df`.
+  On **`forecast()`**, infer from `X_df` if omitted. On **`cross_validation()`** and
+  **`detect_anomalies()`**, infer from non-target columns in `df` if omitted.
 
 ## Model constructor: `exog_strategy`
 
@@ -66,12 +62,8 @@ same native rules apply per checkpoint.
 `detect_anomalies()` runs in-sample cross-validation and flags values whose residual
 falls outside the `level` interval, so covariate-aware models should see the same
 covariates there as in `forecast()`. Every window is scored inside `df`, so covariates
-must cover the whole history. Either:
-
-- keep exog columns in **`df`**, exactly as for `cross_validation()`, or
-- pass them separately in **`X_df`** with a row for every `(unique_id, ds)` in `df`.
-  `X_df` is merged into `df` before the windows are built; a covariate cannot appear in
-  both.
+must cover the whole history: keep exog columns in **`df`**, exactly as for
+`cross_validation()`.
 
 In mixed `FoundationForecast` runs, set `exog_strategy=False` on models without native
 exog so they score anomalies univariately.
@@ -108,15 +100,6 @@ cv = model.cross_validation(df=df, h=24)
 
 # Anomaly detection: exog columns in `df`, as in cross-validation
 anomalies = ff.detect_anomalies(df=df, h=24, n_windows=2, level=99)
-
-# ...or covariates kept apart in an X_df covering every (unique_id, ds) in df
-exog_cols = ["ex_1", "ex_2"]
-anomalies = model.detect_anomalies(
-    df=df.drop(columns=exog_cols),
-    h=24,
-    n_windows=2,
-    X_df=df[["unique_id", "ds", *exog_cols]],
-)
 ```
 
 See `docs/examples/exogenous-variables.ipynb` for more models.
