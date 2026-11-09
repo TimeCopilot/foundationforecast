@@ -54,4 +54,17 @@ jobs:
         run: uv publish --trusted-publishing always
 
       - name: After publishing test
-        run: uv run --isolated --no-project -p 3.13 --with foundationforecast -- python -c "from foundationforecast import FoundationForecast; from foundationforecast.models import Chronos"
+        run: |
+          version="$(uv version --short)"
+          # Run outside the checkout so `python -c` imports the published
+          # package, not the repo source, and retry while PyPI's index catches up.
+          cd "$RUNNER_TEMP"
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if uv run --refresh --isolated --no-project -p 3.13 \
+              --with "foundationforecast==${version}" -- python -c "import foundationforecast; assert 'site-packages' in foundationforecast.__file__, foundationforecast.__file__; from foundationforecast import FoundationForecast; from foundationforecast.models import Chronos"; then
+              exit 0
+            fi
+            echo "Attempt ${attempt} failed; waiting for foundationforecast==${version} on PyPI"
+            sleep 20
+          done
+          exit 1
