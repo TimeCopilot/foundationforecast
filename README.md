@@ -148,10 +148,11 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 
 ## News
 
-Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.18.md) for full release notes.
+Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.19.md) for full release notes.
 
 | When | What | Checkpoint / detail |
 |------|------|---------------------|
+| Nov 2026 | **Prophet adapter** | `FoundationProphet(model=...)` — swap any foundation model into an existing Prophet pipeline (`fit`, `predict`, `plot`, diagnostics); install with `foundationforecast[prophet]` ([v0.1.19](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.19.md)) |
 | Nov 2026 | **Conformal prediction** | `ConformalIntervals` / `prediction_intervals=` — CV-calibrated `level` / `quantiles` from point-forecast errors; works on every model ([v0.1.18](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.18.md)) |
 | Oct 2026 | [**Tabby**](https://huggingface.co/paris-noah/Tabby) | `paris-noah/Tabby` — 99 native quantiles; `trust_remote_code`; CC-BY-NC-4.0; GIFT-Eval CI ([v0.1.17](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.17.md)) |
 | Oct 2026 | [**TimeH2O**](https://huggingface.co/h2oai/timeh2o-v1) | `h2oai/timeh2o-v1`, `h2oai/timeh2o-v1-tiny` — requires `h2ofm>=0.43.0` (Python 3.12+); native `X_df`; GIFT-Eval and fev-bench CI ([v0.1.16](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.16.md)) |
