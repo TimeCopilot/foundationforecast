@@ -6,6 +6,7 @@ from .core.model_weight_cache import set_max_cached_models
 from .models import (
     Chronos,
     ChronosFinetuningConfig,
+    Kumo,
     Moirai,
     Tabby,
     TimeGPT,
@@ -21,6 +22,7 @@ __all__ = [
     "set_max_cached_models",
     "Chronos",
     "ChronosFinetuningConfig",
+    "Kumo",
     "Moirai",
     "Tabby",
     "TimeGPT",

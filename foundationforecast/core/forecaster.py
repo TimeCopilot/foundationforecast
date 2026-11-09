@@ -330,6 +330,10 @@ class Forecaster:
         """Whether this forecaster can use native known-future exog APIs."""
         return False
 
+    def supports_native_quantiles(self) -> bool:
+        """Whether `level` / `quantiles` work without `prediction_intervals`."""
+        return True
+
     def _forecast_native_futr_exog(
         self,
         df: pd.DataFrame,
