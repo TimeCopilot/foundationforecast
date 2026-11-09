@@ -306,6 +306,8 @@ def test_passing_both_level_and_quantiles(model):
 
 @pytest.mark.parametrize("model", models)
 def test_using_quantiles(model):
+    if not model.supports_native_quantiles():
+        pytest.skip("no native quantiles; covered by the conformal tests")
     # 0.57: int(100×q) truncates to 56; output must use suffix 57 (100×q text).
     # 0.025 / 0.975: off 0.01 knot grid (interpolated on fixed-knot backends).
     qs = [round(i * 0.1, 1) for i in range(1, 10)] + [0.025, 0.57, 0.975]
@@ -331,6 +333,8 @@ def test_using_quantiles(model):
 
 @pytest.mark.parametrize("model", models)
 def test_using_level(model):
+    if not model.supports_native_quantiles():
+        pytest.skip("no native quantiles; covered by the conformal tests")
     # 20/40/60/80 hit decile knots; 50 → 0.25/0.75; 95 → 0.025/0.975 (interpolated)
     level = [20, 40, 50, 60, 80, 95]
     df = generate_series(n_series=2, freq="D")
