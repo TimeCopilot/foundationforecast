@@ -77,7 +77,7 @@ license = "Apache-2.0"
 name = "foundationforecast"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.1.19"
+version = "0.1.20"
 
 [project.optional-dependencies]
 plot = [

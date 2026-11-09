@@ -2,6 +2,7 @@
 
 Welcome to the FoundationForecast Changelog. Here you will find a list of changes, updates, and improvements for each release. Explore the details of each version below.
 
+- [v0.1.20](v0.1.20.md)
 - [v0.1.19](v0.1.19.md)
 - [v0.1.18](v0.1.18.md)
 - [v0.1.17](v0.1.17.md)
