@@ -131,7 +131,7 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 
 - **Chronos:** `amazon/chronos-t5-{tiny,mini,small,base,large}`, `amazon/chronos-bolt-{tiny,mini,small,base}`, `amazon/chronos-2`
 - **FlowState:** `ibm-research/flowstate`, `ibm-granite/granite-timeseries-flowstate-r1`
-- **Kumo:** `nvidia/Kumo-Forecast` (default, cross-channel) and `checkpoint="moment_head_512_6hr.pt"` (point forecasts; requires `timecopilot-kumo-forecast>=0.1.0`)
+- **Kumo:** `nvidia/Kumo-Forecast` (point forecasts; requires `timecopilot-kumo-forecast>=0.1.0`)
 - **Moirai:** `Salesforce/moirai-{1.0,1.1,2.0}-R-{small,base,large}`, `Salesforce/moirai-moe-1.0-R-*`
 - **PatchTST-FM:** `ibm-research/patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r2` (r2 requires `granite-tsfm>=0.3.9`)
 - **Sundial:** `thuml/sundial-base-128m`

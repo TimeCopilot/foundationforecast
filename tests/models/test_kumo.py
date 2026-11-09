@@ -123,14 +123,3 @@ def test_kumo_conformal_intervals_work(mocker):
     assert (fcst["Kumo-CF"] <= fcst["Kumo-CF-hi-80"]).all()
     point = model.forecast(df, h=3, freq="D")
     assert list(point.columns) == ["unique_id", "ds", "Kumo-CF"]
-
-
-@pytest.mark.models
-def test_kumo_base_checkpoint_forecasts_with_real_weights():
-    # the base checkpoint has no cross-channel attention, unlike the default one
-    model = Kumo(checkpoint="moment_head_512_6hr.pt", alias="Kumo-base", batch_size=2)
-    df = generate_series(2, freq="D", min_length=60, max_length=60)
-    fcst = model.forecast(df, h=80, freq="D")  # beyond the native 72-step horizon
-    assert fcst.shape[0] == 2 * 80
-    assert np.isfinite(fcst["Kumo-base"]).all()
-    model.clear_model_cache()
