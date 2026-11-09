@@ -38,6 +38,7 @@ FoundationForecast uses **`supports_native_futr_exog()`** on the forecaster inst
 |---------|------------------------|------------------|-------|
 | **Chronos** | contains `chronos-2` (case-insensitive), e.g. `amazon/chronos-2` | Yes | Other Chronos checkpoints → error with `X_df` |
 | **FlowState** | any | No | Use `exog_strategy=False` in multi-model runs |
+| **Kumo** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **Moirai** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **PatchTST-FM** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **Sundial** | any | No | Use `exog_strategy=False` in multi-model runs |

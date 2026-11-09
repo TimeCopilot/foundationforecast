@@ -90,6 +90,7 @@ When adding a new foundation model:
 **foundationforecast** uses forked Python packages maintained under custom names on PyPI:
 
 - **chronos-forecasting** — [`timecopilot-chronos-forecasting`](https://pypi.org/project/timecopilot-chronos-forecasting/)
+- **kumo-forecast** — [`timecopilot-kumo-forecast`](https://pypi.org/project/timecopilot-kumo-forecast/) (inference-only packaging of [NVIDIA Kumo-TS](https://github.com/NVIDIA/Kumo-TS))
 - **timesfm** — [`timecopilot-timesfm`](https://pypi.org/project/timecopilot-timesfm/)
 - **tirex** — [`timecopilot-tirex`](https://pypi.org/project/timecopilot-tirex/)
 - **toto** — [`timecopilot-toto`](https://pypi.org/project/timecopilot-toto/)
