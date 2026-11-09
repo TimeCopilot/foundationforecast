@@ -46,8 +46,9 @@ class Kumo(ExogCapableForecaster, _DataProcessor):
                 directory holding the checkpoint. Defaults to
                 "nvidia/Kumo-Forecast".
             checkpoint (str, optional): Checkpoint file inside `repo_id`.
-                Defaults to "run8_best_model_cr.pt", the published
-                512-step-context checkpoint.
+                Defaults to "run8_best_model_cr.pt" (with cross-channel
+                attention). The other published checkpoint is
+                "moment_head_512_6hr.pt" (without it).
             context_length (int, optional): Maximum number of recent
                 observations used per series. The published checkpoint reads
                 at most 512; shorter series are left-padded and masked.
