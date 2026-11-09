@@ -1236,7 +1236,7 @@ wheels = [
 
 [[package]]
 name = "foundationforecast"
-version = "0.1.18"
+version = "0.1.19"
 source = { editable = "../../" }
 dependencies = [
     { name = "gluonts", extra = ["torch"] },
@@ -1274,6 +1274,7 @@ requires-dist = [
     { name = "nixtla", specifier = ">=0.7.0" },
     { name = "pandas", marker = "python_full_version >= '3.13'", specifier = ">=2.2.0" },
     { name = "plotly", marker = "extra == 'plot'", specifier = ">=6.3.1" },
+    { name = "prophet", marker = "extra == 'prophet'", specifier = ">=1.1.6" },
     { name = "scipy" },
     { name = "tabpfn-time-series", marker = "python_full_version < '3.13'", specifier = ">=1.2.0" },
     { name = "tafsut", specifier = ">=0.1.0" },
@@ -1291,13 +1292,14 @@ requires-dist = [
     { name = "transformers", marker = "python_full_version >= '3.13'", specifier = ">=4.48,<6" },
     { name = "utilsforecast", specifier = ">=0.2.15" },
 ]
-provides-extras = ["plot"]
+provides-extras = ["plot", "prophet"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "mktestdocs", specifier = ">=0.2.5" },
     { name = "peft", specifier = ">=0.20.0,<1" },
     { name = "pre-commit" },
+    { name = "prophet", specifier = ">=1.1.6" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-codspeed", specifier = ">=5.0.3" },
     { name = "pytest-cov", specifier = ">=6.0" },
