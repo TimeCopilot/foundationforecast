@@ -1251,6 +1251,7 @@ dependencies = [
     { name = "tafsut" },
     { name = "tfc-t0", extra = ["torch"], marker = "python_full_version < '3.14'" },
     { name = "timecopilot-chronos-forecasting" },
+    { name = "timecopilot-kumo-forecast" },
     { name = "timecopilot-timesfm" },
     { name = "timecopilot-timestral" },
     { name = "timecopilot-tirex" },
@@ -1274,11 +1275,13 @@ requires-dist = [
     { name = "nixtla", specifier = ">=0.7.0" },
     { name = "pandas", marker = "python_full_version >= '3.13'", specifier = ">=2.2.0" },
     { name = "plotly", marker = "extra == 'plot'", specifier = ">=6.3.1" },
+    { name = "prophet", marker = "extra == 'prophet'", specifier = ">=1.1.6" },
     { name = "scipy" },
     { name = "tabpfn-time-series", marker = "python_full_version < '3.13'", specifier = ">=1.2.0" },
     { name = "tafsut", specifier = ">=0.1.0" },
     { name = "tfc-t0", extras = ["torch"], marker = "python_full_version >= '3.11' and python_full_version < '3.14'", specifier = ">=0.6.0" },
     { name = "timecopilot-chronos-forecasting", specifier = ">=0.2.2" },
+    { name = "timecopilot-kumo-forecast", specifier = ">=0.1.0" },
     { name = "timecopilot-timesfm", specifier = ">=0.4.1" },
     { name = "timecopilot-timestral", specifier = ">=0.1.0" },
     { name = "timecopilot-tirex", marker = "python_full_version >= '3.11'", specifier = ">=0.1.1" },
@@ -1291,13 +1294,14 @@ requires-dist = [
     { name = "transformers", marker = "python_full_version >= '3.13'", specifier = ">=4.48,<6" },
     { name = "utilsforecast", specifier = ">=0.2.15" },
 ]
-provides-extras = ["plot"]
+provides-extras = ["plot", "prophet"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "mktestdocs", specifier = ">=0.2.5" },
     { name = "peft", specifier = ">=0.20.0,<1" },
     { name = "pre-commit" },
+    { name = "prophet", specifier = ">=1.1.6" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-codspeed", specifier = ">=5.0.3" },
     { name = "pytest-cov", specifier = ">=6.0" },
@@ -5355,6 +5359,24 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/53/67/b14b13f1e52bc6d4f44f8524ee41c00399cdf9208f36cad408abe827f714/timecopilot_gift_eval-0.3.1.tar.gz", hash = "sha256:12296d5ea20e699fc72cc0ece08cf3bb2634e5f6a7346ce50dbe8d1166776ba2", size = 230414, upload-time = "2026-08-24T21:49:49.92Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b6/d8/58523eb3ff4aa94f80560527f8ad65d64bcf8470f299dd2cb4e44fdfa439/timecopilot_gift_eval-0.3.1-py3-none-any.whl", hash = "sha256:38479b2174d0b77939e53aaa1d196f7848c4baabfef40fc5371319ea21fe40c7", size = 11072, upload-time = "2026-08-24T21:49:48.78Z" },
+]
+
+[[package]]
+name = "timecopilot-kumo-forecast"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "huggingface-hub" },
+    { name = "joblib" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14'" },
+    { name = "torch", version = "2.13.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14'" },
+    { name = "transformers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2a/22/8cd247d191e4061a051acfc8f5c8524e283f493ffd1db4b44bb0f7f552e9/timecopilot_kumo_forecast-0.1.0.tar.gz", hash = "sha256:c66ebe7d9be0fe9ee4f8dcfbb0b8a2ba0df6be844b6b3c7add7ac128575efb7c", size = 137607, upload-time = "2026-11-09T19:36:39.367Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d1/ed/4345fde5b055df13e0b5a0a2beed831dbd5f05fdebab4abfdd3a5c2ce88b/timecopilot_kumo_forecast-0.1.0-py3-none-any.whl", hash = "sha256:6f8f7482723481773a52be215b6daf597edbdafd6fff253495f526267089684e", size = 17526, upload-time = "2026-11-09T19:36:38.107Z" },
 ]
 
 [[package]]
