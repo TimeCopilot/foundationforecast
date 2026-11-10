@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -162,3 +164,57 @@ def test_finite_sample_tied_zero_errors_and_integer_percent_float():
     )
     np.testing.assert_array_equal(out["M-lo-50.0"], fcst["M"])
     np.testing.assert_array_equal(out["M-hi-50.0"], fcst["M"])
+
+
+def test_finite_sample_warning_lists_unsupported_levels_once_for_all_models():
+    fcst, cs = _fcst_cs()
+    fcst["N"] = fcst["M"] + 100
+    cs["N"] = 2 * cs["M"]
+    with pytest.warns(UserWarning) as caught:
+        out = get_conformal_method("conformal_error_finite_sample")(
+            fcst, cs, ["M", "N"], [50, 80, 95.0], 2, 2, 1, 2
+        )
+    assert len(caught) == 1
+    message = str(caught[0].message)
+    assert "level 80 needs at least 4 calibration windows, got 2" in message
+    assert "level 95 needs at least 19 calibration windows, got 2" in message
+    assert "bounds are infinite" in message
+    assert "level 50" not in message
+    for model in ["M", "N"]:
+        assert np.isfinite(out[f"{model}-hi-50"]).all()
+        assert np.isposinf(out[f"{model}-hi-95.0"]).all()
+
+
+def test_finite_sample_warning_for_100_percent_level():
+    fcst, cs = _fcst_cs()
+    with pytest.warns(
+        UserWarning, match="level 100.*any number of calibration windows"
+    ):
+        out = get_conformal_method("conformal_error_finite_sample")(
+            fcst, cs, ["M"], [100], 2, 2, 1, 2
+        )
+    assert np.isneginf(out["M-lo-100"]).all()
+    assert np.isposinf(out["M-hi-100"]).all()
+
+
+@pytest.mark.parametrize("method", ["conformal_error", "conformal_error_finite_sample"])
+def test_finite_sample_warning_only_for_unsupported_corrected_levels(method):
+    fcst, _ = _fcst_cs()
+    cs = pd.DataFrame({"M": np.repeat(np.arange(1, 20), 2)})
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        get_conformal_method(method)(fcst, cs, ["M"], [80, 95], 19, 2, 1, 2)
+        if method == "conformal_error":
+            _, small_cs = _fcst_cs()
+            get_conformal_method(method)(fcst, small_cs, ["M"], [95], 2, 2, 1, 2)
+    assert not caught
+
+
+def test_finite_sample_zero_level_clamp_selects_first_error():
+    # Public level=0 is rejected; near-median quantile conversion can yield it.
+    fcst, cs = _fcst_cs()
+    out = get_conformal_method("conformal_error_finite_sample")(
+        fcst, cs, ["M"], [0], 2, 2, 1, 2
+    )
+    np.testing.assert_array_equal(out["M-lo-0"], fcst["M"] - [1.0, 2.0])
+    np.testing.assert_array_equal(out["M-hi-0"], fcst["M"] + [1.0, 2.0])

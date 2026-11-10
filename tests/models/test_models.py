@@ -375,7 +375,18 @@ def test_finite_sample_conformal_forecast(model, monkeypatch):
         ConformalIntervals(n_windows=4, method="conformal_error_finite_sample"),
     )
     df = generate_series(n_series=2, freq="D", min_length=40, max_length=40)
-    fcst = model.forecast(df=df, h=3, freq="D", level=[50, 80, 95])
+    with pytest.warns(
+        UserWarning,
+        match=(
+            "level 95 needs at least 19 calibration windows, got 4; "
+            "bounds are infinite"
+        ),
+    ) as caught:
+        fcst = model.forecast(df=df, h=3, freq="D", level=[50, 80, 95])
+    infinite_warnings = [
+        warning for warning in caught if "bounds are infinite" in str(warning.message)
+    ]
+    assert len(infinite_warnings) == 1
     assert fcst.shape == (6, 9)
     assert np.isfinite(fcst[model.alias]).all()
     for level in [50, 80]:

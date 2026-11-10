@@ -254,6 +254,26 @@ def test_finite_sample_quantiles_match_level_bounds_and_keep_median():
     assert not any("-lo-" in col or "-hi-" in col for col in quantiles)
 
 
+@pytest.mark.parametrize(
+    "kwargs", [{"level": [80, 95]}, {"quantiles": [0.025, 0.1, 0.9, 0.975]}]
+)
+def test_finite_sample_forecast_warns_for_infinite_bounds(kwargs):
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(
+            n_windows=2, method="conformal_error_finite_sample"
+        )
+    )
+    with pytest.warns(UserWarning) as caught:
+        result = model.forecast(_panel(), h=2, freq="D", **kwargs)
+    user_warnings = [warning for warning in caught if warning.category is UserWarning]
+    assert len(user_warnings) == 1
+    message = str(user_warnings[0].message)
+    assert "level 80 needs at least 4 calibration windows, got 2" in message
+    assert "level 95 needs at least 19 calibration windows, got 2" in message
+    assert np.isfinite(result["Mean"]).all()
+    assert np.isinf(result.drop(columns=["unique_id", "ds", "Mean"])).all().all()
+
+
 def test_conformal_forecast_with_integer_unique_ids():
     model = _MeanForecaster(
         prediction_intervals=ConformalIntervals(n_windows=2),
