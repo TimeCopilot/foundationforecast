@@ -106,7 +106,9 @@ corrected_intervals = ConformalIntervals(
 )
 ```
 
-Pass this configuration as a model's `prediction_intervals`. At 95%, **19 windows** are the minimum for a finite radius; 90% needs 9, and 80% needs 4. For example, two calibration windows produce infinite 80% and 95% bounds. Increase `n_windows` to obtain finite intervals, subject to the history-length requirement above. Check for infinite bounds before plotting or computing metrics that require finite values.
+Pass this configuration as a model's `prediction_intervals`. At 95%, **19 windows** are the minimum for a finite radius; 90% needs 9, and 80% needs 4. For example, two calibration windows produce infinite 80% and 95% bounds. At forecast time, a **`UserWarning`** lists the unsupported levels and the minimum number of calibration windows each needs, for example: `level 95 needs at least 19 calibration windows, got 4; bounds are infinite`. The bounds remain infinite. Increase `n_windows` to obtain finite intervals, subject to the history-length requirement above. Check for infinite bounds before plotting or computing metrics that require finite values.
+
+**Compute and history cost.** With `n_windows=19`, each `forecast()` runs about **20 panel point forecasts per model**: 19 calibration forecasts plus the final forecast. Each series needs at least **`h + 18 * step_size + 1`** historical observations, or **457 observations** when `h=24` and `step_size=24`. A rolling-origin evaluation repeats this calibration at every evaluation cutoff.
 
 The correction gives the usual **marginal coverage** lower bound when the calibration and future absolute errors are exchangeable. It does not guarantee simultaneous coverage of the entire forecast horizon. Rolling-origin residuals use different training histories, can be dependent, and may drift; even non-overlapping windows do not establish exchangeability. The correction therefore does **not** by itself guarantee nominal coverage on time series. See [Angelopoulos and Bates, Section 1.1](https://arxiv.org/abs/2107.07511).
 
