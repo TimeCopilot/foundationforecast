@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
@@ -22,7 +23,8 @@ class ConformalIntervals:
             horizon step. ``conformal_error_finite_sample`` selects the
             ceil((n_windows + 1) * level / 100)-th smallest absolute error,
             without interpolation. If the rank exceeds ``n_windows``, the
-            bounds are infinite. The usual marginal coverage lower bound
+            bounds are infinite and ``forecast()`` emits a ``UserWarning``.
+            The usual marginal coverage lower bound
             requires exchangeable calibration and future errors; rolling
             backtests do not establish that assumption.
         step_size: Gap between consecutive calibration cutoffs. ``None``
@@ -108,8 +110,26 @@ def add_conformal_error_intervals(
         if any(not 0 <= cut <= 1 for cut in cuts):
             raise ValueError("Quantiles must be in the range [0, 1]")
         # Select exact ranks rather than interpolating between calibration errors.
-        # A level of zero can arise internally when converting near-median quantiles.
+        # Public level=0 is rejected; near-median quantile conversions can yield it.
+        # Clamp that internal case to the first error, not a zero-width interval.
         ranks = [max(1, ceil((cs_n_windows + 1) * lv / 100)) for lv in level]
+        unsupported = []
+        for lv, rank in zip(level, ranks, strict=False):
+            if rank <= cs_n_windows:
+                continue
+            if lv == 100:
+                requirement = (
+                    "cannot have finite bounds with any number of calibration windows"
+                )
+            else:
+                requirement = (
+                    f"needs at least {ceil(lv / (100 - lv))} calibration windows"
+                )
+            unsupported.append(
+                f"level {lv:g} {requirement}, got {cs_n_windows}; bounds are infinite"
+            )
+        if unsupported:
+            warnings.warn(". ".join(unsupported) + ".", UserWarning, stacklevel=2)
     for model in model_names:
         mean = fcst_df[model].to_numpy().ravel()
         scores = cs_df[model].to_numpy().reshape(cs_n_windows, n_series, cs_h)
