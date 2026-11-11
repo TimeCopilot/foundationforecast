@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -7,6 +8,7 @@ from tests.helpers import (
     panel_with_futr_exog_horizon,
 )
 from .conftest import conformal_models, models
+from foundationforecast.core.conformal import ConformalIntervals
 from foundationforecast.core.quantiles import quantile_column_name
 
 
@@ -366,3 +368,37 @@ def test_conformal_forecast_using_level(model):
     assert all(col in fcst_df.columns for col in exp_lv_cols)
     assert not any("-q-" in col for col in fcst_df.columns)
     _assert_level_monotonicity(model, fcst_df, exp_lv_cols)
+
+
+@pytest.mark.models
+@pytest.mark.parametrize("model", models)
+def test_finite_sample_conformal_forecast(model, monkeypatch):
+    monkeypatch.setattr(
+        model,
+        "prediction_intervals",
+        ConformalIntervals(n_windows=4, method="conformal_error_finite_sample"),
+    )
+    df = generate_series(n_series=2, freq="D", min_length=40, max_length=40)
+    with pytest.warns(
+        UserWarning,
+        match=(
+            "level 95 needs at least 19 calibration windows, got 4; "
+            "bounds are infinite"
+        ),
+    ) as caught:
+        fcst = model.forecast(df=df, h=3, freq="D", level=[50, 80, 95])
+    infinite_warnings = [
+        warning for warning in caught if "bounds are infinite" in str(warning.message)
+    ]
+    assert len(infinite_warnings) == 1
+    assert fcst.shape == (6, 9)
+    assert np.isfinite(fcst[model.alias]).all()
+    for level in [50, 80]:
+        lo, hi = fcst[f"{model.alias}-lo-{level}"], fcst[f"{model.alias}-hi-{level}"]
+        assert np.isfinite(lo).all() and np.isfinite(hi).all()
+        assert lo.le(fcst[model.alias]).all()
+        assert hi.ge(fcst[model.alias]).all()
+    assert fcst[f"{model.alias}-lo-80"].le(fcst[f"{model.alias}-lo-50"]).all()
+    assert fcst[f"{model.alias}-hi-80"].ge(fcst[f"{model.alias}-hi-50"]).all()
+    assert np.isneginf(fcst[f"{model.alias}-lo-95"]).all()
+    assert np.isposinf(fcst[f"{model.alias}-hi-95"]).all()

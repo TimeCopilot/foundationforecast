@@ -114,7 +114,10 @@ def test_conformal_ignores_history_only_exog_columns():
     assert "Mean-lo-80" in fcst.columns
 
 
-def test_conformal_staggered_cutoffs_match_per_series():
+@pytest.mark.parametrize(
+    "method", ["conformal_distribution", "conformal_error_finite_sample"]
+)
+def test_conformal_staggered_cutoffs_match_per_series(method):
     rows = []
     for uid, start, length in (("a", 0, 30), ("b", 20, 30)):
         for t in range(length):
@@ -127,7 +130,7 @@ def test_conformal_staggered_cutoffs_match_per_series():
             )
     df = pd.DataFrame(rows)
     model = _MeanForecaster(
-        prediction_intervals=ConformalIntervals(n_windows=2),
+        prediction_intervals=ConformalIntervals(n_windows=4, method=method),
     )
     joint = model.forecast(df=df, h=3, freq="D", level=[80])
     per_series = pd.concat(
@@ -156,9 +159,12 @@ def test_conformal_forecast_adds_interval_columns():
     assert not any("-q-" in c for c in fcst.columns)
 
 
-def test_conformal_forecast_through_foundation_forecast_matches_direct():
+@pytest.mark.parametrize(
+    "method", ["conformal_distribution", "conformal_error_finite_sample"]
+)
+def test_conformal_forecast_through_foundation_forecast_matches_direct(method):
     model = _MeanForecaster(
-        prediction_intervals=ConformalIntervals(n_windows=2),
+        prediction_intervals=ConformalIntervals(n_windows=4, method=method),
     )
     df = _panel(n_series=3, length=40)
     direct = model.forecast(df=df, h=3, freq="D", level=[80])
@@ -205,9 +211,12 @@ def test_conformal_forecast_matches_point_only_cross_validation():
     )
 
 
-def test_cross_validation_recalibrates_conformal_intervals_per_window():
+@pytest.mark.parametrize(
+    "method", ["conformal_distribution", "conformal_error_finite_sample"]
+)
+def test_cross_validation_recalibrates_conformal_intervals_per_window(method):
     model = _MeanForecaster(
-        prediction_intervals=ConformalIntervals(n_windows=3),
+        prediction_intervals=ConformalIntervals(n_windows=4, method=method),
     )
     df = _panel(n_series=2, length=60)
     cv = model.cross_validation(df=df, h=3, freq="D", n_windows=2, level=[80])
@@ -218,6 +227,51 @@ def test_cross_validation_recalibrates_conformal_intervals_per_window():
             expected.reset_index(drop=True),
         )
     assert cv.groupby("cutoff")["Mean-hi-80"].mean().nunique() == 2
+
+
+def test_finite_sample_quantiles_match_level_bounds_and_keep_median():
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(
+            n_windows=9, method="conformal_error_finite_sample"
+        ),
+    )
+    df = _panel(length=40)
+    levels = model.forecast(df, h=2, freq="D", level=[80, 90, 95])
+    quantiles = model.forecast(
+        df, h=2, freq="D", quantiles=[0.025, 0.1, 0.5, 0.9, 0.975]
+    )
+    for q, bound in [
+        ("2.5", "lo-95"),
+        ("10", "lo-80"),
+        ("90", "hi-80"),
+        ("97.5", "hi-95"),
+    ]:
+        np.testing.assert_array_equal(quantiles[f"Mean-q-{q}"], levels[f"Mean-{bound}"])
+    np.testing.assert_array_equal(quantiles["Mean-q-50"], levels["Mean"])
+    assert np.isfinite(levels[["Mean-lo-90", "Mean-hi-90"]]).all().all()
+    assert np.isneginf(quantiles["Mean-q-2.5"]).all()
+    assert np.isposinf(quantiles["Mean-q-97.5"]).all()
+    assert not any("-lo-" in col or "-hi-" in col for col in quantiles)
+
+
+@pytest.mark.parametrize(
+    "kwargs", [{"level": [80, 95]}, {"quantiles": [0.025, 0.1, 0.9, 0.975]}]
+)
+def test_finite_sample_forecast_warns_for_infinite_bounds(kwargs):
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(
+            n_windows=2, method="conformal_error_finite_sample"
+        )
+    )
+    with pytest.warns(UserWarning) as caught:
+        result = model.forecast(_panel(), h=2, freq="D", **kwargs)
+    user_warnings = [warning for warning in caught if warning.category is UserWarning]
+    assert len(user_warnings) == 1
+    message = str(user_warnings[0].message)
+    assert "level 80 needs at least 4 calibration windows, got 2" in message
+    assert "level 95 needs at least 19 calibration windows, got 2" in message
+    assert np.isfinite(result["Mean"]).all()
+    assert np.isinf(result.drop(columns=["unique_id", "ds", "Mean"])).all().all()
 
 
 def test_conformal_forecast_with_integer_unique_ids():
