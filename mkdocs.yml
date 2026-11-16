@@ -32,8 +32,8 @@ nav:
       - Conformal prediction: examples/conformal-prediction.ipynb
       - Prophet adapter: examples/prophet-adapter.ipynb
       - Family Guides:
-          - CIProto: examples/ci-proto-family.ipynb
           - Chronos: examples/chronos-family.ipynb
+          - CIProto: examples/ci-proto-family.ipynb
           - TimesFM: examples/timesfm-family.ipynb
           - TiRex: examples/tirex-family.ipynb
           - Tabby: examples/tabby-family.ipynb

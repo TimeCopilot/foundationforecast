@@ -87,8 +87,8 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 | Provider | Model | Forecast | CV | Anomalies | Intervals | Exogenous | Finetuning | License |
 | :-: | --- | :-: | :-: | :-: | :-: | :-: | :-: | --- |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/amazon.png" width="28" alt="Amazon"> | [Chronos](https://arxiv.org/abs/2403.07815) | ✓ | ✓ | ✓ | ✓ | ✓¶ | ✓ | Apache-2.0 |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/continuousintelligence.png" width="28" alt="Continuous Intelligence"> | [CIProto](https://huggingface.co/ContinuousIntelligence/ci-proto) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | [ci-proto licence](https://github.com/continuousintelligence/ci/blob/main/LICENCE) |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/ibm.png" width="28" alt="IBM"> | [FlowState](https://arxiv.org/abs/2508.05287) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
-| | [ci-proto](https://huggingface.co/ContinuousIntelligence/ci-proto) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | [ci-proto licence](https://github.com/continuousintelligence/ci/blob/main/LICENCE) |
 | <img src="https://cdn-avatars.huggingface.co/v1/production/uploads/65df9200dc3292a8983e5017/Vs5FPVCH-VZBipV3qKTuy.png" width="28" alt="NVIDIA"> | [Kumo-Forecast](https://github.com/NVIDIA/Kumo-TS) | ✓ | ✓ | ✓ | ✓‡‡ | | | Apache-2.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/salesforce.png" width="28" alt="Salesforce"> | [Moirai](https://arxiv.org/abs/2402.02592) | ✓ | ✓ | ✓ | ✓ | | | CC-BY-NC-4.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/ibm.png" width="28" alt="IBM"> | [PatchTST-FM](https://arxiv.org/abs/2602.06909) | ✓ | ✓ | ✓ | ✓ | | | CC-BY-NC-SA-4.0 |
@@ -207,6 +207,13 @@ Optional [Prophet adapter](https://github.com/TimeCopilot/foundationforecast/blo
 ```bash
 uv add "foundationforecast[prophet]"
 # or: pip install "foundationforecast[prophet]"
+```
+
+Optional [CIProto](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/model-hub.md) (`continuousintelligence`):
+
+```bash
+uv add "foundationforecast[ci-proto]"
+# or: pip install "foundationforecast[ci-proto]"
 ```
 
 ---

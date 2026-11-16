@@ -16,6 +16,17 @@
         show_root_heading: true
         show_root_full_path: false
 
+::: foundationforecast.models.ciproto.CIProto
+    options:
+        show_root_heading: true
+        show_root_full_path: false
+        members:
+            - forecast
+            - cross_validation
+            - detect_anomalies
+            - plot
+            - supports_native_futr_exog
+
 ::: foundationforecast.models.flowstate.FlowState
     options:
         show_root_heading: true
@@ -72,17 +83,6 @@
             - supports_native_futr_exog
 
 ::: foundationforecast.models.t0.T0
-    options:
-        show_root_heading: true
-        show_root_full_path: false
-        members:
-            - forecast
-            - cross_validation
-            - detect_anomalies
-            - plot
-            - supports_native_futr_exog
-
-::: foundationforecast.models.ciproto.CIProto
     options:
         show_root_heading: true
         show_root_full_path: false

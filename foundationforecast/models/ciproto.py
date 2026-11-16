@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 
@@ -22,6 +23,11 @@ _CI_INSTALL_MSG = (
     "CIProto requires the continuousintelligence package. "
     'Install with: pip install "foundationforecast[ci-proto]"'
 )
+
+
+def is_ciproto_available() -> bool:
+    """Return whether the optional ``continuousintelligence`` extra is installed."""
+    return importlib.util.find_spec("continuousintelligence") is not None
 
 
 def _import_ci() -> Any:
