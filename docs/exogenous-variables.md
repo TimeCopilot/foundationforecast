@@ -37,6 +37,7 @@ FoundationForecast uses **`supports_native_futr_exog()`** on the forecaster inst
 | Wrapper | `repo_id` / id pattern | Native futr exog | Notes |
 |---------|------------------------|------------------|-------|
 | **Chronos** | contains `chronos-2` (case-insensitive), e.g. `amazon/chronos-2` | Yes | Other Chronos checkpoints → error with `X_df` |
+| **CIProto** | `ContinuousIntelligence/ci-proto` | Yes | Requires `foundationforecast[ci-proto]`; upstream `future_covariates` |
 | **FlowState** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **Kumo** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **Moirai** | any | No | Use `exog_strategy=False` in multi-model runs |

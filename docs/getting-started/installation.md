@@ -36,13 +36,23 @@ Requires **Python 3.10 or later**.
     pip install "foundationforecast[prophet]"
     ```
 
+=== "ci-proto"
+
+    For [Continuous Intelligence ci-proto](../model-hub.md):
+
+    ```bash
+    uv add "foundationforecast[ci-proto]"
+    # or
+    pip install "foundationforecast[ci-proto]"
+    ```
+
 ## Python version and model availability
 
 Some models are gated by Python version:
 
 | Model | Python requirement |
 |-------|-------------------|
-| Chronos, Kumo, Moirai, TimesFM, Toto, TimeGPT, Sundial, Tafsut, Tabby | 3.10+ |
+| Chronos, CIProto, Kumo, Moirai, TimesFM, Toto, TimeGPT, Sundial, Tafsut, Tabby | 3.10+ |
 | TiRex / TiRex-2 | 3.11+ |
 | T0, FlowState, PatchTST-FM | 3.11 – 3.13 |
 | TabPFN | 3.10 – 3.12 |
