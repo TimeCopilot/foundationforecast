@@ -6,7 +6,7 @@
     By default, models cache loaded weights across repeated forecasts. See [Model Weight Cache](model-weight-cache.md) for `reuse_loaded_model`, `set_max_cached_models()`, and `clean_cache`.
 
 !!! note "Family example notebooks"
-    Example notebooks for foundation model families are in [Examples](examples/index.md#foundation-models).
+    Example notebooks for foundation model families are in [Examples](examples/index.md#foundation-models). CIProto: [ci-proto-family.ipynb](examples/ci-proto-family.ipynb) (requires `foundationforecast[ci-proto]`).
 
 !!! tip "Forecast multiple models using a unified API"
 
