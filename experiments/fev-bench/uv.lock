@@ -1144,7 +1144,7 @@ wheels = [
 
 [[package]]
 name = "foundationforecast"
-version = "0.1.20"
+version = "0.1.21"
 source = { editable = "../../" }
 dependencies = [
     { name = "gluonts", extra = ["torch"] },
@@ -1202,7 +1202,7 @@ requires-dist = [
     { name = "transformers", marker = "python_full_version >= '3.13'", specifier = ">=4.48,<6" },
     { name = "utilsforecast", specifier = ">=0.2.15" },
 ]
-provides-extras = ["plot", "prophet", "ci-proto"]
+provides-extras = ["ci-proto", "plot", "prophet"]
 
 [package.metadata.requires-dev]
 dev = [
