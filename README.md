@@ -87,6 +87,7 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 | Provider | Model | Forecast | CV | Anomalies | Intervals | Exogenous | Finetuning | License |
 | :-: | --- | :-: | :-: | :-: | :-: | :-: | :-: | --- |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/amazon.png" width="28" alt="Amazon"> | [Chronos](https://arxiv.org/abs/2403.07815) | ✓ | ✓ | ✓ | ✓ | ✓¶ | ✓ | Apache-2.0 |
+| <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/continuousintelligence.png" width="28" alt="Continuous Intelligence"> | [CIProto](https://huggingface.co/ContinuousIntelligence/ci-proto) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | [ci-proto licence](https://github.com/continuousintelligence/ci/blob/main/LICENCE) |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/ibm.png" width="28" alt="IBM"> | [FlowState](https://arxiv.org/abs/2508.05287) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
 | <img src="https://cdn-avatars.huggingface.co/v1/production/uploads/65df9200dc3292a8983e5017/Vs5FPVCH-VZBipV3qKTuy.png" width="28" alt="NVIDIA"> | [Kumo-Forecast](https://github.com/NVIDIA/Kumo-TS) | ✓ | ✓ | ✓ | ✓‡‡ | | | Apache-2.0 |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/salesforce.png" width="28" alt="Salesforce"> | [Moirai](https://arxiv.org/abs/2402.02592) | ✓ | ✓ | ✓ | ✓ | | | CC-BY-NC-4.0 |
@@ -103,11 +104,13 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/mistral.png" width="28" alt="Mistral"> | [Timestral](https://huggingface.co/collections/mistralai/timestral) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Modified MIT∥ |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/datadog.png" width="28" alt="Datadog"> | [Toto](https://arxiv.org/abs/2505.14766) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
 
+**Optional extra:** **CIProto** (`continuousintelligence`) installs only with `foundationforecast[ci-proto]`.
+
 ‡‡ **Intervals (conformal only):** **Kumo** is a point forecaster; `level` / `quantiles` require `prediction_intervals=ConformalIntervals(...)` and otherwise raise a `ValueError`. See [Conformal prediction](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/conformal-prediction.md).
 
 Licenses verified against Hugging Face model cards. Check the model card for your `repo_id` when in doubt.
 
-¶ **Exogenous (native):** **Chronos** with `repo_id` containing `chronos-2` (e.g. `amazon/chronos-2`); **TimesFM** with **`google/timesfm-3.0-pytorch`**; **TimeGPT**; **T0** (`theforecastingcompany/t0-alpha`, `t0-beta`, `t0-gamma`); **TimeH2O** (`h2oai/timeh2o-v1`, not `-tiny`); **TiRex-2** (`NX-AI/TiRex-2` and other `TiRex-2-*` checkpoints, not TiRex 1.0); **Timestral** (`mistralai/Timestral-*`). Other hub models and other checkpoints in those families do not accept `X_df` under default `exog_strategy`. Set `exog_strategy=False` to ignore horizon exog in mixed `FoundationForecast` runs. See [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md#native-exog-by-checkpoint).
+¶ **Exogenous (native):** **Chronos** with `repo_id` containing `chronos-2` (e.g. `amazon/chronos-2`); **CIProto** (`ContinuousIntelligence/ci-proto`); **TimesFM** with **`google/timesfm-3.0-pytorch`**; **TimeGPT**; **T0** (`theforecastingcompany/t0-alpha`, `t0-beta`, `t0-gamma`); **TimeH2O** (`h2oai/timeh2o-v1`, not `-tiny`); **TiRex-2** (`NX-AI/TiRex-2` and other `TiRex-2-*` checkpoints, not TiRex 1.0); **Timestral** (`mistralai/Timestral-*`). Other hub models and other checkpoints in those families do not accept `X_df` under default `exog_strategy`. Set `exog_strategy=False` to ignore horizon exog in mixed `FoundationForecast` runs. See [Exogenous variables](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/exogenous-variables.md#native-exog-by-checkpoint).
 
 <details><summary><strong>What this means for production</strong></summary>
 
@@ -130,6 +133,7 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 <details><summary><strong>Example checkpoints &amp; API model IDs</strong></summary>
 
 - **Chronos:** `amazon/chronos-t5-{tiny,mini,small,base,large}`, `amazon/chronos-bolt-{tiny,mini,small,base}`, `amazon/chronos-2`
+- **CIProto:** `ContinuousIntelligence/ci-proto` (requires `foundationforecast[ci-proto]`)
 - **FlowState:** `ibm-research/flowstate`, `ibm-granite/granite-timeseries-flowstate-r1`
 - **Kumo:** `nvidia/Kumo-Forecast` (point forecasts; requires `timecopilot-kumo-forecast>=0.1.0`)
 - **Moirai:** `Salesforce/moirai-{1.0,1.1,2.0}-R-{small,base,large}`, `Salesforce/moirai-moe-1.0-R-*`
@@ -203,6 +207,13 @@ Optional [Prophet adapter](https://github.com/TimeCopilot/foundationforecast/blo
 ```bash
 uv add "foundationforecast[prophet]"
 # or: pip install "foundationforecast[prophet]"
+```
+
+Optional [CIProto](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/model-hub.md) (`continuousintelligence`):
+
+```bash
+uv add "foundationforecast[ci-proto]"
+# or: pip install "foundationforecast[ci-proto]"
 ```
 
 ---

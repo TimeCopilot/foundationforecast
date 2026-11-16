@@ -20,6 +20,7 @@ For model API details, see the [Model Hub](../model-hub.md).
 | Notebook | What you'll learn | Prerequisites |
 |----------|-------------------|---------------|
 | [Chronos Family](chronos-family.ipynb) | Forecast with Chronos 1.x and 2.x checkpoints | Python 3.10+ |
+| [CIProto](ci-proto-family.ipynb) | Forecast with Continuous Intelligence ci-proto (native quantiles, optional `ci-proto` extra) | Python 3.10+; `foundationforecast[ci-proto]`; GPU recommended |
 | [TimesFM Family](timesfm-family.ipynb) | Forecast with TimesFM 1.0, 2.0, 2.5, and 3.0 with prediction intervals | Python 3.10+ |
 | [TiRex Family](tirex-family.ipynb) | Forecast with TiRex 1.0 and 2.0 | Python 3.11+ |
 | [Tabby Family](tabby-family.ipynb) | Cross-validate Tabby (`paris-noah/Tabby`) with its published GIFT-Eval inference settings | Python 3.10+ |

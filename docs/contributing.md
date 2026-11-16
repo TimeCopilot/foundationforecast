@@ -97,6 +97,10 @@ When adding a new foundation model:
 - **uni2ts** — [`timecopilot-uni2ts`](https://pypi.org/project/timecopilot-uni2ts/)
 - **timestral** — [`timecopilot-timestral`](https://pypi.org/project/timecopilot-timestral/)
 
+Upstream (optional extra, not a fork):
+
+- **continuousintelligence** — [`continuousintelligence`](https://pypi.org/project/continuousintelligence/) (ci-proto); install via `foundationforecast[ci-proto]`
+
 FlowState and PatchTST-FM use upstream [`granite-tsfm`](https://pypi.org/project/granite-tsfm/)
 (`>=0.3.9`; PatchTST-FM r2 requires overlapping-patch support). The former
 `timecopilot-granite-tsfm` fork is no longer a dependency.

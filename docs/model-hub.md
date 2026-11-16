@@ -6,7 +6,7 @@
     By default, models cache loaded weights across repeated forecasts. See [Model Weight Cache](model-weight-cache.md) for `reuse_loaded_model`, `set_max_cached_models()`, and `clean_cache`.
 
 !!! note "Family example notebooks"
-    Example notebooks for foundation model families are in [Examples](examples/index.md#foundation-models).
+    Example notebooks for foundation model families are in [Examples](examples/index.md#foundation-models). CIProto: [ci-proto-family.ipynb](examples/ci-proto-family.ipynb) (requires `foundationforecast[ci-proto]`).
 
 !!! tip "Forecast multiple models using a unified API"
 
@@ -37,6 +37,7 @@
 Below is the list of available foundation models. Click a model name for API details.
 
 - [Chronos](api/models/foundation/models.md#foundationforecast.models.chronos.Chronos) ([arXiv:2403.07815](https://arxiv.org/abs/2403.07815))
+- [CIProto](api/models/foundation/models.md#foundationforecast.models.ciproto.CIProto) ([ci-proto](https://huggingface.co/ContinuousIntelligence/ci-proto); requires `foundationforecast[ci-proto]` / `continuousintelligence>=0.1.1`) — native quantiles 0.1–0.9, known-future `X_df`, very long context; [ci-proto Code and Model Licence](https://github.com/continuousintelligence/ci/blob/main/LICENCE)
 - [FlowState](api/models/foundation/models.md#foundationforecast.models.flowstate.FlowState) ([arXiv:2508.05287](https://arxiv.org/abs/2508.05287)) — Python 3.11–3.13
 - [Kumo](api/models/foundation/models.md#foundationforecast.models.kumo.Kumo) ([Kumo-TS](https://github.com/NVIDIA/Kumo-TS), [`nvidia/Kumo-Forecast`](https://huggingface.co/nvidia/Kumo-Forecast); requires `timecopilot-kumo-forecast>=0.1.0`) — point forecasts only (intervals need `prediction_intervals`); 512-step context, 72-step native horizon with autoregressive rollout; Apache-2.0
 - [Moirai](api/models/foundation/models.md#foundationforecast.models.moirai.Moirai) ([arXiv:2402.02592](https://arxiv.org/abs/2402.02592))

@@ -2,6 +2,7 @@ import sys
 
 from foundationforecast.core.conformal import ConformalIntervals
 from foundationforecast.models.chronos import Chronos
+from foundationforecast.models.ciproto import CIProto, is_ciproto_available
 from foundationforecast.models.kumo import Kumo
 from foundationforecast.models.moirai import Moirai
 from foundationforecast.models.tabby import Tabby
@@ -53,6 +54,9 @@ models = [
         batch_size=2,
     ),
 ]
+
+if is_ciproto_available():
+    models.append(CIProto(context_length=64, batch_size=2))
 
 if sys.version_info >= (3, 11):
     from foundationforecast.models.tirex import TiRex
