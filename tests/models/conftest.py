@@ -54,6 +54,15 @@ models = [
     ),
 ]
 
+try:
+    import continuousintelligence  # noqa: F401
+except ImportError:
+    pass
+else:
+    from foundationforecast.models.ciproto import CIProto
+
+    models.append(CIProto(context_length=64, batch_size=2))
+
 if sys.version_info >= (3, 11):
     from foundationforecast.models.tirex import TiRex
 

@@ -8,6 +8,10 @@ def test_timegpt_import():
     from foundationforecast.models.timegpt import TimeGPT  # noqa: F401
 
 
+def test_ciproto_import():
+    from foundationforecast.models.ciproto import CIProto  # noqa: F401
+
+
 @pytest.mark.skipif(
     sys.version_info >= (3, 11),
     reason="TiRex requires Python >= 3.11",
