@@ -115,7 +115,7 @@ The correction gives the usual **marginal coverage** lower bound when the calibr
 
 The original `conformal_error` and `conformal_distribution` use interpolated empirical quantiles without this correction. Even with independent calibration and future errors from the same continuous distribution, two calibration windows give at most two-thirds coverage because their radius never exceeds the largest calibration error. Use more calibration windows and measure achieved coverage on held-out backtests, especially when requesting high levels.
 
-The [conformal prediction example notebook](examples/conformal-prediction.ipynb) includes an M4 Hourly rolling-origin check comparing corrected and uncorrected intervals, with empirical coverage, mean width, and the fraction of finite intervals. Calibration uses only observations available before each evaluation cutoff. These results measure that dataset and configuration, rather than proving a coverage guarantee. Adaptive conformal inference (ACI) is not provided; for online adaptation see PID below.
+The [conformal prediction example notebook](examples/conformal-prediction.ipynb) includes an M4 Hourly rolling-origin check comparing corrected and uncorrected intervals, with empirical coverage, mean width, and the fraction of finite intervals. Calibration uses only observations available before each evaluation cutoff. These results measure that dataset and configuration, rather than proving a coverage guarantee. Adaptive conformal inference (ACI) is not provided; for online adaptation see PID below, which the notebook also compares on the same panel.
 
 ## Conformal PID control under distribution shift
 
