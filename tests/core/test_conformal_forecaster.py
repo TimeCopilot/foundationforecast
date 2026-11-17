@@ -6,7 +6,7 @@ import pytest
 from utilsforecast.processing import make_future_dataframe
 
 import foundationforecast.models as ff_models
-from foundationforecast import FoundationForecast
+from foundationforecast import PID, FoundationForecast
 from foundationforecast.core.conformal import (
     ConformalIntervals,
     add_conformal_distribution_intervals,
@@ -115,7 +115,8 @@ def test_conformal_ignores_history_only_exog_columns():
 
 
 @pytest.mark.parametrize(
-    "method", ["conformal_distribution", "conformal_error_finite_sample"]
+    "method",
+    ["conformal_distribution", "conformal_error_finite_sample", PID(ncal=2)],
 )
 def test_conformal_staggered_cutoffs_match_per_series(method):
     rows = []
@@ -160,7 +161,8 @@ def test_conformal_forecast_adds_interval_columns():
 
 
 @pytest.mark.parametrize(
-    "method", ["conformal_distribution", "conformal_error_finite_sample"]
+    "method",
+    ["conformal_distribution", "conformal_error_finite_sample", PID(ncal=2)],
 )
 def test_conformal_forecast_through_foundation_forecast_matches_direct(method):
     model = _MeanForecaster(
@@ -212,7 +214,8 @@ def test_conformal_forecast_matches_point_only_cross_validation():
 
 
 @pytest.mark.parametrize(
-    "method", ["conformal_distribution", "conformal_error_finite_sample"]
+    "method",
+    ["conformal_distribution", "conformal_error_finite_sample", PID(ncal=2)],
 )
 def test_cross_validation_recalibrates_conformal_intervals_per_window(method):
     model = _MeanForecaster(
@@ -340,3 +343,66 @@ def test_native_level_without_prediction_intervals():
     df = _panel(length=10)
     fcst = model.forecast(df=df, h=2, freq="D", level=[80])
     assert "Mean-lo-80" not in fcst.columns
+
+
+@pytest.mark.parametrize("step_size", [None, 1])
+@pytest.mark.parametrize("symmetric", [False, True])
+def test_pid_forecast_matches_replay_of_signed_cross_validation_errors(
+    step_size, symmetric
+):
+    df = _panel(n_series=2, length=60)
+    h, n_windows = 3, 6
+    level: list[int | float] = [80, 95]
+    method = PID(ncal=3, symmetric=symmetric)
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(
+            n_windows=n_windows, method=method, step_size=step_size
+        ),
+    )
+    fcst = model.forecast(df=df, h=h, freq="D", level=level)
+    cv = _MeanForecaster().cross_validation(
+        df=df, h=h, freq="D", n_windows=n_windows, step_size=step_size or h
+    )
+    cv = cv.sort_values(["unique_id", "cutoff", "ds"])
+    errors = (cv["y"] - cv["Mean"]).to_numpy().reshape(2, n_windows, h)
+    lower, upper = method.radii(
+        errors.transpose(1, 0, 2), level, step_size or h, final_gap=h
+    )
+    fcst = fcst.sort_values(["unique_id", "ds"])
+    mean = fcst["Mean"].to_numpy().reshape(2, h)
+    for i, lv in enumerate(level):
+        np.testing.assert_allclose(
+            fcst[f"Mean-lo-{lv}"].to_numpy().reshape(2, h), mean - lower[i]
+        )
+        np.testing.assert_allclose(
+            fcst[f"Mean-hi-{lv}"].to_numpy().reshape(2, h), mean + upper[i]
+        )
+
+
+def test_pid_adapts_to_trailing_level_shift():
+    # Same model and horizon: PID tracks the error scale of recent windows, so
+    # a volatility jump in the latest windows widens the interval relative to
+    # a calm history.
+    rng = np.random.default_rng(0)
+
+    def _series(scale_after: float) -> pd.DataFrame:
+        noise = rng.normal(size=80)
+        noise[60:] *= scale_after
+        return pd.DataFrame(
+            {
+                "unique_id": "a",
+                "ds": pd.date_range("2020-01-01", periods=80, freq="D"),
+                "y": noise,
+            }
+        )
+
+    widths = {}
+    for scale in (1.0, 5.0):
+        model = _MeanForecaster(
+            prediction_intervals=ConformalIntervals(
+                n_windows=10, method=PID(ncal=4), step_size=2
+            ),
+        )
+        fcst = model.forecast(_series(scale), h=2, freq="D", level=[80])
+        widths[scale] = (fcst["Mean-hi-80"] - fcst["Mean-lo-80"]).mean()
+    assert widths[5.0] > widths[1.0]
