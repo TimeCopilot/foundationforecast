@@ -264,7 +264,7 @@ class PID(ConformalMethod):
         step_size: int,
         final_gap: int,
     ) -> tuple[np.ndarray, np.ndarray]:
-        """:meth:`thresholds` floored at zero and nested across ``level``.
+        """`thresholds` floored at zero and nested across ``level``.
 
         ``level`` must be sorted ascending. Warns when a bound is infinite.
         """

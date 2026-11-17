@@ -16,7 +16,7 @@ class ConformalMethod(ABC):
     """Base class for parameterized conformal calibration methods.
 
     Pass an instance as ``ConformalIntervals(method=...)`` (for example
-    :class:`~foundationforecast.core.conformal_pid.PID`). Instances are called
+    `PID`). Instances are called
     with the point forecasts and the signed cross-validation errors
     ``y - y_hat`` of the calibration windows, and return the forecast frame
     with ``-lo-{level}`` / ``-hi-{level}`` columns added.
