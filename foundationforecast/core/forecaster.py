@@ -109,7 +109,7 @@ class Forecaster:
                 ignores ``X_df`` / ``futr_exog_list`` and runs a univariate
                 forecast (including in cross-validation).
             prediction_intervals: When set, ``forecast()`` calibrates prediction
-                intervals from cross-validation absolute errors on the point
+                intervals from cross-validation errors on the point
                 forecast instead of using native model quantiles. Pass
                 ``level`` or ``quantiles`` to emit intervals; without them the
                 point forecast is returned. ``cross_validation()`` recalibrates
@@ -644,7 +644,7 @@ class ExogCapableForecaster(Forecaster):
             futr_exog_list=futr_exog_list,
         )
         cs_df = cv[["unique_id", "ds", "cutoff", self.alias]].copy()
-        cs_df[self.alias] = (cv[self.alias] - cv["y"]).abs()
+        cs_df[self.alias] = cv["y"] - cv[self.alias]
         cs_df = cs_df.sort_values(["unique_id", "cutoff", "ds"])
         cs_df["window"] = cs_df.groupby("unique_id", sort=False)["cutoff"].rank(
             method="dense"
@@ -662,6 +662,7 @@ class ExogCapableForecaster(Forecaster):
             cs_h=h,
             n_series=n_series,
             horizon=h,
+            step_size=step_size,
         )
         return qc.maybe_convert_level_to_quantiles(fcst_df, [self.alias])
 

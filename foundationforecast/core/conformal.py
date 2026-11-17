@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import warnings
+from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
@@ -9,6 +10,40 @@ from math import ceil
 import numpy as np
 import pandas as pd
 import utilsforecast.processing as ufp
+
+
+class ConformalMethod(ABC):
+    """Base class for parameterized conformal calibration methods.
+
+    Pass an instance as ``ConformalIntervals(method=...)`` (for example
+    :class:`~foundationforecast.core.conformal_pid.PID`). Instances are called
+    with the point forecasts and the signed cross-validation errors
+    ``y - y_hat`` of the calibration windows, and return the forecast frame
+    with ``-lo-{level}`` / ``-hi-{level}`` columns added.
+
+    Calibration errors arrive as ``cs_df[model]`` reshaped to
+    ``(cs_n_windows, n_series, cs_h)``; window ``0`` is the oldest cutoff and
+    consecutive windows are ``step_size`` observations apart.
+    """
+
+    def validate(self, n_windows: int, step_size: int | None) -> None:
+        """Raise ``ValueError`` if the method cannot run with these settings."""
+        return None
+
+    @abstractmethod
+    def __call__(
+        self,
+        fcst_df: pd.DataFrame,
+        cs_df: pd.DataFrame,
+        model_names: list[str],
+        level: list[int | float],
+        cs_n_windows: int,
+        cs_h: int,
+        n_series: int,
+        horizon: int,
+        step_size: int,
+    ) -> pd.DataFrame:
+        ...
 
 
 @dataclass
@@ -26,13 +61,15 @@ class ConformalIntervals:
             bounds are infinite and ``forecast()`` emits a ``UserWarning``.
             The usual marginal coverage lower bound
             requires exchangeable calibration and future errors; rolling
-            backtests do not establish that assumption.
+            backtests do not establish that assumption. A parameterized
+            method object such as ``PID(...)`` replays the calibration windows
+            online to track the error quantile under distribution shift.
         step_size: Gap between consecutive calibration cutoffs. ``None``
             (default) uses the forecast horizon (non-overlapping windows).
     """
 
     n_windows: int = 2
-    method: str = "conformal_distribution"
+    method: str | ConformalMethod = "conformal_distribution"
     step_size: int | None = None
 
     def __post_init__(self) -> None:
@@ -40,6 +77,11 @@ class ConformalIntervals:
             raise ValueError(
                 "You need at least two windows to compute conformal intervals"
             )
+        if self.step_size is not None and self.step_size < 1:
+            raise ValueError("step_size must be a positive integer")
+        if isinstance(self.method, ConformalMethod):
+            self.method.validate(self.n_windows, self.step_size)
+            return
         allowed = (
             "conformal_distribution",
             "conformal_error",
@@ -47,8 +89,6 @@ class ConformalIntervals:
         )
         if self.method not in allowed:
             raise ValueError(f"method must be one of {allowed}")
-        if self.step_size is not None and self.step_size < 1:
-            raise ValueError("step_size must be a positive integer")
 
 
 def validate_conformal_samples(
@@ -72,6 +112,7 @@ def add_conformal_distribution_intervals(
     cs_h: int,
     n_series: int,
     horizon: int,
+    step_size: int | None = None,
 ) -> pd.DataFrame:
     """Add intervals from quantiles of mean ± error paths."""
     fcst_df = ufp.copy_if_pandas(fcst_df, deep=False)
@@ -80,7 +121,7 @@ def add_conformal_distribution_intervals(
     cuts.extend(1 - alpha / 200 for alpha in alphas)
     for model in model_names:
         scores = cs_df[model].to_numpy().reshape(cs_n_windows, n_series, cs_h)
-        scores = scores[:, :, :horizon]
+        scores = np.abs(scores[:, :, :horizon])
         mean = fcst_df[model].to_numpy().reshape(1, n_series, -1)
         scores = np.vstack([mean - scores, mean + scores])
         quantiles = np.quantile(scores, cuts, axis=0)
@@ -100,6 +141,7 @@ def add_conformal_error_intervals(
     cs_h: int,
     n_series: int,
     horizon: int,
+    step_size: int | None = None,
     *,
     finite_sample: bool = False,
 ) -> pd.DataFrame:
@@ -133,7 +175,7 @@ def add_conformal_error_intervals(
     for model in model_names:
         mean = fcst_df[model].to_numpy().ravel()
         scores = cs_df[model].to_numpy().reshape(cs_n_windows, n_series, cs_h)
-        scores = scores[:, :, :horizon]
+        scores = np.abs(scores[:, :, :horizon])
         if finite_sample:
             if not np.isfinite(scores).all():
                 raise ValueError(
@@ -154,7 +196,11 @@ def add_conformal_error_intervals(
     return fcst_df
 
 
-def get_conformal_method(method: str) -> Callable[..., pd.DataFrame]:
+def get_conformal_method(
+    method: str | ConformalMethod,
+) -> Callable[..., pd.DataFrame]:
+    if isinstance(method, ConformalMethod):
+        return method
     available: dict[str, Callable[..., pd.DataFrame]] = {
         "conformal_distribution": add_conformal_distribution_intervals,
         "conformal_error": add_conformal_error_intervals,
