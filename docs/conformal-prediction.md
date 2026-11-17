@@ -153,6 +153,8 @@ When the integrator saturates (the miss rate is far from the target, typically a
 
 ### Illustration
 
+For a runnable walkthrough on M4 Hourly with an injected volatility shift, see the [conformal prediction under distribution shift notebook](examples/conformal-distribution-shift.ipynb).
+
 Chronos-2 rolling-origin forecasts on M4 Hourly (414 series, \(h=24\), non-overlapping windows). The calibrators see only windows before each evaluated one; coverage is the mean empirical coverage and MSIS the interval score scaled by seasonal-naive MAE (lower is better). "Shift" multiplies the forecast errors of the evaluated windows by 2.5, emulating a volatility regime change the calibration history has not seen. These are one dataset and configuration, not a coverage guarantee.
 
 | Method | Coverage 80 / 95 | MSIS 80 / 95 | Shift: coverage 80 / 95 | Shift: MSIS 80 / 95 |
