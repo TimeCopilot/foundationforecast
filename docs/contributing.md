@@ -51,7 +51,7 @@ uv run pytest
 Docs tests (markdown and docstring examples):
 
 ```bash
-uv run pytest -m docs
+uv run --group docs --all-extras pytest -m docs -o addopts= -n 0
 ```
 
 ## Documentation Changes
