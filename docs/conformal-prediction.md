@@ -149,6 +149,8 @@ where \(\mathrm{err}_k = 1\) if the score of window \(k\) exceeded the threshold
 
 When the integrator saturates (the miss rate is far from the target, typically at high levels with few windows) the bound is infinite and `forecast()` emits a `UserWarning`, as with the finite-sample correction. Add windows, raise `Csat`/`Tg`, or set `integrate=False`.
 
+The default integrator needs `n_windows >= 3` (with `Tg=n_windows` two windows give a non-positive `Csat`); `ConformalIntervals` raises at construction otherwise. Use more windows, pass `Tg`/`Csat`, or set `integrate=False`. With `init="quantile"` and `step_size < h`, warm-start windows whose score is not yet revealed at the first origin are not replayed later, as in R's `conformalForecast::pid`.
+
 **Verification.** The implementation is cross-checked against R's [`conformalForecast::pid`](https://github.com/xqnwang/conformalForecast) (Wang, Hyndman, Girolimetto): `tests/core/test_conformal_pid_r.py` reproduces every interval R emits (asymmetric/symmetric, expanding/rolling, with/without integrator, all horizons) to `1e-9` from a stored fixture, regenerated with `tests/core/fixtures/pid_r/generate.py`. Hand-computed golden values, an independent calendar-time oracle and an out-of-sample coverage test are covered in `tests/core/test_conformal_pid.py`.
 
 ### Illustration
