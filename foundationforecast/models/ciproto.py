@@ -50,6 +50,8 @@ class CIProto(ExogCapableForecaster):
       Requires the optional extra ``foundationforecast[ci-proto]`` (PyPI package
       ``continuousintelligence``). Model weights use the
       [ci-proto Code and Model Licence](https://github.com/continuousintelligence/ci/blob/main/LICENCE).
+      Uses ci-proto, released by Continuous Intelligence. Continuous Intelligence
+      does not endorse or approve this product or service.
     """
 
     def __init__(

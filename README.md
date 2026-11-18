@@ -104,7 +104,7 @@ Pass any Hugging Face `repo_id` (or local checkpoint path) supported by the unde
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/mistral.png" width="28" alt="Mistral"> | [Timestral](https://huggingface.co/collections/mistralai/timestral) | ✓ | ✓ | ✓ | ✓ | ✓¶ | | Modified MIT∥ |
 | <img src="https://timecopilot.s3.amazonaws.com/public/data/images/logos/datadog.png" width="28" alt="Datadog"> | [Toto](https://arxiv.org/abs/2505.14766) | ✓ | ✓ | ✓ | ✓ | | | Apache-2.0 |
 
-**Optional extra:** **CIProto** (`continuousintelligence`) installs only with `foundationforecast[ci-proto]`.
+**Optional extra:** **CIProto** (`continuousintelligence`) installs only with `foundationforecast[ci-proto]`. Uses ci-proto, released by Continuous Intelligence. Continuous Intelligence does not endorse or approve this product or service.
 
 ‡‡ **Intervals (conformal only):** **Kumo** is a point forecaster; `level` / `quantiles` require `prediction_intervals=ConformalIntervals(...)` and otherwise raise a `ValueError`. See [Conformal prediction](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/conformal-prediction.md).
 
@@ -123,6 +123,7 @@ Licenses verified against Hugging Face model cards. Check the model card for you
 - **H2O.ai NC#** (TimeH2O): checkpoint weights are [non-commercial](https://huggingface.co/h2oai/timeh2o-v1) and gated on Hugging Face (accept terms and set `HF_TOKEN`); inference code is Apache-2.0 via `h2ofm`.
 - **Nixtla API**§: hosted service via `NIXTLA_API_KEY`; production under [Nixtla terms/pricing](https://www.nixtla.io/docs), not open weights.
 - **Modified MIT∥** (Timestral): checkpoint weights use Mistral's [Modified MIT license](https://huggingface.co/mistralai/Timestral-209M) (companies above USD 20M monthly revenue need a commercial license from Mistral); inference code is Apache-2.0 via `timecopilot-timestral`.
+- **ci-proto licence** (CIProto): research and commercial use under the [ci-proto Code and Model Licence](https://github.com/continuousintelligence/ci/blob/main/LICENCE). Uses ci-proto, released by Continuous Intelligence. Continuous Intelligence does not endorse or approve this product or service.
 
 **FoundationForecast** itself is [Apache-2.0](LICENSE) regardless of which model you plug in.
 
