@@ -292,6 +292,22 @@ def test_pid_validates_parameters(kwargs, match):
         PID(**kwargs)
 
 
+def test_conformal_intervals_rejects_default_pid_with_too_few_windows():
+    # Tg defaults to n_windows, and two windows give a non-positive Csat.
+    with pytest.raises(ValueError, match="non-positive Csat.*n_windows=2"):
+        ConformalIntervals(n_windows=2, method=PID())
+    ConformalIntervals(n_windows=3, method=PID())
+    ConformalIntervals(n_windows=2, method=PID(integrate=False))
+    ConformalIntervals(n_windows=2, method=PID(Csat=0.1))
+    ConformalIntervals(n_windows=2, method=PID(Tg=100))
+
+
+def test_pid_without_integrator_runs_with_two_windows():
+    errors = np.array([1.0, -2.0]).reshape(2, 1, 1)
+    lower, upper = PID(integrate=False).thresholds(errors, [80], 1, 1)
+    assert np.isfinite(lower).all() and np.isfinite(upper).all()
+
+
 def test_conformal_intervals_accepts_pid_and_validates_ncal():
     intervals = ConformalIntervals(n_windows=10, method=PID(lr=0.2))
     assert intervals.method == PID(lr=0.2)
