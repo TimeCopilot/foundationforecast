@@ -89,7 +89,7 @@ jobs:
           enable-cache: true
 
       - name: Run docs tests
-        run: uv run --group docs pytest -m docs -o addopts= -x -n 0
+        run: uv run --group docs --all-extras pytest -m docs -o addopts= -x -n 0
 
   build-docs:
     name: build docs

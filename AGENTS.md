@@ -46,7 +46,7 @@ uv run pre-commit run --all-files
 Docs and docstring examples:
 
 ```bash
-uv run pytest -m docs -o addopts= -n 0
+uv run --group docs --all-extras pytest -m docs -o addopts= -n 0
 uv run --group docs zensical build
 ```
 
