@@ -85,6 +85,10 @@ def track_quantiles(
         s = scores[:, :, j]
         p = np.zeros((n_levels, n_series))
         if warm_start:
+            # Windows of the warm-start period whose score is not yet revealed at
+            # the first origin are neither in this quantile nor replayed later
+            # (``applied`` starts at ``first``). This mirrors R's
+            # ``conformalForecast::pid``, which the tests reproduce to 1e-9.
             seen = [k for k in range(first) if k * step_size + lag <= first * step_size]
             if seen:
                 p = np.quantile(s[seen], 1 - alpha, axis=0)
@@ -209,7 +213,23 @@ class PID(ConformalMethod):
     def resolve_ncal(self, n_windows: int) -> int:
         return self.ncal if self.ncal is not None else max(1, n_windows // 2)
 
+    def resolve_csat(self, n_windows: int) -> float:
+        """Integrator saturation constant, or ``inf`` if the integrator is off."""
+        if self.Csat is not None:
+            return self.Csat
+        if not self.integrate:
+            return math.inf
+        tg = self.Tg if self.Tg is not None else float(n_windows)
+        try:
+            return default_csat(tg, self.delta)
+        except ValueError as exc:
+            raise ValueError(
+                f"{exc} (n_windows={n_windows}); use more windows, "
+                "or set Tg/Csat or integrate=False"
+            ) from exc
+
     def validate(self, n_windows: int, step_size: int | None) -> None:
+        self.resolve_csat(n_windows)
         if self.init == "quantile" and self.resolve_ncal(n_windows) >= n_windows:
             raise ValueError(
                 f"PID ncal={self.resolve_ncal(n_windows)} must be smaller than "
@@ -232,8 +252,7 @@ class PID(ConformalMethod):
         n_windows = errors.shape[0]
         self.validate(n_windows, step_size)
         alpha = 1 - np.asarray(level, dtype=float) / 100
-        tg = self.Tg if self.Tg is not None else float(n_windows)
-        csat = self.Csat if self.Csat is not None else default_csat(tg, self.delta)
+        csat = self.resolve_csat(n_windows)
         ki = (
             np.full(errors.shape[1], self.KI, dtype=float)
             if self.KI is not None
