@@ -153,7 +153,7 @@ When the integrator saturates (the miss rate is far from the target, typically a
 
 ### Illustration
 
-For a runnable walkthrough on real weekly COVID-19 cases across 68 countries, where the Omicron surge breaks the calibration history, see the [conformal prediction under distribution shift notebook](examples/conformal-distribution-shift.ipynb).
+For a runnable walkthrough on real data, GOOGL daily prices with changing volatility, comparing the model's own intervals, `conformal_error` and `PID`, see the [conformal prediction under distribution shift notebook](examples/conformal-distribution-shift.ipynb).
 
 Chronos-2 rolling-origin forecasts on M4 Hourly (414 series, \(h=24\), non-overlapping windows). The calibrators see only windows before each evaluated one; coverage is the mean empirical coverage and MSIS the interval score scaled by seasonal-naive MAE (lower is better). "Shift" multiplies the forecast errors of the evaluated windows by 2.5, emulating a volatility regime change the calibration history has not seen. These are one dataset and configuration, not a coverage guarantee.
 
