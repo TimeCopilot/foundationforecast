@@ -2,6 +2,7 @@ import json
 import sys
 from contextlib import contextmanager
 from functools import cache
+from pathlib import Path
 
 if sys.version_info < (3, 11) or sys.version_info >= (3, 14):
     raise ImportError("T0 requires Python >= 3.11 and < 3.14")
@@ -28,10 +29,17 @@ from ..core.utils import PanelData
 
 @cache
 def _checkpoint_config(repo_id: str) -> dict:
-    # huggingface_hub may not inject config.json into model kwargs when the
-    # checkpoint repo is gated; it is read here and passed explicitly.
-    config_path = hf_hub_download(repo_id, CONFIG_NAME)
-    with open(config_path, encoding="utf-8") as f:
+    # Gated Hub repos do not inject config.json into from_pretrained kwargs, so
+    # read it here and pass it explicitly. A local directory already has the file;
+    # hf_hub_download only accepts a Hub id and rejects that path.
+    repo_path = Path(repo_id)
+    if repo_path.is_dir():
+        config_path = repo_path / CONFIG_NAME
+        if not config_path.is_file():
+            raise FileNotFoundError(f"{CONFIG_NAME} not found in {repo_path.resolve()}")
+    else:
+        config_path = Path(hf_hub_download(repo_id, CONFIG_NAME))
+    with config_path.open(encoding="utf-8") as f:
         return json.load(f)
 
 

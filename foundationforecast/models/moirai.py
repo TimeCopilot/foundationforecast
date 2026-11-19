@@ -130,9 +130,12 @@ class Moirai(GluonTSForecaster):
             "feat_dynamic_real_dim": self.feat_dynamic_real_dim,
             "past_feat_dynamic_real_dim": self.past_feat_dynamic_real_dim,
         }
-        if "moe" in self.repo_id:
+        # Classify on the checkpoint name so a local directory is not affected
+        # by a parent folder that happens to contain "moe" or "moirai-2.0".
+        name = self.repo_id.rstrip("/").rsplit("/", 1)[-1]
+        if "moe" in name:
             model_cls, model_module = MoiraiMoEForecast, MoiraiMoEModule
-        elif "moirai-2.0" in self.repo_id:
+        elif "moirai-2.0" in name:
             model_cls, model_module = Moirai2Forecast, Moirai2Module
             del kwargs["patch_size"]
             del kwargs["num_samples"]

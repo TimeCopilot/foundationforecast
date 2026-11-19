@@ -130,7 +130,7 @@ class TimeH2O(ExogCapableForecaster):
             yield model
 
     def supports_native_futr_exog(self) -> bool:
-        return "tiny" not in self.repo_id
+        return "tiny" not in self.repo_id.rstrip("/").rsplit("/", 1)[-1]
 
     def _context_width(self, ts: torch.Tensor) -> int:
         if self.context_length is None:
