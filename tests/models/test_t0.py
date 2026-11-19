@@ -1,3 +1,4 @@
+import json
 import sys
 from unittest.mock import MagicMock
 
@@ -13,9 +14,54 @@ if sys.version_info < (3, 11) or sys.version_info >= (3, 14):
 import pandas as pd  # noqa: E402
 
 from tests.helpers import generate_series  # noqa: E402
-from foundationforecast.models.t0 import T0  # noqa: E402
+from foundationforecast.models.t0 import T0, _checkpoint_config  # noqa: E402
 
 pytestmark = pytest.mark.models
+
+
+def test_checkpoint_config_reads_local_directory(tmp_path, monkeypatch):
+    repo = tmp_path / "t0-alpha"
+    repo.mkdir()
+    (repo / "config.json").write_text(
+        json.dumps({"quantile_levels": [0.1, 0.5, 0.9], "embed_dim": 8}),
+        encoding="utf-8",
+    )
+
+    def _reject_hub(*_args, **_kwargs):
+        raise AssertionError("local checkpoints must not call hf_hub_download")
+
+    monkeypatch.setattr("foundationforecast.models.t0.hf_hub_download", _reject_hub)
+    _checkpoint_config.cache_clear()
+    config = _checkpoint_config(str(repo))
+    assert config["embed_dim"] == 8
+    assert config["quantile_levels"] == [0.1, 0.5, 0.9]
+
+
+def test_load_model_accepts_local_directory(tmp_path, monkeypatch):
+    repo = tmp_path / "t0-alpha"
+    repo.mkdir()
+    (repo / "config.json").write_text(
+        json.dumps({"quantile_levels": [0.1, 0.5, 0.9], "embed_dim": 8}),
+        encoding="utf-8",
+    )
+    _checkpoint_config.cache_clear()
+    loaded = {}
+
+    def fake_from_pretrained(repo_id, **config):
+        loaded["repo_id"] = repo_id
+        loaded["config"] = config
+        model = MagicMock()
+        model.to.return_value = model
+        model.eval.return_value = model
+        return model
+
+    monkeypatch.setattr(
+        "foundationforecast.models.t0.T0Forecaster.from_pretrained",
+        fake_from_pretrained,
+    )
+    T0(repo_id=str(repo), context_length=64, batch_size=2)._load_model()
+    assert loaded["repo_id"] == str(repo)
+    assert loaded["config"]["embed_dim"] == 8
 
 
 def test_t0_native_futr_exog_passes_future_covariates(mocker):

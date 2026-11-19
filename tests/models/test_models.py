@@ -1,4 +1,7 @@
+import inspect
 import warnings
+from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -385,8 +388,7 @@ def test_finite_sample_conformal_forecast(model, monkeypatch):
     with pytest.warns(
         UserWarning,
         match=(
-            "level 95 needs at least 19 calibration windows, got 4; "
-            "bounds are infinite"
+            "level 95 needs at least 19 calibration windows, got 4; bounds are infinite"
         ),
     ) as caught:
         fcst = model.forecast(df=df, h=3, freq="D", level=[50, 80, 95])
@@ -429,3 +431,68 @@ def test_pid_conformal_forecast(model, monkeypatch):
         assert (fcst[f"{model.alias}-lo-{lv}"] <= fcst[f"{model.alias}-hi-{lv}"]).all()
     assert (fcst[f"{model.alias}-lo-95"] <= fcst[f"{model.alias}-lo-80"]).all()
     assert (fcst[f"{model.alias}-hi-95"] >= fcst[f"{model.alias}-hi-80"]).all()
+
+
+def _local_repo_case_id(model: Any) -> str:
+    repo_id = getattr(model, "repo_id", None)
+    alias = getattr(model, "alias", type(model).__name__)
+    batch = getattr(model, "batch_size", None)
+    repo = repo_id.rsplit("/", 1)[-1] if isinstance(repo_id, str) else "no-repo"
+    return f"{alias}-{repo}-bs{batch}"
+
+
+def _public_class(model: Any) -> Any:
+    # TimesFM.__new__ returns a version-specific subclass. Reconstruct through
+    # the public class so a local path is classified the same way a user would.
+    if type(model).__name__.startswith("_TimesFM"):
+        from foundationforecast.models.timesfm import TimesFM
+
+        return TimesFM
+    return type(model)
+
+
+def _clone_with_repo_id(model: Any, repo_id: str) -> Any:
+    cls = _public_class(model)
+    constructor = cls.__new__ if cls.__name__ == "TimesFM" else cls.__init__
+    signature = inspect.signature(constructor)
+    kwargs = {}
+    for name, param in signature.parameters.items():
+        if name in {"self", "cls"} or param.kind in (
+            param.VAR_KEYWORD,
+            param.VAR_POSITIONAL,
+        ):
+            continue
+        if name == "repo_id":
+            kwargs[name] = repo_id
+        elif hasattr(model, name):
+            kwargs[name] = getattr(model, name)
+    extra = getattr(model, "kwargs", None)
+    if cls.__name__ == "TimesFM" and isinstance(extra, dict):
+        kwargs.update(extra)
+    return cls(**kwargs)
+
+
+def _link_local_repo(repo_id: str, directory: Path) -> Path:
+    from huggingface_hub import snapshot_download
+
+    snapshot = Path(snapshot_download(repo_id))
+    local = directory / repo_id.rsplit("/", 1)[-1]
+    local.symlink_to(snapshot, target_is_directory=True)
+    return local
+
+
+@pytest.mark.models
+@pytest.mark.parametrize("model", models, ids=_local_repo_case_id)
+def test_forecast_from_local_checkpoint(model, tmp_path):
+    """Every registered checkpoint loads from a local directory, not only a Hub id."""
+    checkpoint = getattr(model, "repo_id", None)
+    if not isinstance(checkpoint, str):
+        pytest.skip("model has no Hugging Face checkpoint")
+    local_model = _clone_with_repo_id(
+        model, str(_link_local_repo(cast(str, checkpoint), tmp_path))
+    )
+    df = generate_series(n_series=1, freq="D", min_length=64, max_length=64)
+    fcst = local_model.forecast(df, h=2, freq="D")
+    assert fcst.shape[0] == 2
+    assert local_model.alias in fcst.columns
+    assert np.isfinite(fcst[local_model.alias]).all()
