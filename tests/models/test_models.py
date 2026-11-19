@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -8,6 +10,7 @@ from tests.helpers import (
     panel_with_futr_exog_horizon,
 )
 from .conftest import conformal_models, models
+from foundationforecast import PID
 from foundationforecast.core.conformal import ConformalIntervals
 from foundationforecast.core.quantiles import quantile_column_name
 
@@ -402,3 +405,27 @@ def test_finite_sample_conformal_forecast(model, monkeypatch):
     assert fcst[f"{model.alias}-hi-80"].ge(fcst[f"{model.alias}-hi-50"]).all()
     assert np.isneginf(fcst[f"{model.alias}-lo-95"]).all()
     assert np.isposinf(fcst[f"{model.alias}-hi-95"]).all()
+
+
+@pytest.mark.models
+@pytest.mark.parametrize("model", models)
+def test_pid_conformal_forecast(model, monkeypatch):
+    monkeypatch.setattr(
+        model, "prediction_intervals", ConformalIntervals(n_windows=6, method=PID())
+    )
+    level = [80, 95]
+    df = generate_series(n_series=2, freq="D", min_length=60, max_length=60)
+    with warnings.catch_warnings():
+        # short backtests may saturate the integrator to infinite bounds
+        warnings.filterwarnings("ignore", message="PID error integration saturated")
+        fcst = model.forecast(df=df, h=3, freq="D", level=level)
+    cols = [f"{model.alias}-{side}-{lv}" for lv in level for side in ("lo", "hi")]
+    assert fcst.shape == (6, 3 + len(cols))
+    assert not fcst[[model.alias, *cols]].isna().any().any()
+    for lv in level:
+        assert (fcst[f"{model.alias}-lo-{lv}"] <= fcst[model.alias]).all()
+        assert (fcst[f"{model.alias}-hi-{lv}"] >= fcst[model.alias]).all()
+    for lv in level:
+        assert (fcst[f"{model.alias}-lo-{lv}"] <= fcst[f"{model.alias}-hi-{lv}"]).all()
+    assert (fcst[f"{model.alias}-lo-95"] <= fcst[f"{model.alias}-lo-80"]).all()
+    assert (fcst[f"{model.alias}-hi-95"] >= fcst[f"{model.alias}-hi-80"]).all()

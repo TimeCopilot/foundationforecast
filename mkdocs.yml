@@ -29,7 +29,9 @@ nav:
       - Anomaly Detection: examples/anomaly-detection-forecaster-quickstart.ipynb
       - Compare Foundation Models: examples/ts-foundation-models-comparison-quickstart.ipynb
       - Exogenous variables: examples/exogenous-variables.ipynb
-      - Conformal prediction: examples/conformal-prediction.ipynb
+      - Conformal:
+          - Conformal prediction: examples/conformal-prediction.ipynb
+          - Conformal under distribution shift: examples/conformal-distribution-shift.ipynb
       - Prophet adapter: examples/prophet-adapter.ipynb
       - Family Guides:
           - Chronos: examples/chronos-family.ipynb
