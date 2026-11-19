@@ -1,4 +1,6 @@
 import inspect
+import os
+import shutil
 import warnings
 from pathlib import Path
 from typing import Any, cast
@@ -472,13 +474,60 @@ def _clone_with_repo_id(model: Any, repo_id: str) -> Any:
     return cls(**kwargs)
 
 
+def _materialize_repo(snapshot: Path, local: Path) -> None:
+    """Copy the repo layout without leaving Python files as cache-blob symlinks.
+
+    Hugging Face snapshots symlink each file at ``blobs/<hash>``. Transformers
+    resolves those links and then looks for relative imports next to the blob,
+    so a dynamic module such as Tabby cannot load from the snapshot directory.
+    """
+    local.mkdir(parents=True, exist_ok=True)
+    for entry in snapshot.iterdir():
+        dest = local / entry.name
+        if entry.is_dir():
+            _materialize_repo(entry.resolve(), dest)
+            continue
+        resolved = entry.resolve()
+        if dest.suffix == ".py":
+            try:
+                os.link(resolved, dest)
+            except OSError:
+                shutil.copy2(resolved, dest)
+        else:
+            dest.symlink_to(resolved)
+
+
 def _link_local_repo(repo_id: str, directory: Path) -> Path:
     from huggingface_hub import snapshot_download
 
     snapshot = Path(snapshot_download(repo_id))
     local = directory / repo_id.rsplit("/", 1)[-1]
-    local.symlink_to(snapshot, target_is_directory=True)
+    _materialize_repo(snapshot, local)
     return local
+
+
+def test_local_repo_keeps_python_files_out_of_the_cache_blobs(tmp_path, monkeypatch):
+    snapshot = tmp_path / "snapshot"
+    blobs = tmp_path / "blobs"
+    snapshot.mkdir()
+    blobs.mkdir()
+    (blobs / "modeling").write_text("from .sibling import x\n", encoding="utf-8")
+    (blobs / "sibling").write_text("x = 1\n", encoding="utf-8")
+    (blobs / "weights").write_bytes(b"weights")
+    (snapshot / "modeling.py").symlink_to(blobs / "modeling")
+    (snapshot / "sibling.py").symlink_to(blobs / "sibling")
+    (snapshot / "model.safetensors").symlink_to(blobs / "weights")
+    monkeypatch.setattr(
+        "huggingface_hub.snapshot_download",
+        lambda repo_id: str(snapshot),
+    )
+
+    local = _link_local_repo("paris-noah/Tabby", tmp_path / "repos")
+
+    assert not (local / "modeling.py").is_symlink()
+    assert (local / "sibling.py").read_text(encoding="utf-8") == "x = 1\n"
+    assert (local / "model.safetensors").is_symlink()
+    assert (local / "model.safetensors").resolve() == (blobs / "weights").resolve()
 
 
 @pytest.mark.models
