@@ -131,6 +131,21 @@ class TiRex(ExogCapableForecaster):
         if device == "cpu":
             # see https://github.com/NX-AI/tirex/tree/main?tab=readme-ov-file#cuda-kernels
             os.environ["TIREX_NO_CUDA"] = "1"
+        if os.path.isdir(self.repo_id):
+            # load_model() parses a Hub id (`org/name`) before it looks at the
+            # filesystem, so a local directory never selects the TiRex class.
+            # The v1 loader reads the checkpoint file itself.
+            checkpoint = os.path.join(self.repo_id, "model.ckpt")
+            if not os.path.isfile(checkpoint):
+                raise FileNotFoundError(
+                    f"model.ckpt not found in {os.path.abspath(self.repo_id)}"
+                )
+            model_cls = PretrainedModel.REGISTRY["TiRex"]
+            return model_cls.from_pretrained(
+                checkpoint,
+                backend="torch",
+                device=device,
+            )
         return load_model(self.repo_id, device=device)
 
     @contextmanager

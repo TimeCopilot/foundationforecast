@@ -40,6 +40,12 @@ def test_timesfm_routes_3_0_repo():
     assert model.repo_id == "google/timesfm-3.0-pytorch"
 
 
+def test_timesfm_local_directory_uses_checkpoint_name():
+    parent = "/tmp/runs-2.0/exported"
+    model = TimesFM(repo_id=f"{parent}/timesfm-2.5-200m-pytorch", context_length=32)
+    assert isinstance(model, _TimesFMV2_p5)
+
+
 def test_timesfm_rejects_non_pytorch_repo():
     with pytest.raises(ValueError, match="JAX backends are not supported"):
         TimesFM(repo_id="google/timesfm-2.0-500m")

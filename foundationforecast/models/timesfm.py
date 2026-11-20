@@ -31,6 +31,11 @@ _GIFT_EVAL_LEGACY_REPOS = (
 )
 
 
+def _checkpoint_name(repo_id: str) -> str:
+    """Last path segment, so a local directory is classified like its Hub id."""
+    return repo_id.rstrip("/").rsplit("/", 1)[-1]
+
+
 class _TimesFMV1(ExogCapableForecaster):
     def __init__(
         self,
@@ -61,7 +66,7 @@ class _TimesFMV1(ExogCapableForecaster):
         quantiles: list[float] | None,
     ) -> str:
         quantiles_key = tuple(quantiles) if quantiles is not None else None
-        v2_version = "2.0" in self.repo_id
+        v2_version = "2.0" in _checkpoint_name(self.repo_id)
         context_len = (
             min(self.context_length, 512) if not v2_version else self.context_length
         )
@@ -78,7 +83,7 @@ class _TimesFMV1(ExogCapableForecaster):
         backend = "gpu" if torch.cuda.is_available() else "cpu"
         # these values are based on
         # https://github.com/google-research/timesfm/blob/ba034ae71c2fc88eaf59f80b4a778cc2c0dca7d6/experiments/extended_benchmarks/run_timesfm.py#L91
-        v2_version = "2.0" in self.repo_id
+        v2_version = "2.0" in _checkpoint_name(self.repo_id)
         context_len = (
             min(self.context_length, 512) if not v2_version else self.context_length
         )
@@ -570,14 +575,15 @@ class TimesFM(ExogCapableForecaster):
         prediction_intervals: ConformalIntervals | None = None,
         **kwargs: Any,
     ):
-        if "pytorch" not in repo_id and repo_id not in _GIFT_EVAL_LEGACY_REPOS:
+        name = _checkpoint_name(repo_id)
+        if "pytorch" not in name and repo_id not in _GIFT_EVAL_LEGACY_REPOS:
             legacy = ", ".join(_GIFT_EVAL_LEGACY_REPOS)
             raise ValueError(
                 "TimesFM requires a PyTorch checkpoint repo_id (name contains "
                 f"'pytorch') or a supported legacy GIFT-Eval repo_id: {legacy}. "
                 "JAX backends are not supported."
             )
-        if "1.0" in repo_id or "2.0" in repo_id:
+        if "1.0" in name or "2.0" in name:
             return _TimesFMV1(
                 repo_id=repo_id,
                 context_length=context_length,
@@ -587,7 +593,7 @@ class TimesFM(ExogCapableForecaster):
                 exog_strategy=exog_strategy,
                 prediction_intervals=prediction_intervals,
             )
-        elif "2.5" in repo_id:
+        elif "2.5" in name:
             return _TimesFMV2_p5(
                 repo_id=repo_id,
                 context_length=context_length,
@@ -598,7 +604,7 @@ class TimesFM(ExogCapableForecaster):
                 prediction_intervals=prediction_intervals,
                 **kwargs,
             )
-        elif "3.0" in repo_id:
+        elif "3.0" in name:
             return _TimesFMV3(
                 repo_id=repo_id,
                 context_length=context_length,

@@ -26,6 +26,29 @@ def test_is_tirex2_dispatch():
     assert TiRex(repo_id="NX-AI/TiRex-2/")._is_tirex2()
     assert TiRex(repo_id="NX-AI/TiRex-2-gifteval-pretrain")._is_tirex2()
     assert TiRex(repo_id="NX-AI/TiRex-2-gifteval-zs")._is_tirex2()
+    assert TiRex(repo_id="/tmp/models/TiRex-2")._is_tirex2()
+    assert not TiRex(repo_id="/tmp/models/TiRex")._is_tirex2()
+
+
+def test_tirex_v1_loads_checkpoint_file_from_local_directory(tmp_path, mocker):
+    repo = tmp_path / "TiRex"
+    repo.mkdir()
+    checkpoint = repo / "model.ckpt"
+    checkpoint.write_bytes(b"not-a-real-checkpoint")
+    model = TiRex(repo_id=str(repo))
+    sentinel = object()
+    model_cls = mocker.Mock()
+    model_cls.from_pretrained.return_value = sentinel
+    mocker.patch.dict(
+        "foundationforecast.models.tirex.PretrainedModel.REGISTRY",
+        {"TiRex": model_cls},
+    )
+    load_model = mocker.patch("foundationforecast.models.tirex.load_model")
+    assert model._load_model_v1() is sentinel
+    load_model.assert_not_called()
+    args, kwargs = model_cls.from_pretrained.call_args
+    assert args[0] == str(checkpoint)
+    assert kwargs["backend"] == "torch"
 
 
 def test_tirex2_forecast():

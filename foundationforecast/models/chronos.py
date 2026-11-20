@@ -217,7 +217,7 @@ class Chronos(ExogCapableForecaster):
         self.finetuning_config = finetuning_config
 
     def supports_native_futr_exog(self) -> bool:
-        return "chronos-2" in self.repo_id.lower()
+        return "chronos-2" in Path(self.repo_id).name.lower()
 
     def _to_chronos2_df(
         self,
