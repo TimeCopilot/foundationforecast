@@ -157,7 +157,7 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 
 ## News
 
-Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.22.md) for full release notes.
+Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.23.md) for full release notes.
 
 | When | What | Checkpoint / detail |
 |------|------|---------------------|
