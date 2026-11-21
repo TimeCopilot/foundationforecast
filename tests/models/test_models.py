@@ -15,7 +15,7 @@ from tests.helpers import (
     panel_with_futr_exog_horizon,
 )
 from .conftest import conformal_models, models
-from foundationforecast import PID
+from foundationforecast import ACI, PID
 from foundationforecast.core.conformal import ConformalIntervals
 from foundationforecast.core.quantiles import quantile_column_name
 
@@ -433,6 +433,44 @@ def test_pid_conformal_forecast(model, monkeypatch):
         assert (fcst[f"{model.alias}-lo-{lv}"] <= fcst[f"{model.alias}-hi-{lv}"]).all()
     assert (fcst[f"{model.alias}-lo-95"] <= fcst[f"{model.alias}-lo-80"]).all()
     assert (fcst[f"{model.alias}-hi-95"] >= fcst[f"{model.alias}-hi-80"]).all()
+
+
+@pytest.mark.models
+@pytest.mark.parametrize("model", models)
+@pytest.mark.parametrize("use_quantiles", [False, True])
+def test_aci_conformal_forecast(model, use_quantiles, monkeypatch):
+    monkeypatch.setattr(
+        model,
+        "prediction_intervals",
+        ConformalIntervals(n_windows=6, method=ACI(gamma=0.005)),
+    )
+    df = generate_series(n_series=2, freq="D", min_length=60, max_length=60)
+    kwargs = (
+        {"quantiles": [0.025, 0.1, 0.5, 0.9, 0.975]}
+        if use_quantiles
+        else {"level": [80, 95]}
+    )
+    forecast = model.forecast(df=df, h=3, freq="D", **kwargs)
+    numeric = forecast.drop(columns=["unique_id", "ds"])
+    assert len(forecast) == 6
+    assert np.isfinite(numeric).all().all()
+    if use_quantiles:
+        columns = [f"{model.alias}-q-{q}" for q in ["2.5", "10", "50", "90", "97.5"]]
+        assert set(forecast) == {"unique_id", "ds", model.alias, *columns}
+        for low, high in zip(columns, columns[1:], strict=False):
+            assert forecast[low].le(forecast[high]).all()
+        np.testing.assert_array_equal(forecast[columns[2]], forecast[model.alias])
+    else:
+        assert forecast.shape == (6, 7)
+        for level in [80, 95]:
+            assert forecast[f"{model.alias}-lo-{level}"].le(forecast[model.alias]).all()
+            assert forecast[f"{model.alias}-hi-{level}"].ge(forecast[model.alias]).all()
+        assert (
+            forecast[f"{model.alias}-lo-95"].le(forecast[f"{model.alias}-lo-80"]).all()
+        )
+        assert (
+            forecast[f"{model.alias}-hi-95"].ge(forecast[f"{model.alias}-hi-80"]).all()
+        )
 
 
 def _local_repo_case_id(model: Any) -> str:

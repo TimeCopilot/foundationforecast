@@ -41,7 +41,7 @@ fcst = ff.forecast(df=df, h=12, freq="MS", level=[80, 95])
 | Field | Meaning |
 | --- | --- |
 | `n_windows` | Rolling backtest windows for residual estimation (minimum **2**). |
-| `method` | `conformal_distribution` (default), `conformal_error`, `conformal_error_finite_sample`, or a method object such as [`PID(...)`][foundationforecast.core.conformal_pid.PID] ([online calibration under shift](#conformal-pid-control-under-distribution-shift)). |
+| `method` | `conformal_distribution` (default), `conformal_error`, `conformal_error_finite_sample`, or a method object: [`PID(...)`][foundationforecast.core.conformal_pid.PID] or [`ACI(...)`][foundationforecast.core.conformal_aci.ACI]. |
 | `step_size` | Gap between calibration cutoffs. `None` (default) uses the forecast `h` (non-overlapping windows). |
 
 The calibration horizon is always the `h` passed to `forecast()` / `cross_validation()`.
@@ -50,7 +50,7 @@ The calibration horizon is always the `h` passed to `forecast()` / `cross_valida
 
 - Pass **`level`** or **`quantiles`** to produce intervals. Without either, only the point forecast is returned.
 - Each series needs at least **`h + (n_windows - 1) * step_size + 1`** observations (`step_size` defaults to `h`).
-- `conformal_error_finite_sample` requires finite calibration errors; `NaN` or infinite errors raise `ValueError`.
+- `conformal_error_finite_sample` and `ACI` require finite calibration errors; `NaN` or infinite errors raise `ValueError`.
 
 ## How it works
 
@@ -115,7 +115,7 @@ The correction gives the usual **marginal coverage** lower bound when the calibr
 
 The original `conformal_error` and `conformal_distribution` use interpolated empirical quantiles without this correction. Even with independent calibration and future errors from the same continuous distribution, two calibration windows give at most two-thirds coverage because their radius never exceeds the largest calibration error. Use more calibration windows and measure achieved coverage on held-out backtests, especially when requesting high levels.
 
-The [conformal prediction example notebook](examples/conformal-prediction.ipynb) includes an M4 Hourly rolling-origin check comparing corrected and uncorrected intervals, with empirical coverage, mean width, and the fraction of finite intervals. Calibration uses only observations available before each evaluation cutoff. These results measure that dataset and configuration, rather than proving a coverage guarantee. Adaptive conformal inference (ACI) is not provided; for online adaptation see PID below.
+The [conformal prediction example notebook](examples/conformal-prediction.ipynb) includes an M4 Hourly rolling-origin check comparing corrected and uncorrected intervals, with empirical coverage, mean width, and the fraction of finite intervals. Calibration uses only observations available before each evaluation cutoff. These results measure that dataset and configuration, rather than proving a coverage guarantee. For adaptive replay see PID and ACI below.
 
 ## Conformal PID control under distribution shift
 
@@ -167,3 +167,37 @@ Chronos-2 rolling-origin forecasts on M4 Hourly (414 series, \(h=24\), non-overl
 | `PID(integrate=False)` | 0.790 / 0.922 | 3.59 / 6.09 | 0.530 / 0.677 | 10.7 / 26.0 |
 
 With stable errors PID reaches nominal coverage and is comparable to a 20-window split conformal at similar cost; `integrate=False` gives tighter intervals there. Under the shift the integrator matters: the default recovers most of the lost coverage while the pooled and the P-only variants stay far below nominal. On a spiky hourly price series (electricity) the same PID setup over-covers and is wider than split conformal on stable windows, so check the achieved coverage on your own backtests.
+
+## Adaptive conformal inference via replay
+
+`ACI` implements the adaptive miscoverage update of [Gibbs and Candes (2021)](https://arxiv.org/abs/2106.00170), using the same stateless `ConformalMethod` interface as PID:
+
+```python
+from foundationforecast import ACI, ConformalIntervals
+
+aci_intervals = ConformalIntervals(n_windows=20, method=ACI(gamma=0.005))
+```
+
+Pass `aci_intervals` as a model's `prediction_intervals` and request `level` or `quantiles`. ACI uses symmetric absolute-error intervals. PID tracks a threshold on the error scale; ACI instead changes the probability used to select an error quantile. For a target level `L`, it initializes `target_alpha = 1 - L/100` and updates a separate adaptive alpha per series, horizon step and level:
+
+\[
+\alpha_{k+1} = \alpha_k + \gamma\big(\alpha_{\mathrm{target}} - \mathrm{miss}_k\big).
+\]
+
+A miss decreases alpha and requests a higher quantile; a cover increases alpha. Before each replay decision, the threshold is the **inverse empirical-CDF quantile** of previously revealed absolute errors: the `ceil(n_seen * (1 - alpha))`-th smallest score, without interpolation. This is the empirical quantile used for the ACI controller, **not** the finite-sample-corrected rank of `conformal_error_finite_sample`; that method's minimum-window counts do not apply to ACI.
+
+| Field | Meaning |
+| --- | --- |
+| `gamma` | Adaptation rate in `(0, 1]`, default `0.01`; the example uses `0.005`. Larger values make alpha respond more quickly and may produce extreme intervals. |
+| `ncal` | Initial windows reserved for warming up the score distribution, default `max(1, n_windows // 2)`; must be a positive integer smaller than `n_windows`. |
+| `rolling` | Use the last `ncal` revealed scores for the CDF (`True`), or every revealed score (`False`, default). |
+
+**Time ordering and delayed feedback.** At horizon step `j`, the score of window `k` is available only at `origin_k + j`. Each replay decision uses only scores available by that cutoff, including when `step_size < h`. Warm-up windows never update alpha; their scores enter the CDF when revealed. Each remaining window updates alpha exactly once, judged against the threshold originally issued for that window, rather than a threshold recomputed after its actual was observed.
+
+**State and coverage.** Every `forecast()` reconstructs this process from its calibration windows and discards the adaptive state afterwards. The same configuration can be reused across calls and models; there is no persistent online session or `update()` API. Levels are simulated independently, then final radii are widened as needed to keep output intervals nested. This resets the controller and modifies the returned sets, so the API **does not inherit the continuous online algorithm's long-run coverage guarantee**. Neither nominal coverage at every cutoff nor simultaneous coverage of the full horizon is promised. In `cross_validation()`, every evaluation cutoff gets a fresh replay using only its training history.
+
+**Extreme intervals are explicit.** Adaptive alpha is not clipped. At `alpha <= 0`, the interval is unbounded (`-inf`, `inf`); at `alpha >= 1`, it is empty (`+inf`, `-inf`). A decision with no revealed scores also starts unbounded. ACI emits a `UserWarning` naming the affected output levels and the replay settings whenever returned intervals are unbounded or empty. Check for these sets before plotting or scoring; use more calibration windows or review `gamma` and `ncal`. Small positive alpha can also select the largest observed error, without giving a finite-sample coverage guarantee.
+
+**Compute and history cost.** Like the other methods, `n_windows=20` requires about 21 panel point forecasts per model and at least `h + 19 * step_size + 1` historical observations per series (481 with `h=step_size=24`). Replay adds quantile calculations but no extra foundation-model forecasts. Rolling-origin evaluation repeats calibration at every cutoff.
+
+The [ACI replay notebook](examples/conformal-aci.ipynb) starts with a finite 24-hour forecast and plot on one M4 Hourly series, then compares ACI, PID and static finite-sample-corrected intervals on held-out rolling origins. It reports coverage, width, finite fraction and empty fraction together, so trivial coverage from infinite intervals is visible. The learning rate and window counts are illustrative settings to validate on your own series, not universal defaults for good coverage.

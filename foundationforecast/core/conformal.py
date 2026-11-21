@@ -16,7 +16,7 @@ class ConformalMethod(ABC):
     """Base class for parameterized conformal calibration methods.
 
     Pass an instance as ``ConformalIntervals(method=...)`` (for example
-    `PID`). Instances are called
+    ``PID`` or ``ACI``). Instances are called
     with the point forecasts and the signed cross-validation errors
     ``y - y_hat`` of the calibration windows, and return the forecast frame
     with ``-lo-{level}`` / ``-hi-{level}`` columns added.
@@ -62,8 +62,8 @@ class ConformalIntervals:
             The usual marginal coverage lower bound
             requires exchangeable calibration and future errors; rolling
             backtests do not establish that assumption. A parameterized
-            method object such as ``PID(...)`` replays the calibration windows
-            online to track the error quantile under distribution shift.
+            method object such as ``PID(...)`` or ``ACI(...)`` replays the
+            calibration windows online under distribution shift.
         step_size: Gap between consecutive calibration cutoffs. ``None``
             (default) uses the forecast horizon (non-overlapping windows).
     """
