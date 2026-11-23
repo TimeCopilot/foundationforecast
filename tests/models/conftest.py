@@ -5,6 +5,7 @@ from foundationforecast.models.chronos import Chronos
 from foundationforecast.models.ciproto import CIProto, is_ciproto_available
 from foundationforecast.models.kumo import Kumo
 from foundationforecast.models.moirai import Moirai
+from foundationforecast.models.simons import Simons
 from foundationforecast.models.tabby import Tabby
 from foundationforecast.models.tafsut import Tafsut
 from foundationforecast.models.timesfm import TimesFM
@@ -50,6 +51,12 @@ models = [
     Timestral(
         repo_id="mistralai/Timestral-5M",
         alias="Timestral-5M",
+        context_length=256,
+        batch_size=2,
+    ),
+    Simons(
+        repo_id="abel-lab/Simons-25M",
+        alias="Simons-25M",
         context_length=256,
         batch_size=2,
     ),

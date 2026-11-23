@@ -69,6 +69,17 @@ def test_model_python_defaults_unless_overridden():
     assert model_python("mistralai--Timestral-209M", default="3.11") == "3.11"
 
 
+def test_simons_registered_with_leaderboard_slugs():
+    models = load_models_config()
+    for size in ("25M", "60M", "178M", "297M"):
+        key = f"abel-lab--Simons-{size}"
+        entry = models[key]
+        assert entry["class"] == "foundationforecast.models.simons.Simons"
+        assert entry["reference_slug"] == f"Simons-{size}"
+        assert entry["kwargs"]["repo_id"] == f"abel-lab/Simons-{size}"
+        assert entry["kwargs"]["alias"] == f"Simons-{size}"
+
+
 def test_tabby_registered_with_leaderboard_settings():
     models = load_models_config()
     entry = models["paris-noah--Tabby"]

@@ -329,7 +329,7 @@ def test_model_constructors_accept_prediction_intervals(model_cls):
     "model_cls",
     [
         cls
-        for name in ("T0", "Tabby", "TimeH2O", "Timestral")
+        for name in ("Simons", "T0", "Tabby", "TimeH2O", "Timestral")
         if (cls := getattr(ff_models, name, None)) is not None
     ],
 )
