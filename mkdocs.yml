@@ -43,6 +43,7 @@ nav:
           - Kumo: examples/kumo-family.ipynb
           - Toto: examples/toto-family.ipynb
           - PatchTST-FM: examples/patchtst-fm-family.ipynb
+          - Simons: examples/simons-family.ipynb
           - Timestral: examples/timestral-family.ipynb
           - T0: examples/t0-family.ipynb
           - TimeH2O: examples/timeh2o-family.ipynb
