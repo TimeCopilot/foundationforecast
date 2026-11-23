@@ -53,3 +53,6 @@ jobs:
   - model_key: paris-noah--Tabby
     dataset_name: m4_weekly
     term: short
+  - model_key: abel-lab--Simons-297M
+    dataset_name: m4_weekly
+    term: short
