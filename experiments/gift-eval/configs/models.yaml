@@ -371,6 +371,38 @@ models:
     class: foundationforecast.models.tabpfn.TabPFN
     reference_slug: tabpfn_ts
 
+  abel-lab--Simons-25M:
+    class: foundationforecast.models.simons.Simons
+    reference_slug: Simons-25M
+    kwargs:
+      repo_id: abel-lab/Simons-25M
+      alias: Simons-25M
+      batch_size: 64
+
+  abel-lab--Simons-60M:
+    class: foundationforecast.models.simons.Simons
+    reference_slug: Simons-60M
+    kwargs:
+      repo_id: abel-lab/Simons-60M
+      alias: Simons-60M
+      batch_size: 64
+
+  abel-lab--Simons-178M:
+    class: foundationforecast.models.simons.Simons
+    reference_slug: Simons-178M
+    kwargs:
+      repo_id: abel-lab/Simons-178M
+      alias: Simons-178M
+      batch_size: 64
+
+  abel-lab--Simons-297M:
+    class: foundationforecast.models.simons.Simons
+    reference_slug: Simons-297M
+    kwargs:
+      repo_id: abel-lab/Simons-297M
+      alias: Simons-297M
+      batch_size: 64
+
   tafsut-univariate-base:
     class: foundationforecast.models.tafsut.Tafsut
     reference_slug: tafsut
