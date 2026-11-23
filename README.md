@@ -118,7 +118,7 @@ Licenses verified against Hugging Face model cards. Check the model card for you
 - **Apache-2.0**, **MIT**: generally fine for commercial production (retain notices; T0† is also gated on Hugging Face: accept terms and set `HF_TOKEN`).
 - **CC-BY-NC-4.0** (Moirai, Tabby), **CC-BY-NC-SA-4.0** (PatchTST-FM r1 checkpoints): **non-commercial** only; not for revenue-generating production without a separate agreement from the rights holder.
 - **Apache-2.0 / OpenMDW 1.0** (Granite PatchTST-FM r2): commercial-friendly; choose either license per the [model card](https://huggingface.co/ibm-granite/granite-timeseries-patchtst-fm-r2).
-- **OpenMDW-1.1¶¶** (Simons): checkpoint weights use the [OpenMDW-1.1 license](https://huggingface.co/abel-lab/Simons-297M/blob/main/LICENSE); inference code is Apache-2.0 via `simons`.
+- **OpenMDW-1.1¶¶** (Simons): checkpoint weights use the [OpenMDW-1.1 license](https://huggingface.co/abel-lab/Simons-297M/blob/main/LICENSE); inference code is Apache-2.0 via `timecopilot-simons`.
 - **TimesFM 3.0**: weights for `google/timesfm-3.0-pytorch` are [non-commercial](https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE); TimesFM 1.0–2.5 checkpoints remain Apache-2.0.
 - **TabPFN NC**‡: TabPFN-2.6+ and TabPFN-3 weights are non-commercial; production requires a [Prior Labs commercial license or API](https://docs.priorlabs.ai/models). First LOCAL use requires accepting terms at [ux.priorlabs.ai](https://ux.priorlabs.ai) (`TABPFN_TOKEN`). TabPFN-3 is LOCAL-only today.
 - **Community / Apache-2.0** (TiRex): TiRex 1.0 uses the [NXAI Community License](https://huggingface.co/NX-AI/TiRex/blob/main/LICENSE) (commercial limits for large enterprises); TiRex 2.0 is Apache-2.0.
@@ -141,7 +141,7 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 - **Kumo:** `nvidia/Kumo-Forecast` (point forecasts; requires `timecopilot-kumo-forecast>=0.1.0`)
 - **Moirai:** `Salesforce/moirai-{1.0,1.1,2.0}-R-{small,base,large}`, `Salesforce/moirai-moe-1.0-R-*`
 - **PatchTST-FM:** `ibm-research/patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r2` (r2 requires `granite-tsfm>=0.3.9`)
-- **Simons:** `abel-lab/Simons-{25M,60M,178M,297M}` (requires `simons>=0.1.2` from [GitHub](https://github.com/Abel-ai-lab/Simons))
+- **Simons:** `abel-lab/Simons-{25M,60M,178M,297M}` (requires `timecopilot-simons>=0.1.0`)
 - **Sundial:** `thuml/sundial-base-128m`
 - **T0:** `theforecastingcompany/t0-alpha`, `theforecastingcompany/t0-beta`, `theforecastingcompany/t0-gamma` (requires `tfc-t0[torch]>=0.6.0`)
 - **Tabby:** `paris-noah/Tabby` (requires `trust_remote_code`; CC-BY-NC-4.0)
@@ -164,7 +164,7 @@ Recent additions and checkpoints (newest first). See the [changelog](https://git
 
 | When | What | Checkpoint / detail |
 |------|------|---------------------|
-| Nov 2026 | [**Simons**](https://huggingface.co/collections/abel-lab/simons-1-6ae3d4ce9705938e293c52dd) | `abel-lab/Simons-{25M,60M,178M,297M}` — requires `simons>=0.1.2` (GitHub tag `v0.1.2`); native `X_df`; 9 quantiles (0.1–0.9) |
+| Nov 2026 | [**Simons**](https://huggingface.co/collections/abel-lab/simons-1-6ae3d4ce9705938e293c52dd) | `abel-lab/Simons-{25M,60M,178M,297M}` — requires `timecopilot-simons>=0.1.0`; native `X_df`; 9 quantiles (0.1–0.9) |
 | Nov 2026 | **Conformal PID** | `ConformalIntervals(method=PID())` — online interval calibration that tracks the error quantile under distribution shift; works on every model ([v0.1.22](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.22.md)) |
 | Nov 2026 | [**CIProto**](https://huggingface.co/ContinuousIntelligence/ci-proto) | `ContinuousIntelligence/ci-proto` — ~167M zero-shot forecaster; 16k context, 9 native quantiles (0.1–0.9), native `X_df`; install with `foundationforecast[ci-proto]` ([v0.1.21](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.21.md)) |
 | Nov 2026 | [**Kumo-Forecast**](https://huggingface.co/nvidia/Kumo-Forecast) | `nvidia/Kumo-Forecast` — NVIDIA's ~340M zero-shot forecaster; point forecasts only (use `prediction_intervals=ConformalIntervals(...)` for intervals); 512-step context, 72-step native horizon with autoregressive rollout; requires `timecopilot-kumo-forecast>=0.1.0` ([v0.1.20](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.20.md)) |

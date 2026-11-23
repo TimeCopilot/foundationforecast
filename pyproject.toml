@@ -55,12 +55,12 @@ dependencies = [
   "nixtla>=0.7.0",
   "pandas>=2.2.0 ; python_full_version >= '3.13'",
   "scipy",
-  "simons>=0.1.2",
   "tabpfn-time-series>=1.2.0 ; python_full_version < '3.13'",
   "tafsut>=0.1.0",
   "tfc-t0[torch]>=0.6.0 ; python_full_version >= '3.11' and python_full_version < '3.14'",
   "timecopilot-chronos-forecasting>=0.2.2",
   "timecopilot-kumo-forecast>=0.1.0",
+  "timecopilot-simons>=0.1.0",
   "timecopilot-timesfm>=0.4.1",
   "timecopilot-timestral>=0.1.0",
   "timecopilot-tirex2>=0.1.0 ; python_full_version >= '3.11'",
@@ -126,6 +126,3 @@ select = ["B", "E", "F", "I", "SIM", "UP"]
 [tool.ruff.lint.isort]
 known-local-folder = ["foundationforecast"]
 no-lines-before = ["local-folder"]
-
-[tool.uv.sources]
-simons = {git = "https://github.com/Abel-ai-lab/Simons", tag = "v0.1.2"}

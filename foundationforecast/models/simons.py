@@ -60,10 +60,10 @@ class Simons(ExogCapableForecaster):
                 the conformal prediction docs. Defaults to None.
 
         Notes:
-            **Requirements:** ``simons>=0.1.2`` from
-            [Abel-ai-lab/Simons](https://github.com/Abel-ai-lab/Simons)
-            (Python 3.10+, PyTorch 2.5+). The package is not on PyPI; this
-            library pins git tag ``v0.1.2``.
+            **Requirements:** ``timecopilot-simons>=0.1.0`` (Python 3.10+,
+            PyTorch 2.5+). The package vendors inference code from
+            [Abel-ai-lab/Simons](https://github.com/Abel-ai-lab/Simons) tag
+            ``v0.1.2``. The import name stays ``simons``.
 
             **Available models:**
 
