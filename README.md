@@ -160,11 +160,12 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 
 ## News
 
-Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.23.md) for full release notes.
+Recent additions and checkpoints (newest first). See the [changelog](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.24.md) for full release notes.
 
 | When | What | Checkpoint / detail |
 |------|------|---------------------|
-| Nov 2026 | [**Simons**](https://huggingface.co/collections/abel-lab/simons-1-6ae3d4ce9705938e293c52dd) | `abel-lab/Simons-{25M,60M,178M,297M}` — requires `timecopilot-simons>=0.1.0`; native `X_df`; 9 quantiles (0.1–0.9) |
+| Nov 2026 | [**Simons**](https://huggingface.co/collections/abel-lab/simons-1-6ae3d4ce9705938e293c52dd) | `abel-lab/Simons-{25M,60M,178M,297M}` — requires `timecopilot-simons>=0.1.0`; native `X_df`; 9 quantiles (0.1–0.9); GIFT-Eval and fev-bench CI ([v0.1.24](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.24.md)) |
+| Nov 2026 | **Conformal ACI** | `ConformalIntervals(method=ACI())` — stateless replay of the Gibbs and Candès miscoverage update; works on every model ([v0.1.24](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.24.md)) |
 | Nov 2026 | **Conformal PID** | `ConformalIntervals(method=PID())` — online interval calibration that tracks the error quantile under distribution shift; works on every model ([v0.1.22](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.22.md)) |
 | Nov 2026 | [**CIProto**](https://huggingface.co/ContinuousIntelligence/ci-proto) | `ContinuousIntelligence/ci-proto` — ~167M zero-shot forecaster; 16k context, 9 native quantiles (0.1–0.9), native `X_df`; install with `foundationforecast[ci-proto]` ([v0.1.21](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.21.md)) |
 | Nov 2026 | [**Kumo-Forecast**](https://huggingface.co/nvidia/Kumo-Forecast) | `nvidia/Kumo-Forecast` — NVIDIA's ~340M zero-shot forecaster; point forecasts only (use `prediction_intervals=ConformalIntervals(...)` for intervals); 512-step context, 72-step native horizon with autoregressive rollout; requires `timecopilot-kumo-forecast>=0.1.0` ([v0.1.20](https://github.com/TimeCopilot/foundationforecast/blob/main/docs/changelogs/v0.1.20.md)) |
