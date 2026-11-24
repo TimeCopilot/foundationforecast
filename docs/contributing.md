@@ -95,6 +95,7 @@ When adding a new foundation model:
 - **tirex** — [`timecopilot-tirex`](https://pypi.org/project/timecopilot-tirex/)
 - **toto** — [`timecopilot-toto`](https://pypi.org/project/timecopilot-toto/)
 - **uni2ts** — [`timecopilot-uni2ts`](https://pypi.org/project/timecopilot-uni2ts/)
+- **simons** — [`timecopilot-simons`](https://pypi.org/project/timecopilot-simons/) (inference-only packaging of [Abel-ai-lab/Simons](https://github.com/Abel-ai-lab/Simons) v0.1.2; import name stays `simons`)
 - **timestral** — [`timecopilot-timestral`](https://pypi.org/project/timecopilot-timestral/)
 
 Upstream (optional extra, not a fork):

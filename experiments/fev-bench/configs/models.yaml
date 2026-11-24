@@ -54,6 +54,14 @@ models:
       alias: TiRex-2
       batch_size: 64
 
+  abel-lab--Simons-297M:
+    class: foundationforecast.models.simons.Simons
+    reference_csv: simons-297m.csv
+    kwargs:
+      repo_id: abel-lab/Simons-297M
+      alias: Simons-297M
+      batch_size: 256
+
   h2oai--timeh2o-v1:
     class: foundationforecast.models.timeh2o.TimeH2O
     reference_csv: timeh2o-v1.csv

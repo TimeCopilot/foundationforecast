@@ -4,6 +4,7 @@ from .chronos import Chronos, ChronosFinetuningConfig
 from .ciproto import CIProto
 from .kumo import Kumo
 from .moirai import Moirai
+from .simons import Simons
 from .tabby import Tabby
 from .tafsut import Tafsut
 from .timegpt import TimeGPT, TimeGPTFinetuningConfig
@@ -17,6 +18,7 @@ __all__ = [
     "CIProto",
     "Kumo",
     "Moirai",
+    "Simons",
     "Tabby",
     "Tafsut",
     "TimeGPT",

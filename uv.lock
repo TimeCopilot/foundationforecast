@@ -1500,6 +1500,7 @@ dependencies = [
     { name = "tfc-t0", extra = ["torch"], marker = "python_full_version >= '3.11' and python_full_version < '3.14'" },
     { name = "timecopilot-chronos-forecasting" },
     { name = "timecopilot-kumo-forecast" },
+    { name = "timecopilot-simons" },
     { name = "timecopilot-timesfm" },
     { name = "timecopilot-timestral" },
     { name = "timecopilot-tirex", marker = "python_full_version >= '3.11'" },
@@ -1570,6 +1571,7 @@ requires-dist = [
     { name = "tfc-t0", extras = ["torch"], marker = "python_full_version >= '3.11' and python_full_version < '3.14'", specifier = ">=0.6.0" },
     { name = "timecopilot-chronos-forecasting", specifier = ">=0.2.2" },
     { name = "timecopilot-kumo-forecast", specifier = ">=0.1.0" },
+    { name = "timecopilot-simons", specifier = ">=0.1.0" },
     { name = "timecopilot-timesfm", specifier = ">=0.4.1" },
     { name = "timecopilot-timestral", specifier = ">=0.1.0" },
     { name = "timecopilot-tirex", marker = "python_full_version >= '3.11'", specifier = ">=0.1.1" },
@@ -6462,6 +6464,23 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/2a/22/8cd247d191e4061a051acfc8f5c8524e283f493ffd1db4b44bb0f7f552e9/timecopilot_kumo_forecast-0.1.0.tar.gz", hash = "sha256:c66ebe7d9be0fe9ee4f8dcfbb0b8a2ba0df6be844b6b3c7add7ac128575efb7c", size = 137607, upload-time = "2026-11-09T19:36:39.367Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d1/ed/4345fde5b055df13e0b5a0a2beed831dbd5f05fdebab4abfdd3a5c2ce88b/timecopilot_kumo_forecast-0.1.0-py3-none-any.whl", hash = "sha256:6f8f7482723481773a52be215b6daf597edbdafd6fff253495f526267089684e", size = 17526, upload-time = "2026-11-09T19:36:38.107Z" },
+]
+
+[[package]]
+name = "timecopilot-simons"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "huggingface-hub" },
+    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
+    { name = "safetensors" },
+    { name = "torch", version = "2.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and python_full_version < '3.14'" },
+    { name = "torch", version = "2.13.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or python_full_version >= '3.14'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2d/d7/b400b6e3e641a8acbf7f5d355d0198d7f2b3d4a30c2a131bbd6a20456055/timecopilot_simons-0.1.0.tar.gz", hash = "sha256:9cf5c9da35fc1c44728e3cc88a50339736465352b025400fe6c39096227007ea", size = 39814, upload-time = "2026-11-23T21:44:30.917Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e7/f4/a7c485e90743b6b356efff4a811d81382e0fc39adbae4ef440c90763b7fe/timecopilot_simons-0.1.0-py3-none-any.whl", hash = "sha256:2db4f1e6ac2670b7fd863919805e2e605101d1eb41ba08d54decf19a9542e8f3", size = 37867, upload-time = "2026-11-23T21:44:29.816Z" },
 ]
 
 [[package]]

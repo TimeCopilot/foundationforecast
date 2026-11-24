@@ -42,6 +42,7 @@ FoundationForecast uses **`supports_native_futr_exog()`** on the forecaster inst
 | **Kumo** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **Moirai** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **PatchTST-FM** | any | No | Use `exog_strategy=False` in multi-model runs |
+| **Simons** | `abel-lab/Simons-25M`, `Simons-60M`, `Simons-178M`, `Simons-297M` | Yes | Numeric known-future covariates; up to 16 usable columns |
 | **Sundial** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **Tabby** | any | No | Use `exog_strategy=False` in multi-model runs |
 | **TabPFN** | any | No | Use `exog_strategy=False` in multi-model runs |

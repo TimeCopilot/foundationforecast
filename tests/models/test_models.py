@@ -146,6 +146,7 @@ def _assert_quantile_monotonicity(model, fcst_df, ordered_q_cols):
         elif (
             "tirex" in alias
             or alias.startswith("t0")
+            or "simons" in alias
             or "patchtst" in alias
             or "granite" in alias
         ):

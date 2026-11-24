@@ -93,6 +93,16 @@ def test_tirex_2_registered_with_leaderboard_reference():
     assert entry["kwargs"]["repo_id"] == "NX-AI/TiRex-2"
 
 
+def test_simons_297m_registered_with_leaderboard_reference():
+    models = load_models_config()
+    entry = models["abel-lab--Simons-297M"]
+    assert entry["class"] == "foundationforecast.models.simons.Simons"
+    assert entry["reference_csv"] == "simons-297m.csv"
+    assert entry["kwargs"]["repo_id"] == "abel-lab/Simons-297M"
+    assert entry["kwargs"]["alias"] == "Simons-297M"
+    assert entry["kwargs"]["batch_size"] == 256
+
+
 def test_timeh2o_registered_with_leaderboard_reference():
     models = load_models_config()
     entry = models["h2oai--timeh2o-v1"]
