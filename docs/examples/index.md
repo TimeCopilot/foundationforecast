@@ -14,6 +14,7 @@ For model API details, see the [Model Hub](../model-hub.md).
 | [Exogenous variables](exogenous-variables.ipynb) | Panel forecast with `X_df`, native exog, and `exog_strategy=False` for mixed models | Python 3.10+; GPU recommended for Chronos-2 |
 | [Conformal prediction](conformal-prediction.ipynb) | CV-calibrated intervals with `prediction_intervals` on M4 Hourly | Python 3.10+; GPU optional |
 | [Conformal under distribution shift](conformal-distribution-shift.ipynb) | Chronos intervals, pooled split conformal and `PID` on GOOGL daily prices with changing volatility | Python 3.10+; GPU optional |
+| [Adaptive conformal replay](conformal-aci.ipynb) | Plot a finite ACI forecast, then compare held-out coverage, width and non-finite intervals with static conformal and PID on M4 Hourly | Python 3.10+; GPU optional |
 | [Prophet adapter](prophet-adapter.ipynb) | Swap `Prophet()` for `FoundationProphet(model=...)`, in-sample backtests, regressors and Prophet diagnostics | Python 3.10+; `foundationforecast[prophet]` |
 
 ## Foundation Models

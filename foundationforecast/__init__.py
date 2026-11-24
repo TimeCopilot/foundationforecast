@@ -2,6 +2,7 @@ import sys
 
 from ._foundation_forecast import FoundationForecast
 from .core.conformal import ConformalIntervals, ConformalMethod
+from .core.conformal_aci import ACI
 from .core.conformal_pid import PID
 from .core.model_weight_cache import set_max_cached_models
 from .models import (
@@ -20,6 +21,7 @@ from .models import (
 )
 
 __all__ = [
+    "ACI",
     "ConformalIntervals",
     "ConformalMethod",
     "PID",
