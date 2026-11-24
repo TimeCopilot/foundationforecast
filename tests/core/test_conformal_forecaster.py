@@ -6,7 +6,7 @@ import pytest
 from utilsforecast.processing import make_future_dataframe
 
 import foundationforecast.models as ff_models
-from foundationforecast import PID, FoundationForecast
+from foundationforecast import ACI, PID, FoundationForecast
 from foundationforecast.core.conformal import (
     ConformalIntervals,
     add_conformal_distribution_intervals,
@@ -406,3 +406,105 @@ def test_pid_adapts_to_trailing_level_shift():
         fcst = model.forecast(_series(scale), h=2, freq="D", level=[80])
         widths[scale] = (fcst["Mean-hi-80"] - fcst["Mean-lo-80"]).mean()
     assert widths[5.0] > widths[1.0]
+
+
+@pytest.mark.parametrize("step_size", [None, 1])
+def test_aci_forecast_matches_causal_replay_and_foundation_forecast(step_size):
+    df = _panel(n_series=2, length=60)
+    method = ACI(gamma=0.005, ncal=4)
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(
+            n_windows=12, method=method, step_size=step_size
+        )
+    )
+    forecast = model.forecast(df, h=3, freq="D", level=[80, 95])
+    cv = (
+        _MeanForecaster()
+        .cross_validation(df, h=3, freq="D", n_windows=12, step_size=step_size or 3)
+        .sort_values(["unique_id", "cutoff", "ds"])
+    )
+    errors = (cv["y"] - cv["Mean"]).to_numpy().reshape(2, 12, 3).transpose(1, 0, 2)
+    radii = np.maximum.accumulate(
+        method.thresholds(errors, [80, 95], step_size or 3, 3), axis=0
+    )
+    mean = forecast["Mean"].to_numpy().reshape(2, 3)
+    for i, level in enumerate([80, 95]):
+        np.testing.assert_allclose(
+            forecast[f"Mean-lo-{level}"], (mean - radii[i]).ravel()
+        )
+        np.testing.assert_allclose(
+            forecast[f"Mean-hi-{level}"], (mean + radii[i]).ravel()
+        )
+    via_ff = FoundationForecast(models=[model]).forecast(
+        df, h=3, freq="D", level=[80, 95]
+    )
+    pd.testing.assert_frame_equal(forecast, via_ff[forecast.columns])
+
+
+def test_aci_cross_validation_restarts_at_each_cutoff():
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=6, method=ACI(gamma=0.005))
+    )
+    df = _panel(length=50)
+    result = model.cross_validation(df, h=2, freq="D", n_windows=3, level=[80, 95])
+    for cutoff, window in result.groupby("cutoff"):
+        expected = model.forecast(df[df["ds"] <= cutoff], h=2, freq="D", level=[80, 95])
+        pd.testing.assert_frame_equal(
+            window[expected.columns].reset_index(drop=True), expected
+        )
+
+
+def test_aci_quantiles_use_the_matching_bounds_and_point_median():
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=6, method=ACI(gamma=0.005))
+    )
+    df = _panel()
+    levels = model.forecast(df, h=2, freq="D", level=[80, 95])
+    quantiles = model.forecast(
+        df, h=2, freq="D", quantiles=[0.025, 0.1, 0.5, 0.9, 0.975]
+    )
+    for q, suffix in [
+        ("2.5", "lo-95"),
+        ("10", "lo-80"),
+        ("90", "hi-80"),
+        ("97.5", "hi-95"),
+    ]:
+        np.testing.assert_array_equal(
+            quantiles[f"Mean-q-{q}"], levels[f"Mean-{suffix}"]
+        )
+    np.testing.assert_array_equal(quantiles["Mean-q-50"], levels["Mean"])
+
+
+@pytest.mark.parametrize("kwargs", [{}, {"quantiles": [0.5]}])
+@pytest.mark.filterwarnings("error:ACI replay.*:UserWarning")
+def test_aci_point_only_forecasts_do_not_calibrate_or_warn(kwargs, monkeypatch):
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(n_windows=20, method=ACI())
+    )
+    # Too little history for calibration is fine when no interval is requested.
+    monkeypatch.setattr(
+        model, "cross_validation", lambda **kw: pytest.fail("unneeded calibration")
+    )
+    result = model.forecast(_panel(length=5), h=2, freq="D", **kwargs)
+    assert np.isfinite(result["Mean"]).all()
+
+
+@pytest.mark.parametrize("empty", [False, True])
+def test_aci_forecast_warns_about_nonfinite_sets(empty):
+    df = _panel(n_series=1, length=40)
+    df["y"] = 1.0 if empty else np.arange(len(df), dtype=float)
+    model = _MeanForecaster(
+        prediction_intervals=ConformalIntervals(
+            n_windows=4 if empty else 12,
+            method=ACI(gamma=1 if empty else 0.5, ncal=1 if empty else 2),
+        )
+    )
+    kind, level = ("empty", 50) if empty else ("unbounded", 95)
+    with pytest.warns(UserWarning, match=f"ACI.*{kind}"):
+        result = model.forecast(df, h=1, freq="D", level=[level])
+    if empty:
+        assert np.isposinf(result[f"Mean-lo-{level}"]).all()
+        assert np.isneginf(result[f"Mean-hi-{level}"]).all()
+    else:
+        assert np.isneginf(result[f"Mean-lo-{level}"]).all()
+        assert np.isposinf(result[f"Mean-hi-{level}"]).all()
