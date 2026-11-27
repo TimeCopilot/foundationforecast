@@ -95,7 +95,6 @@ When adding a new foundation model:
 - **tirex** — [`timecopilot-tirex`](https://pypi.org/project/timecopilot-tirex/)
 - **toto** — [`timecopilot-toto`](https://pypi.org/project/timecopilot-toto/)
 - **uni2ts** — [`timecopilot-uni2ts`](https://pypi.org/project/timecopilot-uni2ts/)
-- **simons** — [`timecopilot-simons`](https://pypi.org/project/timecopilot-simons/) (inference-only packaging of [Abel-ai-lab/Simons](https://github.com/Abel-ai-lab/Simons) v0.1.2; import name stays `simons`)
 - **timestral** — [`timecopilot-timestral`](https://pypi.org/project/timecopilot-timestral/)
 
 Upstream (optional extra, not a fork):
@@ -105,5 +104,8 @@ Upstream (optional extra, not a fork):
 FlowState and PatchTST-FM use upstream [`granite-tsfm`](https://pypi.org/project/granite-tsfm/)
 (`>=0.3.9`; PatchTST-FM r2 requires overlapping-patch support). The former
 `timecopilot-granite-tsfm` fork is no longer a dependency.
+
+Simons uses upstream [`simons-forecasting`](https://pypi.org/project/simons-forecasting/)
+(`>=0.1.3`; import name stays `simons`).
 
 See the [TimeCopilot contributing guide](https://timecopilot.dev/community/contributing/) for upstream fork links.

@@ -118,7 +118,7 @@ Licenses verified against Hugging Face model cards. Check the model card for you
 - **Apache-2.0**, **MIT**: generally fine for commercial production (retain notices; T0† is also gated on Hugging Face: accept terms and set `HF_TOKEN`).
 - **CC-BY-NC-4.0** (Moirai, Tabby), **CC-BY-NC-SA-4.0** (PatchTST-FM r1 checkpoints): **non-commercial** only; not for revenue-generating production without a separate agreement from the rights holder.
 - **Apache-2.0 / OpenMDW 1.0** (Granite PatchTST-FM r2): commercial-friendly; choose either license per the [model card](https://huggingface.co/ibm-granite/granite-timeseries-patchtst-fm-r2).
-- **OpenMDW-1.1¶¶** (Simons): checkpoint weights use the [OpenMDW-1.1 license](https://huggingface.co/abel-lab/Simons-297M/blob/main/LICENSE); inference code is Apache-2.0 via `timecopilot-simons`.
+- **OpenMDW-1.1¶¶** (Simons): checkpoint weights use the [OpenMDW-1.1 license](https://huggingface.co/abel-lab/Simons-297M/blob/main/LICENSE); inference code is Apache-2.0 via `simons-forecasting`.
 - **TimesFM 3.0**: weights for `google/timesfm-3.0-pytorch` are [non-commercial](https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE); TimesFM 1.0–2.5 checkpoints remain Apache-2.0.
 - **TabPFN NC**‡: TabPFN-2.6+ and TabPFN-3 weights are non-commercial; production requires a [Prior Labs commercial license or API](https://docs.priorlabs.ai/models). First LOCAL use requires accepting terms at [ux.priorlabs.ai](https://ux.priorlabs.ai) (`TABPFN_TOKEN`). TabPFN-3 is LOCAL-only today.
 - **Community / Apache-2.0** (TiRex): TiRex 1.0 uses the [NXAI Community License](https://huggingface.co/NX-AI/TiRex/blob/main/LICENSE) (commercial limits for large enterprises); TiRex 2.0 is Apache-2.0.
@@ -141,7 +141,7 @@ Some models require specific Python versions (e.g. FlowState 3.11-3.13, TabPFN &
 - **Kumo:** `nvidia/Kumo-Forecast` (point forecasts; requires `timecopilot-kumo-forecast>=0.1.0`)
 - **Moirai:** `Salesforce/moirai-{1.0,1.1,2.0}-R-{small,base,large}`, `Salesforce/moirai-moe-1.0-R-*`
 - **PatchTST-FM:** `ibm-research/patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r1`, `ibm-granite/granite-timeseries-patchtst-fm-r2` (r2 requires `granite-tsfm>=0.3.9`)
-- **Simons:** `abel-lab/Simons-{25M,60M,178M,297M}` (requires `timecopilot-simons>=0.1.0`)
+- **Simons:** `abel-lab/Simons-{25M,60M,178M,297M}` (requires `simons-forecasting>=0.1.3`)
 - **Sundial:** `thuml/sundial-base-128m`
 - **T0:** `theforecastingcompany/t0-alpha`, `theforecastingcompany/t0-beta`, `theforecastingcompany/t0-gamma` (requires `tfc-t0[torch]>=0.6.0`)
 - **Tabby:** `paris-noah/Tabby` (requires `trust_remote_code`; CC-BY-NC-4.0)
